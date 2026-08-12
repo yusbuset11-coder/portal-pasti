@@ -353,6 +353,37 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
 
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
+  def add_identity_table(doc, rows_data):
+    """Fungsi khusus untuk membuat tabel identitas yang seragam dan rapi di setiap halaman lampiran."""
+    table = doc.add_table(rows=len(rows_data), cols=2)
+    table.style = "Table Grid"
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+
+    for idx, (label, val) in enumerate(rows_data):
+      row_cells = table.rows[idx].cells
+      row_cells[0].text = label
+      row_cells[0].width = Inches(2.3)
+      row_cells[1].width = Inches(4.2)
+      set_cell_background(row_cells[0], "F5EBE0")
+
+      for p in row_cells[0].paragraphs:
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after = Pt(4)
+        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        for run in p.runs:
+          run.font.size = Pt(10)
+          run.font.bold = True
+
+      row_cells[1].text = str(val)
+      for p in row_cells[1].paragraphs:
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after = Pt(4)
+        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        for run in p.runs:
+          run.font.size = Pt(10)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(6)
+
   def add_formative_matrix_table(doc):
     """Fungsi khusus untuk merender Matriks Lembar Observasi Formatif berbentuk Tabel Praktis Guru."""
     p_sub = doc.add_paragraph()
@@ -507,10 +538,13 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     r_rub_t.font.bold = True
     r_rub_t.font.color.rgb = RGBColor(74, 46, 33)
 
-    p_meta_rubrik = doc.add_paragraph()
-    p_meta_rubrik.add_run(f"Nama Guru / Pengamat: {nama_penulis}\n").font.bold = True
-    p_meta_rubrik.add_run(f"Kelas / Fase: {fase_kelas}\n").font.bold = True
-    p_meta_rubrik.add_run(f"Mata Pelajaran / Topik: {mata_pelajaran} - {topik}").font.bold = True
+    # Identitas Seragam Tabel Rubrik
+    tabel_identitas_rubrik = [
+        ("Nama Guru / Pengamat", nama_penulis),
+        ("Kelas / Fase", fase_kelas),
+        ("Mata Pelajaran / Topik", f"{mata_pelajaran} - {topik}"),
+    ]
+    add_identity_table(doc, tabel_identitas_rubrik)
 
     p_sec_a = doc.add_paragraph()
     p_sec_a.add_run("A. Rubrik Penilaian Kinerja / Kompetensi").font.bold = True
@@ -538,7 +572,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
       for line in rubrik_data.split("\n"):
         doc.add_paragraph(line)
     else:
-      # Fallback agar tidak pernah kosong
       p_def = doc.add_paragraph()
       p_def.add_run("• Ketajaman Analisis & Kompetensi Proses:\n- Perlu Bimbingan: Belum menunjukkan pemahaman dan ketepatan analisis.\n- Cukup: Mampu menganalisis namun masih terdapat kesalahan konsep.\n- Baik: Mampu menganalisis materi dengan logis dan benar.\n- Sangat Baik: Mampu menganalisis secara komprehensif, kritis, dan mendalam.")
 
@@ -561,10 +594,13 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     r_inst_t.font.bold = True
     r_inst_t.font.color.rgb = RGBColor(74, 46, 33)
 
-    p_meta_inst = doc.add_paragraph()
-    p_meta_inst.add_run(f"Nama Guru / Pengamat: {nama_penulis}\n").font.bold = True
-    p_meta_inst.add_run(f"Kelas / Fase: {fase_kelas}\n").font.bold = True
-    p_meta_inst.add_run(f"Mata Pelajaran / Topik: {mata_pelajaran} - {topik}").font.bold = True
+    # Identitas Seragam Tabel Instrumen Formatif
+    tabel_identitas_inst = [
+        ("Nama Guru / Pengamat", nama_penulis),
+        ("Kelas / Fase", fase_kelas),
+        ("Mata Pelajaran / Topik", f"{mata_pelajaran} - {topik}"),
+    ]
+    add_identity_table(doc, tabel_identitas_inst)
 
     instrumen_data = data_ai.get("instrumen_formatif", {})
     if isinstance(instrumen_data, dict) and instrumen_data:
@@ -590,10 +626,13 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     r_lkm_t.font.bold = True
     r_lkm_t.font.color.rgb = RGBColor(74, 46, 33)
 
-    p_meta_lkm = doc.add_paragraph()
-    p_meta_lkm.add_run("Nama Kelompok / Peserta Didik: ........................................................................\n").font.bold = True
-    p_meta_lkm.add_run(f"Kelas / Fase: {fase_kelas}\n").font.bold = True
-    p_meta_lkm.add_run(f"Mata Pelajaran / Topik: {mata_pelajaran} - {topik}").font.bold = True
+    # Identitas Seragam Tabel LKM
+    tabel_identitas_lkm = [
+        ("Nama Kelompok / Peserta Didik", "........................................................................"),
+        ("Kelas / Fase", fase_kelas),
+        ("Mata Pelajaran / Topik", f"{mata_pelajaran} - {topik}"),
+    ]
+    add_identity_table(doc, tabel_identitas_lkm)
 
     lkm_data = data_ai.get("lkm_content", {})
     if isinstance(lkm_data, dict) and lkm_data:
