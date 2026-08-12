@@ -353,6 +353,119 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
 
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
+  def add_kerangka_pembelajaran_table(doc, kerangka_data):
+    """Membuat tabel Kerangka Pembelajaran dengan sub-kategori berjenjang persis seperti format file referensi[cite: 5]."""
+    if not isinstance(kerangka_data, dict):
+      kerangka_data = {}
+
+    praktik = kerangka_data.get("praktik_pedagogis", {})
+    if not isinstance(praktik, dict):
+      praktik = {"model_pembelajaran": str(praktik), "metode_pembelajaran": "-"}
+
+    kemitraan = kerangka_data.get("kemitraan_pembelajaran", {})
+    if not isinstance(kemitraan, dict):
+      kemitraan = {"lingkungan_sekolah": str(kemitraan), "lingkungan_luar_sekolah": "-"}
+
+    lingkungan = kerangka_data.get("lingkungan_belajar", {})
+    if not isinstance(lingkungan, dict):
+      lingkungan = {
+          "ruang_fisik": str(lingkungan),
+          "ruang_virtual": "-",
+          "ruang_budaya_belajar": "-",
+      }
+
+    digital = kerangka_data.get("pemanfaatan_digital", {})
+    if not isinstance(digital, dict):
+      digital = {
+          "tahap_perencanaan": str(digital),
+          "tahap_pelaksanaan": "-",
+          "tahap_asesmen": "-",
+      }
+
+    rows_structure = [
+        ("section", "Praktik Pedagogis"),
+        ("row", ("Model Pembelajaran", praktik.get("model_pembelajaran", "Problem Based Learning"))),
+        ("row", ("Metode Pembelajaran", praktik.get("metode_pembelajaran", "Diskusi, Tanya Jawab, Penugasan"))),
+        ("section", "Kemitraan Pembelajaran"),
+        ("row", ("Lingkungan Sekolah", kemitraan.get("lingkungan_sekolah", "Kolaborasi internal antar guru dan siswa"))),
+        ("row", ("Lingkungan Luar Sekolah", kemitraan.get("lingkungan_luar_sekolah", "Pelibatan narasumber / praktisi dunia kerja"))),
+        ("section", "Lingkungan Belajar"),
+        ("row", ("Ruang Fisik", lingkungan.get("ruang_fisik", "Ruang kelas kolaboratif / laboratorium"))),
+        ("row", ("Ruang Virtual", lingkungan.get("ruang_virtual", "Google Classroom / Cloud Storage"))),
+        ("row", ("Ruang / Budaya Belajar", lingkungan.get("ruang_budaya_belajar", "Kolaboratif, Berpikir Kritis dan Kreatif, Umpan Balik Konstruktif"))),
+        ("section", "Pemanfaatan Digital"),
+        ("row", ("Tahap Perencanaan", digital.get("tahap_perencanaan", "Penyusunan modul berbasis perangkat digital dan AI"))),
+        ("row", ("Tahap Pelaksanaan", digital.get("tahap_pelaksanaan", "Media interaktif dan penelusuran referensi online"))),
+        ("row", ("Tahap Asesmen", digital.get("tahap_asesmen", "Kuis digital dan lembar kerja elektronik"))),
+    ]
+
+    table = doc.add_table(rows=len(rows_structure) + 1, cols=2)
+    table.style = "Table Grid"
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+
+    hdr_cells = table.rows[0].cells
+    hdr_cells[0].merge(hdr_cells[1])
+    hdr_cells[0].text = "KERANGKA PEMBELAJARAN"
+    set_cell_background(hdr_cells[0], "5A3825")
+    for p in hdr_cells[0].paragraphs:
+      p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+      p.paragraph_format.space_before = Pt(4)
+      p.paragraph_format.space_after = Pt(4)
+      for run in p.runs:
+        run.font.bold = True
+        run.font.size = Pt(10)
+        run.font.color.rgb = RGBColor(255, 255, 255)
+
+    for idx, item in enumerate(rows_structure):
+      row_cells = table.rows[idx + 1].cells
+      if item[0] == "section":
+        row_cells[0].merge(row_cells[1])
+        row_cells[0].text = item[1]
+        set_cell_background(row_cells[0], "E6D5C3")
+        for p in row_cells[0].paragraphs:
+          p.paragraph_format.space_before = Pt(5)
+          p.paragraph_format.space_after = Pt(5)
+          p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+          for run in p.runs:
+            run.font.size = Pt(10)
+            run.font.bold = True
+            run.font.color.rgb = RGBColor(74, 46, 33)
+      else:
+        label, val = item[1]
+        row_cells[0].text = label
+        row_cells[0].width = Inches(2.5)
+        row_cells[1].width = Inches(4.0)
+        set_cell_background(row_cells[0], "F5EBE0")
+
+        for p in row_cells[0].paragraphs:
+          p.paragraph_format.space_before = Pt(4)
+          p.paragraph_format.space_after = Pt(4)
+          p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+          for run in p.runs:
+            run.font.size = Pt(10)
+            run.font.bold = True
+
+        val_str = str(val)
+        row_cells[1].text = ""
+        lines = val_str.split("\n")
+        for line_idx, line in enumerate(lines):
+          p_right = row_cells[1].paragraphs[0] if line_idx == 0 else row_cells[1].add_paragraph()
+          p_right.paragraph_format.space_before = Pt(4)
+          p_right.paragraph_format.space_after = Pt(4)
+          p_right.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+          if ":" in line:
+            parts = line.split(":", 1)
+            r1 = p_right.add_run(parts[0].strip() + ": ")
+            r1.font.bold = True
+            r1.font.size = Pt(10)
+            r2 = p_right.add_run(parts[1].strip())
+            r2.font.size = Pt(10)
+          else:
+            r3 = p_right.add_run(line)
+            r3.font.size = Pt(10)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(6)
+
   def add_identity_table(doc, rows_data):
     table = doc.add_table(rows=len(rows_data), cols=2)
     table.style = "Table Grid"
@@ -654,26 +767,9 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
         ("Pertanyaan Pemantik", data_ai.get("pertanyaan_pemantik", "-"))
     ])
     
-    # 4. KERANGKA PEMBELAJARAN (Sistematika Baru Lengkap)
+    # 4. KERANGKA PEMBELAJARAN (Sistematika Berjenjang Baru Sesuai Panduan[cite: 5])
     kerangka = data_ai.get("kerangka_pembelajaran", {})
-    praktik = kerangka.get("praktik_pedagogis", {}) if isinstance(kerangka, dict) else {}
-    kemitraan = kerangka.get("kemitraan_pembelajaran", {}) if isinstance(kerangka, dict) else {}
-    lingkungan = kerangka.get("lingkungan_belajar", {}) if isinstance(kerangka, dict) else {}
-    digital = kerangka.get("pemanfaatan_digital", {}) if isinstance(kerangka, dict) else {}
-
-    tabel_kerangka = [
-        ("Praktik Pedagogis - Model Pembelajaran", praktik.get("model_pembelajaran", "Problem Based Learning")),
-        ("Praktik Pedagogis - Metode Pembelajaran", praktik.get("metode_pembelajaran", "Diskusi, Tanya Jawab, Penugasan")),
-        ("Kemitraan Pembelajaran - Lingkungan Sekolah", kemitraan.get("lingkungan_sekolah", "Kolaborasi internal antar guru dan siswa")),
-        ("Kemitraan Pembelajaran - Lingkungan Luar Sekolah", kemitraan.get("lingkungan_luar_sekolah", "Pelibatan narasumber / praktisi dunia kerja")),
-        ("Lingkungan Belajar - Ruang Fisik", lingkungan.get("ruang_fisik", "Ruang kelas kolaboratif / laboratorium")),
-        ("Lingkungan Belajar - Ruang Virtual", lingkungan.get("ruang_virtual", "Google Classroom / Cloud Storage")),
-        ("Lingkungan Belajar - Ruang / Budaya Belajar", lingkungan.get("ruang_budaya_belajar", "Kolaboratif, Berpikir Kritis dan Kreatif, Umpan Balik Konstruktif")),
-        ("Pemanfaatan Digital - Tahap Perencanaan", digital.get("tahap_perencanaan", "Penyusunan modul berbasis perangkat digital dan AI")),
-        ("Pemanfaatan Digital - Tahap Pelaksanaan", digital.get("tahap_pelaksanaan", "Media interaktif dan penelusuran referensi online")),
-        ("Pemanfaatan Digital - Tahap Asesmen", digital.get("tahap_asesmen", "Kuis digital dan lembar kerja elektronik")),
-    ]
-    add_section_table_custom(doc, "KERANGKA PEMBELAJARAN", tabel_kerangka)
+    add_kerangka_pembelajaran_table(doc, kerangka)
 
     # 5. PENGALAMAN BELAJAR (LANGKAH-LANGKAH)
     pengalaman = data_ai.get("pengalaman_belajar", {})
@@ -799,7 +895,7 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     elif not topik:
       st.warning("⚠️ Mohon isi topik pembelajaran.")
     else:
-      with st.spinner("Sistem GEMA PASTI sedang menyusun Modul Ajar lengkap dengan sistematika baru..."):
+      with st.spinner("Sistem GEMA sedang menyusun Modul Ajar PM ..."):
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel("gemini-3.5-flash")
         
@@ -845,14 +941,14 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
         except:
           data_ai = {}
 
-        st.success("🎉 Modul Ajar GEMA Berhasil Disusun Sesuai Sistematika Baru!")
+        st.success("🎉 Modul Ajar PM Berhasil Disusun Sesuai Sistematika Baru!")
         docx_file = generate_docx(
             data_ai, nama_sekolah, semester, tahun_pelajaran, mata_pelajaran,
             fase_kelas, topik, alokasi_waktu, pertemuan_ke, nama_penulis,
             nama_kota, tanggal_pembuatan, nip_penulis
         )
         st.download_button(
-            label="📥 Unduh Modul Ajar GEMA (.docx)",
+            label="📥 Unduh Modul Ajar PM (.docx)",
             data=docx_file,
             file_name=f"Modul_Ajar_{topik.replace(' ', '_')}.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
