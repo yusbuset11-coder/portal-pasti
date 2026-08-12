@@ -987,26 +987,141 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
 # APLIKASI 2: SIPENSIS (Sistem Pengelolaan Administrasi Siswa)
 # =========================================================================
 elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
-  st.markdown("### 📋 Sistem Pengelolaan Administrasi Siswa (SIPENSIS)")
-  st.write("Guru dapat langsung melihat, menambah, mengedit, atau menghapus data siswa yang terhubung ke **Database_PASTI_Pusat**.")
+  st.markdown("### 📋 Sistem Pengelolaan Administrasi Siswa & Absensi (SIPENSIS)")
+  st.write(
+      "Guru dapat langsung melihat, menambah, mengedit, atau menghapus data"
+      " siswa yang terhubung ke **Database_PASTI_Pusat**."
+  )
 
-  df_siswa = load_sheet_data("Siswa")
+  # Memuat data dari Database Pusat menggunakan fungsi Google Sheets Anda
+  df_siswa = load_sheet_data("Siswa")  # Sesuaikan nama fungsi lama Anda
+
   if not df_siswa.empty:
-    st.info("💡 Anda dapat melakukan edit langsung pada tabel di bawah ini. Klik tombol **'Simpan Perubahan ke Database Pusat'** setelah selesai.")
+    # Memastikan kolom status kehadiran ada
+    if "Status_Kehadiran" not in df_siswa.columns:
+      df_siswa["Status_Kehadiran"] = "Hadir"
+    else:
+      df_siswa["Status_Kehadiran"] = df_siswa["Status_Kehadiran"].fillna("Hadir")
 
-    edited_df = st.data_editor(df_siswa, num_rows="dynamic", use_container_width=True, key="editor_siswa")
+    # 1. Filter Pilih Sekolah
+    daftar_sekolah = df_siswa["Sekolah"].dropna().unique()
+    sekolah_pilih = st.selectbox("🏫 Pilih Sekolah:", daftar_sekolah)
 
-    if st.button("💾 Simpan Perubahan ke Database Pusat"):
-      with st.spinner("Menyimpan pembaruan data ke Google Sheets..."):
-        success = save_sheet_data("Siswa", edited_df)
+    df_sekolah = df_siswa[df_siswa["Sekolah"] == sekolah_pilih]
+
+    # 2. Filter Pilih Kelas berdasarkan Sekolah
+    daftar_kelas = df_sekolah["Kelas"].dropna().unique()
+    kelas_pilih = st.selectbox("📚 Pilih Kelas:", daftar_kelas)
+
+    # Saring data khusus untuk sekolah dan kelas tersebut
+    df_filtered = df_sekolah[df_sekolah["Kelas"] == kelas_pilih].copy()
+
+    st.markdown("---")
+    st.info(
+        f"Menampilkan daftar siswa untuk **{sekolah_pilih}** - Kelas"
+        f" **{kelas_pilih}**. Silakan ubah status kehadiran siswa pada kolom"
+        " tabel di bawah."
+    )
+
+    # Pilihan status absensi
+    opsi_kehadiran = ["Hadir", "Sakit (S)", "Izin (I)", "Tanpa Keterangan (A)"]
+
+    # Tabel interaktif khusus kelas terpilih
+    edited_filtered = st.data_editor(
+        df_filtered,
+        column_config={
+            "Status_Kehadiran": st.column_config.SelectboxColumn(
+                "Status Kehadiran",
+                help="Pilih status kehadiran siswa",
+                options=opsi_kehadiran,
+                required=True,
+            )
+        },
+        disabled=["ID_Siswa", "Sekolah", "Kelas", "Nama Siswa"],
+        hide_index=True,
+        use_container_width=True,
+        key="editor_absensi_kelas",
+    )
+
+    # Tombol Simpan Perubahan Tabel Interaktif
+    if st.button("💾 Simpan Perubahan Absensi ke Database Pusat", type="primary"):
+      with st.spinner("Menyimpan pembaruan absensi ke Database Pusat..."):
+        for idx, row in edited_filtered.iterrows():
+          id_val = row["ID_Siswa"]
+          status_val = row["Status_Kehadiran"]
+          df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "Status_Kehadiran"] = (
+              status_val
+          )
+
+        success = save_sheet_data(
+            "Siswa", df_siswa
+        )  # Sesuaikan fungsi simpan lama Anda
         if success:
-          st.success("✅ Data siswa berhasil diperbarui dan disimpan ke Database Pusat!")
+          st.success(
+              "✅ Data absensi kelas berhasil disimpan dan diperbarui di"
+              " Database Pusat!"
+          )
           st.rerun()
         else:
-          st.error("❌ Gagal menyimpan data. Pastikan konfigurasi Google Service Account sudah aktif.")
-  else:
-    st.warning("⚠️ Data siswa belum termuat atau tab 'Siswa' pada Google Sheet kosong.")
+          st.error("❌ Gagal menyimpan data ke Database Pusat.")
 
+    # =====================================================================
+    # FITUR TAMBAHAN: DOWNLOAD TEMPLATE & UPLOAD EXCEL/CSV UNTUK GURU
+    # =====================================================================
+    st.markdown("---")
+    st.subheader("📂 Atau Kelola Data via Upload / Download Excel")
+    st.write(
+        "Jika ingin memperbarui data dalam jumlah banyak sekaligus, Anda dapat"
+        " menggunakan template di bawah ini."
+    )
+
+    # 1. Fitur Download Template
+    df_template = pd.DataFrame(
+        columns=[
+            "ID_Siswa",
+            "Sekolah",
+            "Kelas",
+            "Nama Siswa",
+            "Status_Kehadiran",
+        ]
+    )
+    csv_template = df_template.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="📥 Download Template Excel/CSV Siswa",
+        data=csv_template,
+        file_name="Template_SIPENSIS_Pusat.csv",
+        mime="text/csv",
+        help="Unduh template kosong untuk diisi oleh guru.",
+    )
+
+    # 2. Fitur Upload File Excel/CSV Guru
+    uploaded_excel = st.file_uploader(
+        "⬆️ Upload File Excel/CSV yang Telah Diisi Guru", type=["csv", "xlsx"]
+    )
+    if uploaded_excel is not None:
+      try:
+        if uploaded_excel.name.endswith(".csv"):
+          df_upload = pd.read_csv(uploaded_excel)
+        else:
+          df_upload = pd.read_excel(uploaded_excel)
+
+        st.write("Preview Data yang Di-upload:")
+        st.dataframe(df_upload.head())
+
+        if st.button("🔄 Sinkronkan & Timpa ke Database Pusat"):
+          with st.spinner("Sedang memperbarui Database Pusat..."):
+            success = save_sheet_data("Siswa", df_upload)
+            if success:
+              st.success(
+                  "✅ Data dari file berhasil disinkronkan ke Database Pusat!"
+              )
+              st.rerun()
+            else:
+              st.error("❌ Gagal menyimpan data upload ke database pusat.")
+      except Exception as e:
+        st.error(f"Terjadi kesalahan saat membaca file: {e}")
+  else:
+    st.warning("⚠️ Data siswa belum termuat atau tab 'Siswa' pada database kosong.")
 # =========================================================================
 # APLIKASI 3 & 4: DIGMA & SAKTI
 # =========================================================================
