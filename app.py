@@ -320,8 +320,8 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     for idx, (label, val) in enumerate(rows_data):
       row_cells = table.rows[idx + 1].cells
       row_cells[0].text = label
-      row_cells[0].width = Inches(2.3)
-      row_cells[1].width = Inches(4.2)
+      row_cells[0].width = Inches(2.5)
+      row_cells[1].width = Inches(4.0)
       set_cell_background(row_cells[0], "F5EBE0")
 
       for p in row_cells[0].paragraphs:
@@ -354,7 +354,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
   def add_identity_table(doc, rows_data):
-    """Fungsi khusus untuk membuat tabel identitas yang seragam dan rapi di setiap halaman lampiran."""
     table = doc.add_table(rows=len(rows_data), cols=2)
     table.style = "Table Grid"
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -362,8 +361,8 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     for idx, (label, val) in enumerate(rows_data):
       row_cells = table.rows[idx].cells
       row_cells[0].text = label
-      row_cells[0].width = Inches(2.3)
-      row_cells[1].width = Inches(4.2)
+      row_cells[0].width = Inches(2.5)
+      row_cells[1].width = Inches(4.0)
       set_cell_background(row_cells[0], "F5EBE0")
 
       for p in row_cells[0].paragraphs:
@@ -385,7 +384,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
   def add_rubric_table(doc, rubrik_data):
-    """Fungsi khusus untuk merender Bagian A (Rubrik Penilaian) ke dalam bentuk Tabel Terstruktur."""
     p_sec_a = doc.add_paragraph()
     p_sec_a.add_run("A. Rubrik Penilaian Kinerja / Kompetensi").font.bold = True
     p_sec_a.runs[0].font.color.rgb = RGBColor(90, 56, 37)
@@ -452,13 +450,11 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
   def add_scoring_tables(doc):
-    """Fungsi khusus untuk merender Bagian B (Pedoman Penskoran & Predikat) ke dalam bentuk Tabel Terstruktur."""
     p_sec_b = doc.add_paragraph()
     p_sec_b.paragraph_format.space_before = Pt(8)
     p_sec_b.add_run("B. Pedoman Penskoran & Perhitungan Nilai").font.bold = True
     p_sec_b.runs[0].font.color.rgb = RGBColor(90, 56, 37)
 
-    # Tabel 1: Rumus Perhitungan
     p_sub1 = doc.add_paragraph()
     p_sub1.add_run("1. Rumus Perhitungan Nilai Akhir").font.bold = True
     p_sub1.runs[0].font.size = Pt(10)
@@ -498,7 +494,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
 
     doc.add_paragraph().paragraph_format.space_after = Pt(4)
 
-    # Tabel 2: Konversi Predikat
     p_sub2 = doc.add_paragraph()
     p_sub2.add_run("2. Konversi Predikat Nilai").font.bold = True
     p_sub2.runs[0].font.size = Pt(10)
@@ -546,7 +541,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
   def add_formative_matrix_table(doc):
-    """Fungsi khusus untuk merender Matriks Lembar Observasi Formatif berbentuk Tabel Praktis Guru."""
     p_sub = doc.add_paragraph()
     r_sub = p_sub.add_run("Tabel Matriks Penilaian Formatif (Praktis untuk Guru)")
     r_sub.font.bold = True
@@ -630,6 +624,7 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     run_title.font.bold = True
     run_title.font.color.rgb = RGBColor(74, 46, 33)
 
+    # 1. IDENTIFIKASI DAN INFORMASI UMUM
     tabel_identifikasi = [
         ("Penulis Modul", nama_penulis),
         ("Satuan Pendidikan", nama_sekolah),
@@ -642,7 +637,7 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     ]
     add_section_table_custom(doc, "IDENTIFIKASI DAN INFORMASI UMUM", tabel_identifikasi)
     
-    # Render Dimensi Profil Lulusan yang relevan saja (support string, list, atau dict)
+    # 2. DIMENSI PROFIL LULUSAN
     dimensi_data = data_ai.get("dimensi_profil_lulusan", "Penalaran Kritis & Kolaborasi")
     if isinstance(dimensi_data, list):
       dimensi_str = "\n".join([f"☑ {d}" for d in dimensi_data])
@@ -652,30 +647,51 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
       dimensi_str = str(dimensi_data)
     add_section_table_custom(doc, "DIMENSI PROFIL LULUSAN", [("Dimensi Profil Lulusan", dimensi_str)])
 
+    # 3. TUJUAN PEMBELAJARAN, PEMAHAMAN BERMAKNA, PERTANYAAN PEMANTIK
     add_section_table_custom(doc, "TUJUAN PEMBELAJARAN", [("Tujuan Pembelajaran", data_ai.get("tujuan_pembelajaran", "Peserta didik menguasai kompetensi materi."))])
-    add_section_table_custom(doc, "PEMAHAMAN BERMAKNA & PERTANYAAN PEMANTIK", [("Pemahaman Bermakna", data_ai.get("pemahaman_bermakna", "-")), ("Pertanyaan Pemantik", data_ai.get("pertanyaan_pemantik", "-"))])
+    add_section_table_custom(doc, "PEMAHAMAN BERMAKNA & PERTANYAAN PEMANTIK", [
+        ("Pemahaman Bermakna", data_ai.get("pemahaman_bermakna", "-")), 
+        ("Pertanyaan Pemantik", data_ai.get("pertanyaan_pemantik", "-"))
+    ])
     
+    # 4. KERANGKA PEMBELAJARAN (Sistematika Baru Lengkap)
+    kerangka = data_ai.get("kerangka_pembelajaran", {})
+    praktik = kerangka.get("praktik_pedagogis", {}) if isinstance(kerangka, dict) else {}
+    kemitraan = kerangka.get("kemitraan_pembelajaran", {}) if isinstance(kerangka, dict) else {}
+    lingkungan = kerangka.get("lingkungan_belajar", {}) if isinstance(kerangka, dict) else {}
+    digital = kerangka.get("pemanfaatan_digital", {}) if isinstance(kerangka, dict) else {}
+
     tabel_kerangka = [
-        ("Praktik Pedagogis", data_ai.get("praktik_pedagogis", "Model: Problem Based Learning")),
-        ("Kemitraan Pembelajaran", data_ai.get("kemitraan_pembelajaran", "Kolaborasi internal sekolah")),
-        ("Lingkungan Belajar", data_ai.get("lingkungan_belajar", "Ruang kelas kolaboratif")),
-        ("Pemanfaatan Digital", data_ai.get("pemanfaatan_digital", "AI & Cloud Storage")),
+        ("Praktik Pedagogis - Model Pembelajaran", praktik.get("model_pembelajaran", "Problem Based Learning")),
+        ("Praktik Pedagogis - Metode Pembelajaran", praktik.get("metode_pembelajaran", "Diskusi, Tanya Jawab, Penugasan")),
+        ("Kemitraan Pembelajaran - Lingkungan Sekolah", kemitraan.get("lingkungan_sekolah", "Kolaborasi internal antar guru dan siswa")),
+        ("Kemitraan Pembelajaran - Lingkungan Luar Sekolah", kemitraan.get("lingkungan_luar_sekolah", "Pelibatan narasumber / praktisi dunia kerja")),
+        ("Lingkungan Belajar - Ruang Fisik", lingkungan.get("ruang_fisik", "Ruang kelas kolaboratif / laboratorium")),
+        ("Lingkungan Belajar - Ruang Virtual", lingkungan.get("ruang_virtual", "Google Classroom / Cloud Storage")),
+        ("Lingkungan Belajar - Ruang / Budaya Belajar", lingkungan.get("ruang_budaya_belajar", "Kolaboratif, Berpikir Kritis dan Kreatif, Umpan Balik Konstruktif")),
+        ("Pemanfaatan Digital - Tahap Perencanaan", digital.get("tahap_perencanaan", "Penyusunan modul berbasis perangkat digital dan AI")),
+        ("Pemanfaatan Digital - Tahap Pelaksanaan", digital.get("tahap_pelaksanaan", "Media interaktif dan penelusuran referensi online")),
+        ("Pemanfaatan Digital - Tahap Asesmen", digital.get("tahap_asesmen", "Kuis digital dan lembar kerja elektronik")),
     ]
     add_section_table_custom(doc, "KERANGKA PEMBELAJARAN", tabel_kerangka)
 
+    # 5. PENGALAMAN BELAJAR (LANGKAH-LANGKAH)
+    pengalaman = data_ai.get("pengalaman_belajar", {})
     tabel_pengalaman = [
-        ("Kegiatan Pendahuluan", data_ai.get("kegiatan_pendahuluan", "Orientasi dan apersepsi")),
-        ("Kegiatan Inti (Memahami)", data_ai.get("kegiatan_memahami", "Eksplorasi konsep")),
-        ("Kegiatan Inti (Mengaplikasi)", data_ai.get("kegiatan_mengaplikasi", "Penerapan dalam LKM")),
-        ("Kegiatan Inti (Merefleksi)", data_ai.get("kegiatan_merefleksi", "Refleksi pemahaman")),
-        ("Kegiatan Penutup", data_ai.get("kegiatan_penutup", "Kesimpulan dan penutup joyful")),
+        ("Kegiatan Pendahuluan", pengalaman.get("kegiatan_pendahuluan", "Orientasi, apersepsi, dan motivasi berkesan")),
+        ("Kegiatan Inti (Memahami)", pengalaman.get("memahami", "Eksplorasi konsep dan materi dasar secara mendalam")),
+        ("Kegiatan Inti (Mengaplikasi)", pengalaman.get("mengaplikasi", "Penerapan konsep dalam lembar kerja dan studi kasus")),
+        ("Kegiatan Inti (Merefleksi)", pengalaman.get("merefleksi", "Evaluasi pemahaman bersama secara kritis")),
+        ("Kegiatan Penutup", pengalaman.get("kegiatan_penutup", "Refleksi bersama yang menyenangkan (joyful) dan bermakna")),
     ]
     add_section_table_custom(doc, "PENGALAMAN BELAJAR (LANGKAH-LANGKAH)", tabel_pengalaman)
 
+    # 6. ASESMEN PEMBELAJARAN
+    asesmen = data_ai.get("asesmen_pembelajaran", {})
     tabel_asesmen = [
-        ("Asesmen Awal", data_ai.get("asesmen_awal", "Diagnostik kesiapan")),
-        ("Asesmen Proses (Formatif)", data_ai.get("asesmen_formatif", "Observasi keaktifan")),
-        ("Asesmen Akhir (Sumatif)", data_ai.get("asesmen_sumatif", "Evaluasi akhir")),
+        ("Asesmen Awal", asesmen.get("asesmen_awal", "Cek kesiapan sebelum masuk topik")),
+        ("Asesmen Proses (Formatif)", asesmen.get("asesmen_formatif", "Pemantauan partisipasi dan pemahaman selama kegiatan")),
+        ("Asesmen Akhir (Sumatif)", asesmen.get("asesmen_sumatif", "Evaluasi hasil berbasis unjuk kerja atau refleksi kedalaman konsep")),
     ]
     add_section_table_custom(doc, "ASESMEN PEMBELAJARAN", tabel_asesmen)
 
@@ -699,7 +715,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     r_rub_t.font.bold = True
     r_rub_t.font.color.rgb = RGBColor(74, 46, 33)
 
-    # Identitas Seragam Tabel Rubrik
     tabel_identitas_rubrik = [
         ("Nama Guru / Pengamat", nama_penulis),
         ("Kelas / Fase", fase_kelas),
@@ -707,10 +722,7 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     ]
     add_identity_table(doc, tabel_identitas_rubrik)
 
-    # A. Rubrik Penilaian Kinerja (Dalam Bentuk Tabel)
     add_rubric_table(doc, data_ai.get("rubrik_penilaian", ""))
-
-    # B. Pedoman Penskoran & Perhitungan Nilai (Dalam Bentuk Tabel)
     add_scoring_tables(doc)
 
     # ==========================================
@@ -724,7 +736,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     r_inst_t.font.bold = True
     r_inst_t.font.color.rgb = RGBColor(74, 46, 33)
 
-    # Identitas Seragam Tabel Instrumen Formatif
     tabel_identitas_inst = [
         ("Nama Guru / Pengamat", nama_penulis),
         ("Kelas / Fase", fase_kelas),
@@ -756,7 +767,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     r_lkm_t.font.bold = True
     r_lkm_t.font.color.rgb = RGBColor(74, 46, 33)
 
-    # Identitas Seragam Tabel LKM
     tabel_identitas_lkm = [
         ("Nama Kelompok / Peserta Didik", "........................................................................"),
         ("Kelas / Fase", fase_kelas),
@@ -785,30 +795,47 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
 
   if st.button("🚀 Buat Modul Ajar GEMA"):
     if not api_key:
-      st.error("Mohon masukkan Google Gemini API Key.")
+      st.error("🔑 Mohon masukkan Google Gemini API Key.")
     elif not topik:
-      st.warning("Mohon isi topik pembelajaran.")
+      st.warning("⚠️ Mohon isi topik pembelajaran.")
     else:
-      with st.spinner("Sistem GEMA PASTI sedang menyusun Modul Ajar lengkap dengan Rubrik dan LKM..."):
+      with st.spinner("Sistem GEMA PASTI sedang menyusun Modul Ajar lengkap dengan sistematika baru..."):
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel("gemini-3.5-flash")
         
         prompt = f"""
-        Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Pembelajaran Mendalam (Deep Learning) yang SANGAT LENGKAP, terperinci, dan mendalam untuk:
-        - Jenjang: {jenjang_pendidikan} ({fase_kelas})
+        Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Pembelajaran Mendalam (Deep Learning) yang SANGAT LENGKAP dan terperinci untuk:
+        - Jenjang & Fase: {jenjang_pendidikan} ({fase_kelas})
         - Mata Pelajaran: {mata_pelajaran}
         - Topik: {topik}
         - Alokasi Waktu: {alokasi_waktu}
         - Pertemuan Ke-: {pertemuan_ke}
 
-        KETENTUAN KHUSUS:
-        1. "dimensi_profil_lulusan": Pilih HANYA 2 sampai 3 dimensi profil lulusan yang PALING RELEVAN dengan materi/topik di atas (misalnya Penalaran Kritis, Kolaborasi, Kreativitas, Komunikasi, dll.), dan berikan penjelasan uraian spesifiknya sesuai materi.
-        2. "rubrik_penilaian": Berikan objek JSON lengkap berisi minimal 2 kriteria penilaian utama yang sesuai dengan kegiatan pembelajaran, di mana setiap kriteria mencakup level: "nama_kriteria", "perlu_bimbingan", "cukup", "baik", "sangat_baik".
-        3. "instrumen_formatif": Berikan rincian lembar observasi kelas (judul_instrumen, tujuan_asesmen, aspek_yang_diamati, pedoman_pengamatan).
-        4. "lkm_content": Berikan detail Lembar Kerja Murid (judul_lkm, tujuan_lkm, petunjuk_kerja, tugas_analisis).
+        SESUAIKAN DENGAN SISTEMATIKA BERIKUT DALAM FORMAT JSON:
+        1. "dimensi_profil_lulusan": Pilih 2 sampai 4 dimensi profil lulusan yang paling relevan (pilih dari: Keimanan dan Ketaqwaan, Kewargaan, Penalaran Kritis, Kreativitas, Kolaborasi, Kemandirian, Kesehatan, Komunikasi).
+        2. "tujuan_pembelajaran": Uraian tujuan pembelajaran yang spesifik.
+        3. "pemahaman_bermakna": Pemahaman bermakna yang diperoleh siswa.
+        4. "pertanyaan_pemantik": Pertanyaan pemantik yang relevan.
+        5. "kerangka_pembelajaran": Berupa objek berisi:
+           - "praktik_pedagogis": objek dengan "model_pembelajaran" (Pilih salah satu: Problem Based Learning / Discovery Learning / Inquiri / Project Based Learning) dan "metode_pembelajaran" (minimal 2-3 metode yang sesuai).
+           - "kemitraan_pembelajaran": objek dengan "lingkungan_sekolah" dan "lingkungan_luar_sekolah".
+           - "lingkungan_belajar": objek dengan "ruang_fisik", "ruang_virtual", dan "ruang_budaya_belajar".
+           - "pemanfaatan_digital": objek dengan "tahap_perencanaan", "tahap_pelaksanaan", dan "tahap_asesmen".
+        6. "pengalaman_belajar": Berupa objek dengan:
+           - "kegiatan_pendahuluan"
+           - "memahami"
+           - "mengaplikasi"
+           - "merefleksi"
+           - "kegiatan_penutup" (refleksi bersama yang menyenangkan/joyful dan bermakna).
+        7. "asesmen_pembelajaran": Berupa objek dengan:
+           - "asesmen_awal" (cek kesiapan)
+           - "asesmen_formatif" (pemantauan proses)
+           - "asesmen_sumatif" (evaluasi hasil akhir).
+        8. "rubrik_penilaian": Objek JSON berisi minimal 2 kriteria penilaian utama dengan atribut level: "nama_kriteria", "perlu_bimbingan", "cukup", "baik", "sangat_baik".
+        9. "instrumen_formatif": Rincian lembar observasi kelas (judul_instrumen, tujuan_asesmen, aspek_yang_diamati, pedoman_pengamatan).
+        10. "lkm_content": Detail Lembar Kerja Murid (judul_lkm, tujuan_lkm, petunjuk_kerja, tugas_analisis).
 
-        Berikan output HANYA dalam format JSON valid tanpa teks lain di luar JSON dengan kunci:
-        dimensi_profil_lulusan, tujuan_pembelajaran, pemahaman_bermakna, pertanyaan_pemantik, praktik_pedagogis, kemitraan_pembelajaran, lingkungan_belajar, pemanfaatan_digital, kegiatan_pendahuluan, kegiatan_memahami, kegiatan_mengaplikasi, kegiatan_merefleksi, kegiatan_penutup, asesmen_awal, asesmen_formatif, asesmen_sumatif, rubrik_penilaian, pedoman_penskoran, instrumen_formatif, lkm_content.
+        Berikan output HANYA dalam format JSON valid tanpa teks lain di luar JSON dengan kunci-kunci di atas.
         """
         
         response = model.generate_content(prompt)
@@ -818,7 +845,7 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
         except:
           data_ai = {}
 
-        st.success("🎉 Modul Ajar GEMA Berhasil Disusun Lengkap dengan Rubrik Penilaian dan LKM!")
+        st.success("🎉 Modul Ajar GEMA Berhasil Disusun Sesuai Sistematika Baru!")
         docx_file = generate_docx(
             data_ai, nama_sekolah, semester, tahun_pelajaran, mata_pelajaran,
             fase_kelas, topik, alokasi_waktu, pertemuan_ke, nama_penulis,
