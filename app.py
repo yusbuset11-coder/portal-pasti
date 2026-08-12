@@ -19,7 +19,7 @@ st.set_page_config(
 )
 
 # ID Google Spreadsheet Database_PASTI_Pusat
-SHEET_ID = "1terQDxNZX1aESF0G02uSn9R7eKLKDgbkit11GpX1pA"
+SHEET_ID = "1terQDxNZX1aESF0GO02uSn9R7eKLKDGbkiT11GpX1pA"
 
 
 @st.cache_data(ttl=10)
