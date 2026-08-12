@@ -8,7 +8,7 @@ from docx.oxml.ns import nsdecls
 from docx.shared import Inches, Pt, RGBColor
 import google.generativeai as genai
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
 import pandas as pd
 import streamlit as st
 
@@ -22,58 +22,48 @@ st.set_page_config(
 SHEET_ID = "1terQDxNZX1aESF0GO02uSn9R7eKLKDGbkiT11GpX1pA"
 
 
-@st.cache_data(ttl=10)
-def load_sheet_data(sheet_name):
-  """Fungsi untuk membaca data dari Google Sheets menggunakan gspread (Service Account)."""
-  client = get_gspread_client()
-  if client:
-    try:
-      sh = client.open_by_key(SHEET_ID)
-      worksheet = sh.worksheet(sheet_name)
-      data = worksheet.get_all_records()
-      return pd.DataFrame(data)
-    except Exception as e:
-      return pd.DataFrame()
-  else:
-    try:
-      url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={sheet_name}"
-      df = pd.read_csv(url)
-      return df
-    except Exception as e:
-      return pd.DataFrame()
+import gspread # Pastikan baris import ini ada di paling atas
+import pandas as pd
+import streamlit as st
+from google.oauth2.service_account import Credentials
 
+# --- TEMPEL KODE FUNGSI GSPREAD DI SINI ---
+scope = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive",
+]
 
 def get_gspread_client():
-  """Inisialisasi koneksi gspread untuk menulis/mengedit data ke Google Sheets."""
-  try:
-    scope = [
-        "https://spreadsheets.google.com/feeds",
-        "https://www.googleapis.com/auth/drive",
-    ]
     creds_dict = dict(st.secrets["gcp_service_account"])
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
     client = gspread.authorize(creds)
     return client
-  except Exception as e:
-    return None
 
+def load_sheet_data(sheet_name):
+    try:
+        client = get_gspread_client()
+        spreadsheet = client.open("Database_PASTI_Pusat")
+        worksheet = spreadsheet.worksheet(sheet_name)
+        data = worksheet.get_all_records()
+        df = pd.DataFrame(data)
+        return df
+    except Exception as e:
+        st.error(f"Gagal memuat data dari Google Sheets: {e}")
+        return pd.DataFrame()
 
 def save_sheet_data(sheet_name, df):
-  """Menyimpan perubahan DataFrame kembali ke Google Sheets."""
-  client = get_gspread_client()
-  if client:
     try:
-      sh = client.open_by_key(SHEET_ID)
-      worksheet = sh.worksheet(sheet_name)
-      worksheet.clear()
-      data_to_write = [df.columns.tolist()] + df.fillna("").values.tolist()
-      worksheet.update(data_to_write)
-      return True
+        client = get_gspread_client()
+        spreadsheet = client.open("Database_PASTI_Pusat")
+        worksheet = spreadsheet.worksheet(sheet_name)
+        df = df.fillna("") # Membersihkan data kosong
+        worksheet.clear()
+        data_to_update = [df.columns.values.tolist()] + df.values.tolist()
+        worksheet.update(data_to_update)
+        return True
     except Exception as e:
-      return False
-  else:
-    return False
-
+        st.error(f"Detail Error saat Menyimpan: {e}")
+        return False
 
 def check_auth():
   """Sistem autentikasi menggunakan Email dan Token dari Google Sheet 'Tokens'."""
