@@ -96,7 +96,6 @@ def check_auth():
                     df_tokens = pd.read_csv(url_tokens)
                     
                     df_tokens = df_tokens.dropna(subset=['Email'])
-                    
                     df_tokens['Email'] = df_tokens['Email'].astype(str).str.strip().str.lower()
                     df_tokens['Token'] = df_tokens['Token'].astype(str).str.strip()
                     
@@ -244,12 +243,12 @@ with st.sidebar:
         st.header("✍️ Identitas Pengesahan Dokumen")
         nama_kota = st.text_input("Nama Kota", "Bangkalan")
         tanggal_pembuatan = st.text_input(
-            "Tanggal / Bulan / Tahun", "11 Agustus 2026"
+            "Tanggal / Bulan / Tahun", "12 Agustus 2026"
         )
         nama_penulis = st.text_input(
             "Nama Penulis Modul", st.session_state['user_nama']
         )
-        nip_penulis = st.text_input("NIP Penulis", "196908302005011003")
+        nip_penulis = st.text_input("NIP Penulis", "")
     else:
         st.header("⚙️ Pengaturan SIPENSIS")
         tanggal_presensi = st.date_input("Tanggal Presensi", datetime.today())
@@ -611,7 +610,7 @@ def generate_docx(
     p_inst_desc.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     p_inst_desc.paragraph_format.space_before = Pt(4)
     p_inst_desc.paragraph_format.space_after = Pt(6)
-    r_id_text = p_inst_desc.add_run(str(instrumen_data))
+    r_id_text = p_inst_desc.add_run(str(instrumen_data).replace("LKPD", "LKM").replace("Lembar Kegiatan Murid", "Lembar Kerja Murid"))
     r_id_text.font.size = Pt(10)
 
     # BAGIAN 4: LEMBAR KERJA MURID (LKM)
@@ -675,47 +674,55 @@ if pilih_modul.startswith("📚"):
         elif not topik:
             st.warning("Mohon isi topik pembelajaran.")
         else:
-            with st.spinner("Yusbuset sedang menyusun Modul Ajar Pembelajaran Mendalam lengkap dengan Instrumen Asesmen dan LKM ..."):
+            with st.spinner("Yusbuset sedang menyusun Modul Ajar Pembelajaran Mendalam lengkap secara mendalam, detail, dan komprehensif ..."):
                 genai.configure(api_key=api_key)
                 model = genai.GenerativeModel("gemini-3.5-flash")
 
                 prompt = f"""
-                Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Berbasis Pembelajaran Mendalam (Deep Learning) yang **SANGAT LENGKAP, DETAIL, DAN KOMPREHENSIF** untuk:
+                Bertindaklah sebagai pakar kurikulum dan instruktur profesional Kurikulum Merdeka berbasis Pembelajaran Mendalam (Deep Learning). 
+                Buatkan konten Modul Ajar yang **SANGAT LENGKAP, DETAIL, BERBOBOT, DAN KOMPREHENSIF** untuk:
                 - Jenjang: {jenjang_pendidikan} ({fase_kelas})
                 - Mata Pelajaran: {mata_pelajaran}
                 - Topik / Materi Pokok: {topik}
                 - Alokasi Waktu: {alokasi_waktu}
                 - Pertemuan Ke-: {pertemuan_ke}
 
-                Berikan output HANYA dalam format JSON valid yang memuat kunci-kunci berikut:
+                Berikan output HANYA dalam format JSON valid tanpa teks pengantar di luar JSON, dengan struktur kunci berikut:
                 {{
-                  "dimensi_profil_lulusan": "Hanya tuliskan dimensi profil lulusan yang dipilih saja (gunakan tanda ☑) beserta uraian penerapannya.",
-                  "tujuan_pembelajaran": "Uraian tujuan pembelajaran yang spesifik, operasional, dan terukur sesuai materi.",
-                  "pemahaman_bermakna": "Uraian pemahaman bermakna yang mendalam terkait materi.",
-                  "pertanyaan_pemantik": "2 pertanyaan pemantik yang kontekstual dan menantang daya nalar kritis siswa.",
-                  "praktik_pedagogis": "Model Pembelajaran: [Isi model]\\nMetode Pembelajaran Pendukung: [Isi metode dengan penomoran]",
-                  "kemitraan_pembelajaran": "Kemitraan Lingkungan Sekolah: [Isi]\\nKemitraan Lingkungan Luar Sekolah: [Isi]",
-                  "lingkungan_belajar": "Ruang Fisik: [Isi]\\nRuang Virtual: [Isi]\\nBudaya Belajar: [Isi]",
-                  "pemanfaatan_digital": "Tahap Perencanaan: [Isi]\\nTahap Pelaksanaan: [Isi]\\nTahap Asesmen: [Isi]",
-                  "kegiatan_pendahuluan": "Langkah rinci kegiatan pendahuluan.",
-                  "kegiatan_memahami": "Langkah rinci kegiatan inti pada tahap Memahami.",
-                  "kegiatan_mengaplikasi": "Langkah rinci kegiatan inti pada tahap Mengaplikasi menggunakan LKM.",
-                  "kegiatan_merefleksi": "Langkah rinci kegiatan inti pada tahap Merefleksi.",
-                  "kegiatan_penutup": "Langkah rinci kegiatan penutup.",
-                  "asesmen_awal": "Uraian asesmen awal.",
-                  "asesmen_formatif": "Uraian asesmen proses/formatif.",
-                  "asesmen_sumatif": "Uraian asesmen akhir/sumatif.",
+                  "dimensi_profil_lulusan": "Tuliskan 3 dimensi profil lulusan relevan (misal Penalaran Kritis, Kolaborasi, Komunikasi) dengan menggunakan tanda ☑ di awal, diikuti uraian operasional dan kontekstual yang sangat mendalam terkait materi.",
+                  "tujuan_pembelajaran": "Uraian tujuan pembelajaran yang sangat spesifik, operasional, terukur, dan mengintegrasikan model pembelajaran mendalam sesuai materi.",
+                  "pemahaman_bermakna": "Uraian pemahaman bermakna yang mendalam, filosofis, dan esensial mengenai manfaat praktis pembelajaran bagi kehidupan nyata siswa.",
+                  "pertanyaan_pemantik": "2 pertanyaan pemantik yang kontekstual, kritis, menantang daya nalar tingkat tinggi (HOTS), dan menstimulasi rasa ingin tahu siswa.",
+                  "praktik_pedagogis": "Model Pembelajaran: [Sebutkan model, misal Problem-Based Learning]\\nMetode Pembelajaran Pendukung: [Uraikan 3 metode bernomor, misal studi kasus, diskusi sokratik, investigasi]",
+                  "kemitraan_pembelajaran": "Kemitraan Lingkungan Sekolah: [Uraikan kolaborasi guru/pustakawan/antar mapel]\\nKemitraan Lingkungan Luar Sekolah: [Uraikan pemanfaatan narasumber/instansi/komunitas]",
+                  "lingkungan_belajar": "Ruang Fisik: [Uraikan penataan ruang kelas/kelompok]\\nRuang Virtual: [Uraikan platform/LMS digital]\\nBudaya Belajar: [Uraikan kultur kelas yang dibangun]",
+                  "pemanfaatan_digital": "Tahap Perencanaan: [Uraikan alat digital perencanaan]\\nTahap Pelaksanaan: [Uraikan penggunaan QR Code/media interaktif]\\nTahap Asesmen: [Uraikan kuis/asesmen berbasis digital]",
+                  "kegiatan_pendahuluan": "1. Orientasi (5 Menit): [Uraikan]\\n2. Apersepsi (5 Menit): [Uraikan]\\n3. Asesmen Awal (5 Menit): [Uraikan]",
+                  "kegiatan_memahami": "Uraian rinci langkah kegiatan inti pada tahap Memahami secara komprehensif dan runtut.",
+                  "kegiatan_mengaplikasi": "Uraian rinci langkah kegiatan inti pada tahap Mengaplikasi menggunakan Lembar Kerja Murid (LKM).",
+                  "kegiatan_merefleksi": "Uraian rinci langkah kegiatan inti pada tahap Merefleksi dan presentasi kelompok.",
+                  "kegiatan_penutup": "Uraian rinci langkah kegiatan penutup (refleksi akhir, apresiasi, doa).",
+                  "asesmen_awal": "Uraian lengkap asesmen awal (diagnostik kognitif/non-kognitif dan pemetaan kesiapan belajar).",
+                  "asesmen_formatif": "Uraian lengkap asesmen proses/formatif selama kegiatan kelompok dan observasi keaktifan.",
+                  "asesmen_sumatif": "Uraian lengkap asesmen akhir/sumatif berbasis penilaian produk kinerja LKM.",
                   "rubrik_penilaian": {{
                     "kriteria_1": {{
-                      "nama_kriteria": "Nama kriteria pertama",
-                      "perlu_bimbingan": "Deskripsi...",
-                      "cukup": "Deskripsi...",
-                      "baik": "Deskripsi...",
-                      "sangat_baik": "Deskripsi..."
+                      "nama_kriteria": "Nama kriteria kompetensi pertama yang spesifik",
+                      "perlu_bimbingan": "Deskripsi level perlu bimbingan...",
+                      "cukup": "Deskripsi level cukup...",
+                      "baik": "Deskripsi level baik...",
+                      "sangat_baik": "Deskripsi level sangat baik..."
+                    }},
+                    "kriteria_2": {{
+                      "nama_kriteria": "Nama kriteria kompetensi kedua yang spesifik",
+                      "perlu_bimbingan": "Deskripsi level perlu bimbingan...",
+                      "cukup": "Deskripsi level cukup...",
+                      "baik": "Deskripsi level baik...",
+                      "sangat_baik": "Deskripsi level sangat baik..."
                     }}
                   }},
-                  "instrumen_asesmen_formatif": "Uraian rinci instrumen asesmen proses (formatif) berupa panduan observasi, lembar ceklis keterlibatan, atau catatan kemajuan belajar peserta didik.",
-                  "lembar_kerja_murid": "Uraian lengkap Lembar Kerja Murid (LKM) yang mencakup petunjuk pengerjaan, instruksi tugas/investigasi kelompok, dan ruang kerja peserta didik."
+                  "instrumen_asesmen_formatif": "Uraian rinci instrumen asesmen proses (formatif) meliputi:\\n- Judul Instrumen: Lembar Observasi Sikap & Kinerja Proses Kolaborasi\\n- Tujuan Asesmen: Mendokumentasikan perkembangan keterampilan berpikir kritis, kolaborasi tim, dan perilaku komunikasi santun murid.\\n- Aspek Yang Diamati: 4 aspek terperinci.\\n- Pedoman Pengamatan: Skala skor 1 sampai 4 beserta deskripsinya.",
+                  "lembar_kerja_murid": "Uraian lengkap Lembar Kerja Murid (LKM) yang memuat:\\n- Judul LKM: LKM (Lembar Kerja Murid): [...]\\n- Tujuan Pembelajaran LKM: [...]\\n- Petunjuk Kerja: Alat, bahan, dan langkah investigasi terperinci.\\n- Tugas Analisis: Tantangan 1, Tantangan 2, Tantangan 3, dan Tantangan 4 yang menantang dan mendalam."
                 }}
                 """
 
