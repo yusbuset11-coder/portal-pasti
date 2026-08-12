@@ -359,43 +359,65 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
 
     praktik = kerangka_data.get("praktik_pedagogis", {})
     if not isinstance(praktik, dict):
-      praktik = {"model_pembelajaran": str(praktik), "metode_pembelajaran": "-"}
+      praktik = {}
+    model_pem = praktik.get("model_pembelajaran", "")
+    if not model_pem or model_pem == "-":
+      model_pem = "Problem Based Learning / Inquiry Learning Berbasis Kolaborasi"
+    metode_pem = praktik.get("metode_pembelajaran", "")
+    if not metode_pem or metode_pem == "-":
+      metode_pem = "Diskusi kelompok, investigasi data, tanya jawab kritis, dan presentasi interaktif"
 
     kemitraan = kerangka_data.get("kemitraan_pembelajaran", {})
     if not isinstance(kemitraan, dict):
-      kemitraan = {"lingkungan_sekolah": str(kemitraan), "lingkungan_luar_sekolah": "-"}
+      kemitraan = {}
+    ling_sekolah = kemitraan.get("lingkungan_sekolah", "")
+    if not ling_sekolah or ling_sekolah == "-":
+      ling_sekolah = "Kolaborasi sejawat dalam kelompok belajar heterogen dan bimbingan guru di lingkungan sekolah"
+    ling_luar = kemitraan.get("lingkungan_luar_sekolah", "")
+    if not ling_luar or ling_luar == "-":
+      ling_luar = "Pelibatan narasumber praktisi atau pengamatan langsung di lingkungan masyarakat/dunia kerja"
 
     lingkungan = kerangka_data.get("lingkungan_belajar", {})
     if not isinstance(lingkungan, dict):
-      lingkungan = {
-          "ruang_fisik": str(lingkungan),
-          "ruang_virtual": "-",
-          "ruang_budaya_belajar": "-",
-      }
+      lingkungan = {}
+    ruang_fisik = lingkungan.get("ruang_fisik", "")
+    if not ruang_fisik or ruang_fisik == "-":
+      ruang_fisik = "Ruang kelas kolaboratif dengan penataan meja kelompok yang fleksibel dan kondusif"
+    ruang_virtual = lingkungan.get("ruang_virtual", "")
+    if not ruang_virtual or ruang_virtual == "-":
+      ruang_virtual = "Google Classroom, grup diskusi WhatsApp, dan platform penyimpanan awan bersama"
+    budaya = lingkungan.get("ruang_budaya_belajar", "")
+    if not budaya or budaya == "-":
+      budaya = "Budaya berpikir kritis, saling menghargai pendapat, serta keterbukaan dalam menerima umpan balik"
 
     digital = kerangka_data.get("pemanfaatan_digital", {})
     if not isinstance(digital, dict):
-      digital = {
-          "tahap_perencanaan": str(digital),
-          "tahap_pelaksanaan": "-",
-          "tahap_asesmen": "-",
-      }
+      digital = {}
+    t_perencanaan = digital.get("tahap_perencanaan", "")
+    if not t_perencanaan or t_perencanaan == "-":
+      t_perencanaan = "Penyusunan modul berbasis perangkat digital, eksplorasi referensi, dan perancangan lembar kerja elektronik"
+    t_pelaksanaan = digital.get("tahap_pelaksanaan", "")
+    if not t_pelaksanaan or t_pelaksanaan == "-":
+      t_pelaksanaan = "Penggunaan media proyektor, penelusuran sumber belajar online, dan asesmen interaktif selama pembelajaran"
+    t_asesmen = digital.get("tahap_asesmen", "")
+    if not t_asesmen or t_asesmen == "-":
+      t_asesmen = "Penggunaan kuis digital (Quizizz/Google Forms), rekapitulasi penilaian online, dan lembar observasi elektronik"
 
     rows_structure = [
         ("section", "Praktik Pedagogis"),
-        ("row", ("Model Pembelajaran", praktik.get("model_pembelajaran", "Problem Based Learning"))),
-        ("row", ("Metode Pembelajaran", praktik.get("metode_pembelajaran", "Diskusi, Tanya Jawab, Penugasan"))),
+        ("row", ("Model Pembelajaran", model_pem)),
+        ("row", ("Metode Pembelajaran", metode_pem)),
         ("section", "Kemitraan Pembelajaran"),
-        ("row", ("Lingkungan Sekolah", kemitraan.get("lingkungan_sekolah", "Kolaborasi internal antar guru dan siswa"))),
-        ("row", ("Lingkungan Luar Sekolah", kemitraan.get("lingkungan_luar_sekolah", "Pelibatan narasumber / praktisi dunia kerja"))),
+        ("row", ("Lingkungan Sekolah", ling_sekolah)),
+        ("row", ("Lingkungan Luar Sekolah", ling_luar)),
         ("section", "Lingkungan Belajar"),
-        ("row", ("Ruang Fisik", lingkungan.get("ruang_fisik", "Ruang kelas kolaboratif / laboratorium"))),
-        ("row", ("Ruang Virtual", lingkungan.get("ruang_virtual", "Google Classroom / Cloud Storage"))),
-        ("row", ("Ruang / Budaya Belajar", lingkungan.get("ruang_budaya_belajar", "Kolaboratif, Berpikir Kritis dan Kreatif, Umpan Balik Konstruktif"))),
+        ("row", ("Ruang Fisik", ruang_fisik)),
+        ("row", ("Ruang Virtual", ruang_virtual)),
+        ("row", ("Ruang / Budaya Belajar", budaya)),
         ("section", "Pemanfaatan Digital"),
-        ("row", ("Tahap Perencanaan", digital.get("tahap_perencanaan", "Penyusunan modul berbasis perangkat digital dan AI"))),
-        ("row", ("Tahap Pelaksanaan", digital.get("tahap_pelaksanaan", "Media interaktif dan penelusuran referensi online"))),
-        ("row", ("Tahap Asesmen", digital.get("tahap_asesmen", "Kuis digital dan lembar kerja elektronik"))),
+        ("row", ("Tahap Perencanaan", t_perencanaan)),
+        ("row", ("Tahap Pelaksanaan", t_pelaksanaan)),
+        ("row", ("Tahap Asesmen", t_asesmen)),
     ]
 
     table = doc.add_table(rows=len(rows_structure) + 1, cols=2)
@@ -496,7 +518,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
   def add_rubric_table(doc, rubrik_data):
-    """Menyusun rubrik penilaian yang sangat rapi menyerupai contoh format[cite: 6]."""
     p_sec_a = doc.add_paragraph()
     r_sec_a = p_sec_a.add_run("A. Rubrik Penilaian Kinerja / Kompetensi")
     r_sec_a.font.bold = True
@@ -506,7 +527,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     headers = ["Kriteria Penilaian", "Perlu Bimbingan", "Cukup", "Baik", "Sangat Baik"]
     rows_content = []
 
-    # Memproses rubrik dari AI jika formatnya adalah list berisi objek JSON
     if isinstance(rubrik_data, list) and len(rubrik_data) > 0 and isinstance(rubrik_data[0], dict):
       for item in rubrik_data:
         rows_content.append((
@@ -527,20 +547,19 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
               str(v.get("sangat_baik", "-"))
           ))
     else:
-      # Data fallback (Bawaan) sesuai dengan format dokumen yang rapi[cite: 6]
       rows_content.append((
-          "Kemampuan Menganalisis Struktur Teks LHO Kritis",
-          "Belum mampu mengidentifikasi bagian-bagian struktur teks LHO secara tepat; penempatan bagian teks masih acak dan tidak disertai penjelasan.",
-          "Mampu mengidentifikasi struktur teks LHO (pernyataan umum, deskripsi bagian, deskripsi manfaat) namun masih terdapat 1-2 kesalahan penempatan teks tanpa alasan pendukung yang kuat.",
-          "Mampu mengidentifikasi seluruh struktur teks LHO dengan tepat dan mampu menjelaskan fungsi masing-masing bagian struktur tersebut dengan logis.",
-          "Mampu mengidentifikasi seluruh struktur teks LHO secara sempurna serta mampu menganalisis keterkaitan logis antarpagraf dalam membangun keutuhan teks secara kritis."
+          "Kemampuan Menganalisis Struktur Teks Kritis",
+          "Belum mampu mengidentifikasi bagian-bagian struktur teks secara tepat; penempatan bagian teks masih acak dan tidak disertai penjelasan.",
+          "Mampu mengidentifikasi struktur teks utama namun masih terdapat 1-2 kesalahan penempatan teks tanpa alasan pendukung yang kuat.",
+          "Mampu mengidentifikasi seluruh struktur teks dengan tepat dan mampu menjelaskan fungsi masing-masing bagian struktur tersebut secara logis.",
+          "Mampu mengidentifikasi seluruh struktur teks secara sempurna serta mampu menganalisis keterkaitan logis antarkomponen secara kritis."
       ))
       rows_content.append((
           "Kemampuan Membedakan Fakta-Opini dan Mendeteksi Bias",
-          "Belum mampu membedakan kalimat fakta dan opini; gagal mendeteksi adanya kalimat bias di dalam teks laporan hasil observasi.",
-          "Mampu membedakan kalimat fakta dan opini sebagian besar teks, namun belum mampu menunjukkan letak bias informasi atau bahasa subjektif yang digunakan penulis.",
-          "Mampu membedakan fakta dan opini secara akurat serta mampu menunjukkan letak bias informasi disertai dengan argumentasi dasar yang rasional.",
-          "Sangat tajam dalam membedakan fakta-opini, mampu mengidentifikasi bias implisit terkecil sekalipun di dalam teks, serta mampu mengusulkan revisi kalimat agar teks menjadi sepenuhnya objektif."
+          "Belum mampu membedakan kalimat fakta dan opini; gagal mendeteksi adanya kalimat bias di dalam teks.",
+          "Mampu membedakan fakta dan opini sebagian besar teks, namun belum mampu menunjukkan letak bias informasi atau bahasa subjektif.",
+          "Mampu membedakan fakta dan opini secara akurat serta mampu menunjukkan letak bias informasi disertai argumentasi rasional.",
+          "Sangat tajam dalam membedakan fakta-opini, mampu mengidentifikasi bias implisit, serta mampu mengusulkan revisi agar teks menjadi objektif."
       ))
 
     table = doc.add_table(rows=len(rows_content) + 1, cols=5)
@@ -567,17 +586,12 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
       for col_idx, text_val in enumerate(row_data):
         row_cells[col_idx].text = text_val
         row_cells[col_idx].width = widths[col_idx]
-        
-        # Format Kolom Kriteria (Warna Pembeda)
         if col_idx == 0:
           set_cell_background(row_cells[col_idx], "F5EBE0")
-            
         for p in row_cells[col_idx].paragraphs:
           p.paragraph_format.space_before = Pt(4)
           p.paragraph_format.space_after = Pt(4)
-          # Kriteria di-align Kiri, sedangkan Deskripsi Rubrik di-align Justify agar terlihat rapi dan kotak
           p.alignment = WD_ALIGN_PARAGRAPH.LEFT if col_idx == 0 else WD_ALIGN_PARAGRAPH.JUSTIFY
-          
           for r in p.runs:
             r.font.size = Pt(9)
             if col_idx == 0:
@@ -918,31 +932,35 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     elif not topik:
       st.warning("⚠️ Mohon isi topik pembelajaran.")
     else:
-      with st.spinner("Sistem GEMA PASTI sedang menyusun Modul Ajar lengkap dengan rubrik penilaian baru..."):
+      with st.spinner("Sistem GEMA PASTI sedang menyusun Modul Ajar lengkap dengan kerangka pembelajaran yang terisi penuh..."):
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel("gemini-3.5-flash")
         
         prompt = f"""
-        Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Pembelajaran Mendalam (Deep Learning) yang SANGAT LENGKAP dan terperinci untuk:
+        Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Pembelajaran Mendalam (Deep Learning) yang SANGAT LENGKAP, detail, dan terperinci untuk:
         - Jenjang & Fase: {jenjang_pendidikan} ({fase_kelas})
         - Mata Pelajaran: {mata_pelajaran}
         - Topik: {topik}
         - Alokasi Waktu: {alokasi_waktu}
         - Pertemuan Ke-: {pertemuan_ke}
 
-        SESUAIKAN DENGAN SISTEMATIKA BERIKUT DALAM FORMAT JSON:
+        SESUAIKAN DENGAN SISTEMATIKA BERIKUT DALAM FORMAT JSON (SEMUA BAGIAN WAJIB TERISI LENGKAP, TIDAK BOLEH KOSONG ATAU TANDA STRIP):
         1. "dimensi_profil_lulusan": Pilih 2 sampai 4 dimensi profil lulusan yang paling relevan.
         2. "tujuan_pembelajaran": Uraian tujuan pembelajaran yang spesifik.
         3. "pemahaman_bermakna": Pemahaman bermakna yang diperoleh siswa.
         4. "pertanyaan_pemantik": Pertanyaan pemantik yang relevan.
-        5. "kerangka_pembelajaran": Berupa objek berisi "praktik_pedagogis", "kemitraan_pembelajaran", "lingkungan_belajar", dan "pemanfaatan_digital".
+        5. "kerangka_pembelajaran": Berupa objek JSON yang WAJIB memiliki sub-kunci berikut secara lengkap:
+           - "praktik_pedagogis": objek dengan sub-kunci "model_pembelajaran" dan "metode_pembelajaran".
+           - "kemitraan_pembelajaran": objek dengan sub-kunci "lingkungan_sekolah" dan "lingkungan_luar_sekolah".
+           - "lingkungan_belajar": objek dengan sub-kunci "ruang_fisik", "ruang_virtual", dan "ruang_budaya_belajar".
+           - "pemanfaatan_digital": objek dengan sub-kunci "tahap_perencanaan", "tahap_pelaksanaan", dan "tahap_asesmen".
         6. "pengalaman_belajar": Berupa objek dengan "kegiatan_pendahuluan", "memahami", "mengaplikasi", "merefleksi", dan "kegiatan_penutup".
         7. "asesmen_pembelajaran": Berupa objek dengan "asesmen_awal", "asesmen_formatif", dan "asesmen_sumatif".
-        8. "rubrik_penilaian": PENTING: Harus berupa *Array of Objects* (Daftar Objek JSON). Setiap objek WAJIB memuat: {{"kriteria": "...", "perlu_bimbingan": "...", "cukup": "...", "baik": "...", "sangat_baik": "..."}}. Buat minimal 2 objek kriteria penilaian.
+        8. "rubrik_penilaian": Berupa *Array of Objects* (Daftar Objek JSON). Setiap objek WAJIB memuat: {{"kriteria": "...", "perlu_bimbingan": "...", "cukup": "...", "baik": "...", "sangat_baik": "..."}}. Buat minimal 2 objek kriteria penilaian.
         9. "instrumen_formatif": Rincian lembar observasi kelas.
         10. "lkm_content": Detail Lembar Kerja Murid.
 
-        Berikan output HANYA dalam format JSON valid tanpa teks lain di luar JSON dengan kunci-kunci di atas.
+        Berikan output HANYA dalam format JSON valid tanpa teks lain di luar JSON.
         """
         
         response = model.generate_content(prompt)
@@ -952,7 +970,7 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
         except:
           data_ai = {}
 
-        st.success("🎉 Modul Ajar GEMA Berhasil Disusun Sesuai Sistematika Baru!")
+        st.success("🎉 Modul Ajar GEMA Berhasil Disusun dengan Seluruh Kolom Terisi Penuh!")
         docx_file = generate_docx(
             data_ai, nama_sekolah, semester, tahun_pelajaran, mata_pelajaran,
             fase_kelas, topik, alokasi_waktu, pertemuan_ke, nama_penulis,
