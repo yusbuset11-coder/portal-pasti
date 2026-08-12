@@ -490,6 +490,7 @@ def generate_docx(
     run_name.font.bold = True
     p_sign.add_run(f"\nNIP. {nip_penulis}")
 
+    # BAGIAN 2: RUBRIK PENILAIAN
     doc.add_page_break()
     p_rubrik_title = doc.add_paragraph()
     p_rubrik_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -569,6 +570,96 @@ def generate_docx(
                         r_l_desc.font.bold = False
                         r_l_desc.font.size = Pt(9.5)
 
+    # BAGIAN 3: INSTRUMEN ASESMEN PROSES (FORMATIF)
+    doc.add_page_break()
+    p_ins_title = doc.add_paragraph()
+    p_ins_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_ins_title.paragraph_format.space_before = Pt(0)
+    p_ins_title.paragraph_format.space_after = Pt(12)
+    r_ins_t = p_ins_title.add_run("INSTRUMEN ASESMEN PROSES (FORMATIF)")
+    r_ins_t.font.name = "Arial"
+    r_ins_t.font.size = Pt(15)
+    r_ins_t.font.bold = True
+    r_ins_t.font.color.rgb = RGBColor(74, 46, 33)
+
+    tabel_id_instrumen = doc.add_table(rows=3, cols=2)
+    tabel_id_instrumen.style = "Table Grid"
+    tabel_id_instrumen.alignment = WD_TABLE_ALIGNMENT.CENTER
+    tabel_id_instrumen.rows[0].cells[0].text = "Nama Guru / Pengamat:"
+    tabel_id_instrumen.rows[0].cells[1].text = f"{nama_penulis}"
+    tabel_id_instrumen.rows[1].cells[0].text = "Kelas / Fase:"
+    tabel_id_instrumen.rows[1].cells[1].text = f"{fase_kelas}"
+    tabel_id_instrumen.rows[2].cells[0].text = "Mata Pelajaran / Topik:"
+    tabel_id_instrumen.rows[2].cells[1].text = f"{mata_pelajaran} - {topik}"
+
+    for row in tabel_id_instrumen.rows:
+        row.cells[0].width = Inches(2.3)
+        row.cells[1].width = Inches(4.2)
+        set_cell_background(row.cells[0], "F5EBE0")
+        for cell in row.cells:
+            for p in cell.paragraphs:
+                p.paragraph_format.space_before = Pt(4)
+                p.paragraph_format.space_after = Pt(4)
+                for run in p.runs:
+                    run.font.size = Pt(10)
+                    run.font.bold = True
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(6)
+
+    instrumen_data = data_ai.get("instrumen_asesmen_formatif", "Lembar observasi keaktifan dan keterlibatan peserta didik selama proses pembelajaran.")
+    p_inst_desc = doc.add_paragraph()
+    p_inst_desc.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p_inst_desc.paragraph_format.space_before = Pt(4)
+    p_inst_desc.paragraph_format.space_after = Pt(6)
+    r_id_text = p_inst_desc.add_run(str(instrumen_data))
+    r_id_text.font.size = Pt(10)
+
+    # BAGIAN 4: LEMBAR KERJA MURID (LKM)
+    doc.add_page_break()
+    p_lkm_title = doc.add_paragraph()
+    p_lkm_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_lkm_title.paragraph_format.space_before = Pt(0)
+    p_lkm_title.paragraph_format.space_after = Pt(12)
+    r_lkm_t = p_lkm_title.add_run("LEMBAR KERJA MURID (LKM)")
+    r_lkm_t.font.name = "Arial"
+    r_lkm_t.font.size = Pt(15)
+    r_lkm_t.font.bold = True
+    r_lkm_t.font.color.rgb = RGBColor(74, 46, 33)
+
+    table_id_lkm = doc.add_table(rows=4, cols=2)
+    table_id_lkm.style = "Table Grid"
+    table_id_lkm.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table_id_lkm.rows[0].cells[0].text = "Nama Kelompok / Siswa:"
+    table_id_lkm.rows[0].cells[1].text = "..........................................................................."
+    table_id_lkm.rows[1].cells[0].text = "Kelas / Fase:"
+    table_id_lkm.rows[1].cells[1].text = f"{fase_kelas}"
+    table_id_lkm.rows[2].cells[0].text = "Mata Pelajaran:"
+    table_id_lkm.rows[2].cells[1].text = f"{mata_pelajaran}"
+    table_id_lkm.rows[3].cells[0].text = "Topik / Materi:"
+    table_id_lkm.rows[3].cells[1].text = f"{topik}"
+
+    for row in table_id_lkm.rows:
+        row.cells[0].width = Inches(2.3)
+        row.cells[1].width = Inches(4.2)
+        set_cell_background(row.cells[0], "F5EBE0")
+        for cell in row.cells:
+            for p in cell.paragraphs:
+                p.paragraph_format.space_before = Pt(4)
+                p.paragraph_format.space_after = Pt(4)
+                for run in p.runs:
+                    run.font.size = Pt(10)
+                    run.font.bold = True
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(6)
+
+    lkm_content = data_ai.get("lembar_kerja_murid", "Panduan kerja, tugas investigasi, dan rubrik pengerjaan tugas mandiri/kelompok.")
+    p_lkm_body = doc.add_paragraph()
+    p_lkm_body.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p_lkm_body.paragraph_format.space_before = Pt(4)
+    p_lkm_body.paragraph_format.space_after = Pt(6)
+    r_lkm_body = p_lkm_body.add_run(str(lkm_content).replace("LKPD", "LKM").replace("Lembar Kegiatan Murid", "Lembar Kerja Murid"))
+    r_lkm_body.font.size = Pt(10)
+
     bio = BytesIO()
     doc.save(bio)
     bio.seek(0)
@@ -584,7 +675,7 @@ if pilih_modul.startswith("📚"):
         elif not topik:
             st.warning("Mohon isi topik pembelajaran.")
         else:
-            with st.spinner("Yusbuset sedang menyusun Modul Ajar Pembelajaran Mendalam ..."):
+            with st.spinner("Yusbuset sedang menyusun Modul Ajar Pembelajaran Mendalam lengkap dengan Instrumen Asesmen dan LKM ..."):
                 genai.configure(api_key=api_key)
                 model = genai.GenerativeModel("gemini-3.5-flash")
 
@@ -622,7 +713,9 @@ if pilih_modul.startswith("📚"):
                       "baik": "Deskripsi...",
                       "sangat_baik": "Deskripsi..."
                     }}
-                  }}
+                  }},
+                  "instrumen_asesmen_formatif": "Uraian rinci instrumen asesmen proses (formatif) berupa panduan observasi, lembar ceklis keterlibatan, atau catatan kemajuan belajar peserta didik.",
+                  "lembar_kerja_murid": "Uraian lengkap Lembar Kerja Murid (LKM) yang mencakup petunjuk pengerjaan, instruksi tugas/investigasi kelompok, dan ruang kerja peserta didik."
                 }}
                 """
 
@@ -641,7 +734,7 @@ if pilih_modul.startswith("📚"):
                 except Exception:
                     data_ai = {}
 
-                st.success("🎉 Modul Ajar Berhasil Disusun!")
+                st.success("🎉 Modul Ajar Beserta Asesmen & LKM Berhasil Disusun!")
                 docx_file = generate_docx(
                     data_ai,
                     nama_sekolah,
@@ -659,7 +752,7 @@ if pilih_modul.startswith("📚"):
                 )
 
                 st.download_button(
-                    label="📥 Unduh Modul Ajar Pembelajaran Mendalam (.docx)",
+                    label="📥 Unduh Modul Ajar & Kelengkapan Pembelajaran (.docx)",
                     data=docx_file,
                     file_name=f"Modul_Ajar_{topik.replace(' ', '_')}.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -672,14 +765,12 @@ else:
     st.subheader(f"📋 Sistem Presensi Siswa - {st.session_state['user_sekolah']}")
 
     try:
-        # Ambil data siswa dari Google Sheets pusat (Tab 'Siswa') via URL gviz CSV
         sheet_id = "1terQDxNZX1aESF0GO02uSn9R7eKLKDGbkiT11GpX1pA"
         url_siswa = f"[https://docs.google.com/spreadsheets/d/](https://docs.google.com/spreadsheets/d/){sheet_id}/gviz/tq?tqx=out:csv&sheet=Siswa"
         df_siswa_pusat = pd.read_csv(url_siswa)
         
         df_siswa_pusat = df_siswa_pusat.dropna(subset=['Sekolah'])
         
-        # Filter khusus sekolah guru yang sedang login
         sekolah_guru = st.session_state["user_sekolah"]
         df_sekolah_ini = df_siswa_pusat[df_siswa_pusat['Sekolah'].str.strip().str.lower() == sekolah_guru.strip().lower()]
         
