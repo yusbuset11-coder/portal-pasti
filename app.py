@@ -24,13 +24,24 @@ SHEET_ID = "1terQDxNZX1aESF0G02uSn9R7eKLKDgbkit11GpX1pA"
 
 @st.cache_data(ttl=10)
 def load_sheet_data(sheet_name):
-  """Fungsi untuk membaca data dari Google Sheets secara publik via CSV."""
-  try:
-    url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={sheet_name}"
-    df = pd.read_csv(url)
-    return df
-  except Exception as e:
-    return pd.DataFrame()
+  """Fungsi untuk membaca data dari Google Sheets menggunakan gspread (Service Account)."""
+  client = get_gspread_client()
+  if client:
+    try:
+      sh = client.open_by_key(SHEET_ID)
+      worksheet = sh.worksheet(sheet_name)
+      data = worksheet.get_all_records()
+      return pd.DataFrame(data)
+    except Exception as e:
+      return pd.DataFrame()
+  else:
+    # Fallback jika gspread belum siap, baca via CSV publik
+    try:
+      url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={sheet_name}"
+      df = pd.read_csv(url)
+      return df
+    except Exception as e:
+      return pd.DataFrame()
 
 
 def get_gspread_client():
