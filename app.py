@@ -300,6 +300,119 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     shading_elm = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{fill_color}"/>')
     cell._tc.get_or_add_tcPr().append(shading_elm)
 
+  def add_section_table_custom(doc, title_text, rows_data):
+    table = doc.add_table(rows=len(rows_data) + 1, cols=2)
+    table.style = "Table Grid"
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+
+    hdr_cells = table.rows[0].cells
+    hdr_cells[0].merge(hdr_cells[1])
+    hdr_cells[0].text = title_text
+    set_cell_background(hdr_cells[0], "5A3825")
+    for p in hdr_cells[0].paragraphs:
+      p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+      p.paragraph_format.space_before = Pt(4)
+      p.paragraph_format.space_after = Pt(4)
+      for run in p.runs:
+        run.font.bold = True
+        run.font.size = Pt(10)
+        run.font.color.rgb = RGBColor(255, 255, 255)
+
+    for idx, (label, val) in enumerate(rows_data):
+      row_cells = table.rows[idx + 1].cells
+      row_cells[0].text = label
+      row_cells[0].width = Inches(2.3)
+      row_cells[1].width = Inches(4.2)
+      set_cell_background(row_cells[0], "F5EBE0")
+
+      for p in row_cells[0].paragraphs:
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after = Pt(4)
+        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        for run in p.runs:
+          run.font.size = Pt(10)
+          run.font.bold = True
+
+      val_str = str(val).replace("LKPD", "LKM").replace("Lembar Kegiatan Murid", "Lembar Kerja Murid")
+      row_cells[1].text = ""
+      lines = val_str.split("\n")
+      for line_idx, line in enumerate(lines):
+        p_right = row_cells[1].paragraphs[0] if line_idx == 0 else row_cells[1].add_paragraph()
+        p_right.paragraph_format.space_before = Pt(4)
+        p_right.paragraph_format.space_after = Pt(4)
+        p_right.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        if ":" in line:
+          parts = line.split(":", 1)
+          r1 = p_right.add_run(parts[0].strip() + ": ")
+          r1.font.bold = True
+          r1.font.size = Pt(10)
+          r2 = p_right.add_run(parts[1].strip())
+          r2.font.size = Pt(10)
+        else:
+          r3 = p_right.add_run(line)
+          r3.font.size = Pt(10)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(6)
+
+  def add_formative_matrix_table(doc):
+    """Fungsi khusus untuk merender Matriks Lembar Observasi Formatif berbentuk Tabel Praktis Guru."""
+    p_sub = doc.add_paragraph()
+    r_sub = p_sub.add_run("Tabel Matriks Penilaian Formatif (Praktis untuk Guru)")
+    r_sub.font.bold = True
+    r_sub.font.size = Pt(11)
+    r_sub.font.color.rgb = RGBColor(90, 56, 37)
+
+    headers = [
+        "No",
+        "Nama Peserta Didik / Kelompok",
+        "Aspek 1\n(Kontribusi)",
+        "Aspek 2\n(Kritis)",
+        "Aspek 3\n(Menghargai)",
+        "Aspek 4\n(Tanggung Jawab)",
+        "Jumlah\nSkor",
+        "Predikat /\nCatatan",
+    ]
+    sample_rows = [
+        ("1", "Kelompok 1 (Contoh)", "4", "3", "4", "4", "15", "Sangat Baik"),
+        ("2", "Kelompok 2 (Contoh)", "3", "3", "3", "2", "11", "Baik"),
+        ("3", "Kelompok 3", "...", "...", "...", "...", "...", "..."),
+        ("4", "Kelompok 4", "...", "...", "...", "...", "...", "..."),
+    ]
+
+    table = doc.add_table(rows=len(sample_rows) + 1, cols=len(headers))
+    table.style = "Table Grid"
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+
+    # Header Row Styling
+    hdr_cells = table.rows[0].cells
+    for i, title in enumerate(headers):
+      hdr_cells[i].text = title
+      set_cell_background(hdr_cells[i], "5A3825")
+      for p in hdr_cells[i].paragraphs:
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after = Pt(4)
+        for r in p.runs:
+          r.font.bold = True
+          r.font.size = Pt(9)
+          r.font.color.rgb = RGBColor(255, 255, 255)
+
+    # Data Rows Styling
+    for row_idx, row_data in enumerate(sample_rows):
+      row_cells = table.rows[row_idx + 1].cells
+      for col_idx, text_val in enumerate(row_data):
+        row_cells[col_idx].text = text_val
+        if row_idx % 2 == 0:
+          set_cell_background(row_cells[col_idx], "F5EBE0")
+        for p in row_cells[col_idx].paragraphs:
+          p.paragraph_format.space_before = Pt(4)
+          p.paragraph_format.space_after = Pt(4)
+          p.alignment = WD_ALIGN_PARAGRAPH.CENTER if col_idx != 1 else WD_ALIGN_PARAGRAPH.LEFT
+          for r in p.runs:
+            r.font.size = Pt(9)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(6)
+
   def generate_docx(
       data_ai, nama_sekolah, semester, tahun_pelajaran, mata_pelajaran,
       fase_kelas, topik, alokasi_waktu, pertemuan_ke, nama_penulis,
@@ -328,60 +441,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     run_title.font.bold = True
     run_title.font.color.rgb = RGBColor(74, 46, 33)
 
-    def add_section_table(title_text, rows_data):
-      table = doc.add_table(rows=len(rows_data) + 1, cols=2)
-      table.style = "Table Grid"
-      table.alignment = WD_TABLE_ALIGNMENT.CENTER
-
-      hdr_cells = table.rows[0].cells
-      hdr_cells[0].merge(hdr_cells[1])
-      hdr_cells[0].text = title_text
-      set_cell_background(hdr_cells[0], "5A3825")
-      for p in hdr_cells[0].paragraphs:
-        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-        p.paragraph_format.space_before = Pt(4)
-        p.paragraph_format.space_after = Pt(4)
-        for run in p.runs:
-          run.font.bold = True
-          run.font.size = Pt(10)
-          run.font.color.rgb = RGBColor(255, 255, 255)
-
-      for idx, (label, val) in enumerate(rows_data):
-        row_cells = table.rows[idx + 1].cells
-        row_cells[0].text = label
-        row_cells[0].width = Inches(2.3)
-        row_cells[1].width = Inches(4.2)
-        set_cell_background(row_cells[0], "F5EBE0")
-
-        for p in row_cells[0].paragraphs:
-          p.paragraph_format.space_before = Pt(4)
-          p.paragraph_format.space_after = Pt(4)
-          p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-          for run in p.runs:
-            run.font.size = Pt(10)
-            run.font.bold = True
-
-        val_str = str(val).replace("LKPD", "LKM").replace("Lembar Kegiatan Murid", "Lembar Kerja Murid")
-        row_cells[1].text = ""
-        lines = val_str.split("\n")
-        for line_idx, line in enumerate(lines):
-          p_right = row_cells[1].paragraphs[0] if line_idx == 0 else row_cells[1].add_paragraph()
-          p_right.paragraph_format.space_before = Pt(4)
-          p_right.paragraph_format.space_after = Pt(4)
-          p_right.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-          if ":" in line:
-            parts = line.split(":", 1)
-            r1 = p_right.add_run(parts[0].strip() + ": ")
-            r1.font.bold = True
-            r1.font.size = Pt(10)
-            r2 = p_right.add_run(parts[1].strip())
-            r2.font.size = Pt(10)
-          else:
-            r3 = p_right.add_run(line)
-            r3.font.size = Pt(10)
-
-      doc.add_paragraph().paragraph_format.space_after = Pt(6)
-
     tabel_identifikasi = [
         ("Penulis Modul", nama_penulis),
         ("Satuan Pendidikan", nama_sekolah),
@@ -392,10 +451,10 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
         ("Alokasi Waktu", alokasi_waktu),
         ("Pertemuan Ke-", pertemuan_ke),
     ]
-    add_section_table("IDENTIFIKASI DAN INFORMASI UMUM", tabel_identifikasi)
-    add_section_table("DIMENSI PROFIL LULUSAN", [("Dimensi Profil Lulusan", data_ai.get("dimensi_profil_lulusan", "Penalaran Kritis & Kolaborasi"))])
-    add_section_table("TUJUAN PEMBELAJARAN", [("Tujuan Pembelajaran", data_ai.get("tujuan_pembelajaran", "Peserta didik menguasai kompetensi materi."))])
-    add_section_table("PEMAHAMAN BERMAKNA & PERTANYAAN PEMANTIK", [("Pemahaman Bermakna", data_ai.get("pemahaman_bermakna", "-")), ("Pertanyaan Pemantik", data_ai.get("pertanyaan_pemantik", "-"))])
+    add_section_table_custom(doc, "IDENTIFIKASI DAN INFORMASI UMUM", tabel_identifikasi)
+    add_section_table_custom(doc, "DIMENSI PROFIL LULUSAN", [("Dimensi Profil Lulusan", data_ai.get("dimensi_profil_lulusan", "Penalaran Kritis & Kolaborasi"))])
+    add_section_table_custom(doc, "TUJUAN PEMBELAJARAN", [("Tujuan Pembelajaran", data_ai.get("tujuan_pembelajaran", "Peserta didik menguasai kompetensi materi."))])
+    add_section_table_custom(doc, "PEMAHAMAN BERMAKNA & PERTANYAAN PEMANTIK", [("Pemahaman Bermakna", data_ai.get("pemahaman_bermakna", "-")), ("Pertanyaan Pemantik", data_ai.get("pertanyaan_pemantik", "-"))])
     
     tabel_kerangka = [
         ("Praktik Pedagogis", data_ai.get("praktik_pedagogis", "Model: Problem Based Learning")),
@@ -403,7 +462,7 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
         ("Lingkungan Belajar", data_ai.get("lingkungan_belajar", "Ruang kelas kolaboratif")),
         ("Pemanfaatan Digital", data_ai.get("pemanfaatan_digital", "AI & Cloud Storage")),
     ]
-    add_section_table("KERANGKA PEMBELAJARAN", tabel_kerangka)
+    add_section_table_custom(doc, "KERANGKA PEMBELAJARAN", tabel_kerangka)
 
     tabel_pengalaman = [
         ("Kegiatan Pendahuluan", data_ai.get("kegiatan_pendahuluan", "Orientasi dan apersepsi")),
@@ -412,14 +471,14 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
         ("Kegiatan Inti (Merefleksi)", data_ai.get("kegiatan_merefleksi", "Refleksi pemahaman")),
         ("Kegiatan Penutup", data_ai.get("kegiatan_penutup", "Kesimpulan dan penutup joyful")),
     ]
-    add_section_table("PENGALAMAN BELAJAR (LANGKAH-LANGKAH)", tabel_pengalaman)
+    add_section_table_custom(doc, "PENGALAMAN BELAJAR (LANGKAH-LANGKAH)", tabel_pengalaman)
 
     tabel_asesmen = [
         ("Asesmen Awal", data_ai.get("asesmen_awal", "Diagnostik kesiapan")),
         ("Asesmen Proses (Formatif)", data_ai.get("asesmen_formatif", "Observasi keaktifan")),
         ("Asesmen Akhir (Sumatif)", data_ai.get("asesmen_sumatif", "Evaluasi akhir")),
     ]
-    add_section_table("ASESMEN PEMBELAJARAN", tabel_asesmen)
+    add_section_table_custom(doc, "ASESMEN PEMBELAJARAN", tabel_asesmen)
 
     p_sign = doc.add_paragraph()
     p_sign.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -452,7 +511,7 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
               p_l.add_run(f"- {lvl}: ").font.bold = True
               p_l.add_run(str(desc))
 
-    # HALAMAN TERPISAH 2: INSTRUMEN FORMATIF
+    # HALAMAN TERPISAH 2: INSTRUMEN FORMATIF (Dilengkapi Tabel Matriks Observasi Kelas)
     doc.add_page_break()
     p_inst_title = doc.add_paragraph()
     p_inst_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -464,7 +523,10 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     instrumen_data = data_ai.get("instrumen_formatif", {})
     if isinstance(instrumen_data, dict) and instrumen_data:
       inst_rows = [(k.replace("_", " ").title(), str(v)) for k, v in instrumen_data.items()]
-      add_section_table("LEMBAR OBSERVASI KELAS", inst_rows)
+      add_section_table_custom(doc, "LEMBAR OBSERVASI KELAS", inst_rows)
+    
+    # Tambahkan render Tabel Matriks Format Formatif Praktis secara otomatis
+    add_formative_matrix_table(doc)
 
     # HALAMAN TERPISAH 3: LEMBAR KERJA MURID (LKM)
     doc.add_page_break()
@@ -478,7 +540,7 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     lkm_data = data_ai.get("lkm_content", {})
     if isinstance(lkm_data, dict) and lkm_data:
       lkm_rows = [(k.replace("_", " ").title(), str(v)) for k, v in lkm_data.items()]
-      add_section_table("STRUKTUR LEMBAR KERJA MURID", lkm_rows)
+      add_section_table_custom(doc, "STRUKTUR LEMBAR KERJA MURID", lkm_rows)
 
     bio = BytesIO()
     doc.save(bio)
@@ -496,7 +558,7 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     else:
       with st.spinner("Sistem GEMA PASTI sedang menyusun Modul Ajar..."):
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-3.5-flash")
+        model = genai.GenerativeModel("gemini-3.5-flash") # atau gemini-3.5-flash sesuai konfigurasi Anda
         prompt = f"""
         Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Pembelajaran Mendalam (Deep Learning) yang SANGAT LENGKAP untuk:
         - Jenjang: {jenjang_pendidikan} ({fase_kelas})
@@ -515,7 +577,7 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
         except:
           data_ai = {}
 
-        st.success("🎉 Modul Ajar GEMA Berhasil Disusun!")
+        st.success("🎉 Modul Ajar GEMA Berhasil Disusun dengan Tabel Asesmen Formatif!")
         docx_file = generate_docx(
             data_ai, nama_sekolah, semester, tahun_pelajaran, mata_pelajaran,
             fase_kelas, topik, alokasi_waktu, pertemuan_ke, nama_penulis,
