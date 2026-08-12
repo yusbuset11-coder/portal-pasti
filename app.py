@@ -35,7 +35,6 @@ def load_sheet_data(sheet_name):
     except Exception as e:
       return pd.DataFrame()
   else:
-    # Fallback jika gspread belum siap, baca via CSV publik
     try:
       url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={sheet_name}"
       df = pd.read_csv(url)
@@ -383,7 +382,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     table.style = "Table Grid"
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
 
-    # Header Row Styling
     hdr_cells = table.rows[0].cells
     for i, title in enumerate(headers):
       hdr_cells[i].text = title
@@ -397,7 +395,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
           r.font.size = Pt(9)
           r.font.color.rgb = RGBColor(255, 255, 255)
 
-    # Data Rows Styling
     for row_idx, row_data in enumerate(sample_rows):
       row_cells = table.rows[row_idx + 1].cells
       for col_idx, text_val in enumerate(row_data):
@@ -452,7 +449,17 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
         ("Pertemuan Ke-", pertemuan_ke),
     ]
     add_section_table_custom(doc, "IDENTIFIKASI DAN INFORMASI UMUM", tabel_identifikasi)
-    add_section_table_custom(doc, "DIMENSI PROFIL LULUSAN", [("Dimensi Profil Lulusan", data_ai.get("dimensi_profil_lulusan", "Penalaran Kritis & Kolaborasi"))])
+    
+    # Render Dimensi Profil Lulusan yang relevan saja (support string, list, atau dict)
+    dimensi_data = data_ai.get("dimensi_profil_lulusan", "Penalaran Kritis & Kolaborasi")
+    if isinstance(dimensi_data, list):
+      dimensi_str = "\n".join([f"☑ {d}" for d in dimensi_data])
+    elif isinstance(dimensi_data, dict):
+      dimensi_str = "\n".join([f"☑ {k}: {v}" for k, v in dimensi_data.items()])
+    else:
+      dimensi_str = str(dimensi_data)
+    add_section_table_custom(doc, "DIMENSI PROFIL LULUSAN", [("Dimensi Profil Lulusan", dimensi_str)])
+
     add_section_table_custom(doc, "TUJUAN PEMBELAJARAN", [("Tujuan Pembelajaran", data_ai.get("tujuan_pembelajaran", "Peserta didik menguasai kompetensi materi."))])
     add_section_table_custom(doc, "PEMAHAMAN BERMAKNA & PERTANYAAN PEMANTIK", [("Pemahaman Bermakna", data_ai.get("pemahaman_bermakna", "-")), ("Pertanyaan Pemantik", data_ai.get("pertanyaan_pemantik", "-"))])
     
@@ -489,7 +496,9 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     run_name.font.bold = True
     p_sign.add_run(f"\nNIP. {nip_penulis}")
 
+    # ==========================================
     # HALAMAN TERPISAH 1: RUBRIK PENILAIAN
+    # ==========================================
     doc.add_page_break()
     p_rubrik_title = doc.add_paragraph()
     p_rubrik_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -498,11 +507,20 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     r_rub_t.font.bold = True
     r_rub_t.font.color.rgb = RGBColor(74, 46, 33)
 
+    p_meta_rubrik = doc.add_paragraph()
+    p_meta_rubrik.add_run(f"Nama Guru / Pengamat: {nama_penulis}\n").font.bold = True
+    p_meta_rubrik.add_run(f"Kelas / Fase: {fase_kelas}\n").font.bold = True
+    p_meta_rubrik.add_run(f"Mata Pelajaran / Topik: {mata_pelajaran} - {topik}").font.bold = True
+
+    p_sec_a = doc.add_paragraph()
+    p_sec_a.add_run("A. Rubrik Penilaian Kinerja / Kompetensi").font.bold = True
+    p_sec_a.runs[0].font.color.rgb = RGBColor(90, 56, 37)
+
     rubrik_data = data_ai.get("rubrik_penilaian", "")
-    if isinstance(rubrik_data, dict):
+    if isinstance(rubrik_data, dict) and rubrik_data:
       for k, v in rubrik_data.items():
+        p_crit = doc.add_paragraph()
         if isinstance(v, dict):
-          p_crit = doc.add_paragraph()
           p_crit.add_run(f"• {v.get('nama_kriteria', k)}").font.bold = True
           for lvl, desc in [("Perlu Bimbingan", v.get("perlu_bimbingan")), ("Cukup", v.get("cukup")), ("Baik", v.get("baik")), ("Sangat Baik", v.get("sangat_baik"))]:
             if desc:
@@ -510,8 +528,31 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
               p_l.paragraph_format.left_indent = Inches(0.3)
               p_l.add_run(f"- {lvl}: ").font.bold = True
               p_l.add_run(str(desc))
+        else:
+          p_crit.add_run(f"• {k}: {v}")
+    elif isinstance(rubrik_data, list) and rubrik_data:
+      for item in rubrik_data:
+        p_it = doc.add_paragraph()
+        p_it.add_run(f"• {item}")
+    elif isinstance(rubrik_data, str) and rubrik_data.strip():
+      for line in rubrik_data.split("\n"):
+        doc.add_paragraph(line)
+    else:
+      # Fallback agar tidak pernah kosong
+      p_def = doc.add_paragraph()
+      p_def.add_run("• Ketajaman Analisis & Kompetensi Proses:\n- Perlu Bimbingan: Belum menunjukkan pemahaman dan ketepatan analisis.\n- Cukup: Mampu menganalisis namun masih terdapat kesalahan konsep.\n- Baik: Mampu menganalisis materi dengan logis dan benar.\n- Sangat Baik: Mampu menganalisis secara komprehensif, kritis, dan mendalam.")
 
-    # HALAMAN TERPISAH 2: INSTRUMEN FORMATIF (Dilengkapi Tabel Matriks Observasi Kelas)
+    p_sec_b = doc.add_paragraph()
+    p_sec_b.paragraph_format.space_before = Pt(8)
+    p_sec_b.add_run("B. Pedoman Penskoran & Perhitungan Nilai").font.bold = True
+    p_sec_b.runs[0].font.color.rgb = RGBColor(90, 56, 37)
+    
+    p_rumus = doc.add_paragraph()
+    p_rumus.add_run("• Rumus Nilai: Nilai Akhir = (Total Skor Perolehan / Skor Maksimal) x 100\n• Kategori Predikat:\n  - 90 - 100 : Sangat Baik (A)\n  - 80 - 89 : Baik (B)\n  - 70 - 79 : Cukup (C)\n  - < 70 : Perlu Bimbingan (D)")
+
+    # ==========================================
+    # HALAMAN TERPISAH 2: INSTRUMEN FORMATIF
+    # ==========================================
     doc.add_page_break()
     p_inst_title = doc.add_paragraph()
     p_inst_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -520,15 +561,27 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     r_inst_t.font.bold = True
     r_inst_t.font.color.rgb = RGBColor(74, 46, 33)
 
+    p_meta_inst = doc.add_paragraph()
+    p_meta_inst.add_run(f"Nama Guru / Pengamat: {nama_penulis}\n").font.bold = True
+    p_meta_inst.add_run(f"Kelas / Fase: {fase_kelas}\n").font.bold = True
+    p_meta_inst.add_run(f"Mata Pelajaran / Topik: {mata_pelajaran} - {topik}").font.bold = True
+
     instrumen_data = data_ai.get("instrumen_formatif", {})
     if isinstance(instrumen_data, dict) and instrumen_data:
       inst_rows = [(k.replace("_", " ").title(), str(v)) for k, v in instrumen_data.items()]
       add_section_table_custom(doc, "LEMBAR OBSERVASI KELAS", inst_rows)
+    else:
+      add_section_table_custom(doc, "LEMBAR OBSERVASI KELAS", [
+          ("Judul Instrumen", "Lembar Observasi Aktivitas & Kolaborasi Kelompok"),
+          ("Tujuan", "Mendokumentasikan perkembangan berpikir kritis dan keaktifan peserta didik."),
+          ("Aspek Diamati", "1. Kontribusi gagasan aktif\n2. Penalaran kritis terhadap data\n3. Sikap saling menghargai pendapat")
+      ])
     
-    # Tambahkan render Tabel Matriks Format Formatif Praktis secara otomatis
     add_formative_matrix_table(doc)
 
+    # ==========================================
     # HALAMAN TERPISAH 3: LEMBAR KERJA MURID (LKM)
+    # ==========================================
     doc.add_page_break()
     p_lkm_title = doc.add_paragraph()
     p_lkm_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -537,10 +590,21 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     r_lkm_t.font.bold = True
     r_lkm_t.font.color.rgb = RGBColor(74, 46, 33)
 
+    p_meta_lkm = doc.add_paragraph()
+    p_meta_lkm.add_run("Nama Kelompok / Peserta Didik: ........................................................................\n").font.bold = True
+    p_meta_lkm.add_run(f"Kelas / Fase: {fase_kelas}\n").font.bold = True
+    p_meta_lkm.add_run(f"Mata Pelajaran / Topik: {mata_pelajaran} - {topik}").font.bold = True
+
     lkm_data = data_ai.get("lkm_content", {})
     if isinstance(lkm_data, dict) and lkm_data:
       lkm_rows = [(k.replace("_", " ").title(), str(v)) for k, v in lkm_data.items()]
       add_section_table_custom(doc, "STRUKTUR LEMBAR KERJA MURID", lkm_rows)
+    else:
+      add_section_table_custom(doc, "STRUKTUR LEMBAR KERJA MURID", [
+          ("Judul LKM", f"LKM Investigasi Topik: {topik}"),
+          ("Tujuan", "Melatih peserta didik mengaplikasikan konsep dan memecahkan studi kasus secara mandiri."),
+          ("Langkah Kerja", "1. Diskusikan bersama kelompok.\n2. Lakukan eksplorasi data.\n3. Presentasikan hasil kerja.")
+      ])
 
     bio = BytesIO()
     doc.save(bio)
@@ -556,20 +620,28 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     elif not topik:
       st.warning("Mohon isi topik pembelajaran.")
     else:
-      with st.spinner("Sistem GEMA PASTI sedang menyusun Modul Ajar..."):
+      with st.spinner("Sistem GEMA PASTI sedang menyusun Modul Ajar lengkap dengan Rubrik dan LKM..."):
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-3.5-flash") # atau gemini-3.5-flash sesuai konfigurasi Anda
+        model = genai.GenerativeModel("gemini-3.5-flash")
+        
         prompt = f"""
-        Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Pembelajaran Mendalam (Deep Learning) yang SANGAT LENGKAP untuk:
+        Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Pembelajaran Mendalam (Deep Learning) yang SANGAT LENGKAP, terperinci, dan mendalam untuk:
         - Jenjang: {jenjang_pendidikan} ({fase_kelas})
         - Mata Pelajaran: {mata_pelajaran}
         - Topik: {topik}
         - Alokasi Waktu: {alokasi_waktu}
         - Pertemuan Ke-: {pertemuan_ke}
 
-        Berikan output HANYA dalam format JSON valid dengan kunci:
+        KETENTUAN KHUSUS:
+        1. "dimensi_profil_lulusan": Pilih HANYA 2 sampai 3 dimensi profil lulusan yang PALING RELEVAN dengan materi/topik di atas (misalnya Penalaran Kritis, Kolaborasi, Kreativitas, Komunikasi, dll.), dan berikan penjelasan uraian spesifiknya sesuai materi.
+        2. "rubrik_penilaian": Berikan objek JSON lengkap berisi minimal 2 kriteria penilaian utama yang sesuai dengan kegiatan pembelajaran, di mana setiap kriteria mencakup level: "nama_kriteria", "perlu_bimbingan", "cukup", "baik", "sangat_baik".
+        3. "instrumen_formatif": Berikan rincian lembar observasi kelas (judul_instrumen, tujuan_asesmen, aspek_yang_diamati, pedoman_pengamatan).
+        4. "lkm_content": Berikan detail Lembar Kerja Murid (judul_lkm, tujuan_lkm, petunjuk_kerja, tugas_analisis).
+
+        Berikan output HANYA dalam format JSON valid tanpa teks lain di luar JSON dengan kunci:
         dimensi_profil_lulusan, tujuan_pembelajaran, pemahaman_bermakna, pertanyaan_pemantik, praktik_pedagogis, kemitraan_pembelajaran, lingkungan_belajar, pemanfaatan_digital, kegiatan_pendahuluan, kegiatan_memahami, kegiatan_mengaplikasi, kegiatan_merefleksi, kegiatan_penutup, asesmen_awal, asesmen_formatif, asesmen_sumatif, rubrik_penilaian, pedoman_penskoran, instrumen_formatif, lkm_content.
         """
+        
         response = model.generate_content(prompt)
         text_resp = response.text.strip().replace("```json", "").replace("```", "").strip()
         try:
@@ -577,7 +649,7 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
         except:
           data_ai = {}
 
-        st.success("🎉 Modul Ajar GEMA Berhasil Disusun dengan Tabel Asesmen Formatif!")
+        st.success("🎉 Modul Ajar GEMA Berhasil Disusun Lengkap dengan Rubrik Penilaian dan LKM!")
         docx_file = generate_docx(
             data_ai, nama_sekolah, semester, tahun_pelajaran, mata_pelajaran,
             fase_kelas, topik, alokasi_waktu, pertemuan_ke, nama_penulis,
@@ -591,7 +663,7 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
         )
 
 # =========================================================================
-# APLIKASI 2: SIPENSIS (Sistem Pengelolaan Administrasi Siswa) - INTERAKTIF EDIT
+# APLIKASI 2: SIPENSIS (Sistem Pengelolaan Administrasi Siswa)
 # =========================================================================
 elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
   st.markdown("### 📋 Sistem Pengelolaan Administrasi Siswa (SIPENSIS)")
