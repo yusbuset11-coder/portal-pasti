@@ -384,6 +384,167 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
 
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
+  def add_rubric_table(doc, rubrik_data):
+    """Fungsi khusus untuk merender Bagian A (Rubrik Penilaian) ke dalam bentuk Tabel Terstruktur."""
+    p_sec_a = doc.add_paragraph()
+    p_sec_a.add_run("A. Rubrik Penilaian Kinerja / Kompetensi").font.bold = True
+    p_sec_a.runs[0].font.color.rgb = RGBColor(90, 56, 37)
+
+    headers = ["Kriteria Penilaian", "Perlu Bimbingan", "Cukup", "Baik", "Sangat Baik"]
+    rows_content = []
+
+    if isinstance(rubrik_data, dict) and rubrik_data:
+      for k, v in rubrik_data.items():
+        if isinstance(v, dict):
+          crit_name = v.get("nama_kriteria", k)
+          pb = v.get("perlu_bimbingan", "-")
+          c = v.get("cukup", "-")
+          b = v.get("baik", "-")
+          sb = v.get("sangat_baik", "-")
+          rows_content.append((crit_name, pb, c, b, sb))
+        else:
+          rows_content.append((str(k), str(v), "-", "-", "-"))
+    elif isinstance(rubrik_data, list) and rubrik_data:
+      for item in rubrik_data:
+        rows_content.append((str(item), "-", "-", "-", "-"))
+    else:
+      rows_content.append((
+          "Ketajaman Analisis & Kompetensi Proses",
+          "Belum menunjukkan pemahaman dan ketepatan analisis data.",
+          "Mampu menganalisis materi namun masih terdapat kesalahan konsep.",
+          "Mampu menganalisis materi dengan logis, runtut, dan benar.",
+          "Mampu menganalisis secara komprehensif, kritis, dan mendalam."
+      ))
+
+    table = doc.add_table(rows=len(rows_content) + 1, cols=5)
+    table.style = "Table Grid"
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+
+    hdr_cells = table.rows[0].cells
+    for i, title in enumerate(headers):
+      hdr_cells[i].text = title
+      set_cell_background(hdr_cells[i], "5A3825")
+      for p in hdr_cells[i].paragraphs:
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after = Pt(4)
+        for r in p.runs:
+          r.font.bold = True
+          r.font.size = Pt(9)
+          r.font.color.rgb = RGBColor(255, 255, 255)
+
+    widths = [Inches(1.5), Inches(1.25), Inches(1.25), Inches(1.25), Inches(1.25)]
+
+    for row_idx, row_data in enumerate(rows_content):
+      row_cells = table.rows[row_idx + 1].cells
+      for col_idx, text_val in enumerate(row_data):
+        row_cells[col_idx].text = text_val
+        row_cells[col_idx].width = widths[col_idx]
+        if row_idx % 2 == 0:
+          set_cell_background(row_cells[col_idx], "F5EBE0")
+        for p in row_cells[col_idx].paragraphs:
+          p.paragraph_format.space_before = Pt(4)
+          p.paragraph_format.space_after = Pt(4)
+          p.alignment = WD_ALIGN_PARAGRAPH.LEFT if col_idx == 0 else WD_ALIGN_PARAGRAPH.JUSTIFY
+          for r in p.runs:
+            r.font.size = Pt(9)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(6)
+
+  def add_scoring_tables(doc):
+    """Fungsi khusus untuk merender Bagian B (Pedoman Penskoran & Predikat) ke dalam bentuk Tabel Terstruktur."""
+    p_sec_b = doc.add_paragraph()
+    p_sec_b.paragraph_format.space_before = Pt(8)
+    p_sec_b.add_run("B. Pedoman Penskoran & Perhitungan Nilai").font.bold = True
+    p_sec_b.runs[0].font.color.rgb = RGBColor(90, 56, 37)
+
+    # Tabel 1: Rumus Perhitungan
+    p_sub1 = doc.add_paragraph()
+    p_sub1.add_run("1. Rumus Perhitungan Nilai Akhir").font.bold = True
+    p_sub1.runs[0].font.size = Pt(10)
+    p_sub1.runs[0].font.color.rgb = RGBColor(74, 46, 33)
+
+    t1_data = [
+        ("Komponen", "Keterangan / Rumus"),
+        ("Formula Nilai Akhir", "Nilai Akhir = (Total Skor Perolehan / Skor Maksimal) × 100")
+    ]
+    table1 = doc.add_table(rows=len(t1_data), cols=2)
+    table1.style = "Table Grid"
+    table1.alignment = WD_TABLE_ALIGNMENT.CENTER
+
+    for i, val in enumerate(t1_data[0]):
+      cell = table1.rows[0].cells[i]
+      cell.text = val
+      set_cell_background(cell, "5A3825")
+      for p in cell.paragraphs:
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after = Pt(4)
+        for r in p.runs:
+          r.font.bold = True
+          r.font.size = Pt(9)
+          r.font.color.rgb = RGBColor(255, 255, 255)
+
+    for i, val in enumerate(t1_data[1]):
+      cell = table1.rows[1].cells[i]
+      cell.text = val
+      cell.width = Inches(2.0) if i == 0 else Inches(4.5)
+      for p in cell.paragraphs:
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after = Pt(4)
+        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        for r in p.runs:
+          r.font.size = Pt(9)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(4)
+
+    # Tabel 2: Konversi Predikat
+    p_sub2 = doc.add_paragraph()
+    p_sub2.add_run("2. Konversi Predikat Nilai").font.bold = True
+    p_sub2.runs[0].font.size = Pt(10)
+    p_sub2.runs[0].font.color.rgb = RGBColor(74, 46, 33)
+
+    predikat_rows = [
+        ("Rentang Nilai", "Predikat", "Kualifikasi / Keterangan"),
+        ("90 - 100", "Sangat Baik (A)", "Penguasaan konsep sangat matang dan kritis"),
+        ("80 - 89", "Baik (B)", "Penguasaan konsep baik dan runtut"),
+        ("70 - 79", "Cukup (C)", "Penguasaan konsep cukup, perlu bimbingan dasar"),
+        ("< 70", "Perlu Bimbingan (D)", "Belum mencapai ketuntasan belajar minimal"),
+    ]
+    table2 = doc.add_table(rows=len(predikat_rows), cols=3)
+    table2.style = "Table Grid"
+    table2.alignment = WD_TABLE_ALIGNMENT.CENTER
+
+    for i, val in enumerate(predikat_rows[0]):
+      cell = table2.rows[0].cells[i]
+      cell.text = val
+      set_cell_background(cell, "5A3825")
+      for p in cell.paragraphs:
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after = Pt(4)
+        for r in p.runs:
+          r.font.bold = True
+          r.font.size = Pt(9)
+          r.font.color.rgb = RGBColor(255, 255, 255)
+
+    col_widths = [Inches(1.5), Inches(2.0), Inches(3.0)]
+    for row_idx, row_data in enumerate(predikat_rows[1:]):
+      row_cells = table2.rows[row_idx + 1].cells
+      for col_idx, text_val in enumerate(row_data):
+        row_cells[col_idx].text = text_val
+        row_cells[col_idx].width = col_widths[col_idx]
+        if row_idx % 2 == 0:
+          set_cell_background(row_cells[col_idx], "F5EBE0")
+        for p in row_cells[col_idx].paragraphs:
+          p.paragraph_format.space_before = Pt(4)
+          p.paragraph_format.space_after = Pt(4)
+          p.alignment = WD_ALIGN_PARAGRAPH.CENTER if col_idx < 2 else WD_ALIGN_PARAGRAPH.LEFT
+          for r in p.runs:
+            r.font.size = Pt(9)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(6)
+
   def add_formative_matrix_table(doc):
     """Fungsi khusus untuk merender Matriks Lembar Observasi Formatif berbentuk Tabel Praktis Guru."""
     p_sub = doc.add_paragraph()
@@ -546,42 +707,11 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     ]
     add_identity_table(doc, tabel_identitas_rubrik)
 
-    p_sec_a = doc.add_paragraph()
-    p_sec_a.add_run("A. Rubrik Penilaian Kinerja / Kompetensi").font.bold = True
-    p_sec_a.runs[0].font.color.rgb = RGBColor(90, 56, 37)
+    # A. Rubrik Penilaian Kinerja (Dalam Bentuk Tabel)
+    add_rubric_table(doc, data_ai.get("rubrik_penilaian", ""))
 
-    rubrik_data = data_ai.get("rubrik_penilaian", "")
-    if isinstance(rubrik_data, dict) and rubrik_data:
-      for k, v in rubrik_data.items():
-        p_crit = doc.add_paragraph()
-        if isinstance(v, dict):
-          p_crit.add_run(f"• {v.get('nama_kriteria', k)}").font.bold = True
-          for lvl, desc in [("Perlu Bimbingan", v.get("perlu_bimbingan")), ("Cukup", v.get("cukup")), ("Baik", v.get("baik")), ("Sangat Baik", v.get("sangat_baik"))]:
-            if desc:
-              p_l = doc.add_paragraph()
-              p_l.paragraph_format.left_indent = Inches(0.3)
-              p_l.add_run(f"- {lvl}: ").font.bold = True
-              p_l.add_run(str(desc))
-        else:
-          p_crit.add_run(f"• {k}: {v}")
-    elif isinstance(rubrik_data, list) and rubrik_data:
-      for item in rubrik_data:
-        p_it = doc.add_paragraph()
-        p_it.add_run(f"• {item}")
-    elif isinstance(rubrik_data, str) and rubrik_data.strip():
-      for line in rubrik_data.split("\n"):
-        doc.add_paragraph(line)
-    else:
-      p_def = doc.add_paragraph()
-      p_def.add_run("• Ketajaman Analisis & Kompetensi Proses:\n- Perlu Bimbingan: Belum menunjukkan pemahaman dan ketepatan analisis.\n- Cukup: Mampu menganalisis namun masih terdapat kesalahan konsep.\n- Baik: Mampu menganalisis materi dengan logis dan benar.\n- Sangat Baik: Mampu menganalisis secara komprehensif, kritis, dan mendalam.")
-
-    p_sec_b = doc.add_paragraph()
-    p_sec_b.paragraph_format.space_before = Pt(8)
-    p_sec_b.add_run("B. Pedoman Penskoran & Perhitungan Nilai").font.bold = True
-    p_sec_b.runs[0].font.color.rgb = RGBColor(90, 56, 37)
-    
-    p_rumus = doc.add_paragraph()
-    p_rumus.add_run("• Rumus Nilai: Nilai Akhir = (Total Skor Perolehan / Skor Maksimal) x 100\n• Kategori Predikat:\n  - 90 - 100 : Sangat Baik (A)\n  - 80 - 89 : Baik (B)\n  - 70 - 79 : Cukup (C)\n  - < 70 : Perlu Bimbingan (D)")
+    # B. Pedoman Penskoran & Perhitungan Nilai (Dalam Bentuk Tabel)
+    add_scoring_tables(doc)
 
     # ==========================================
     # HALAMAN TERPISAH 2: INSTRUMEN FORMATIF
