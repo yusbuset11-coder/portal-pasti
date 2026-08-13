@@ -1059,12 +1059,18 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
       if st.button("💾 Simpan Absensi Harian", type="primary"):
         data_baru_list = []
         for idx, row in edited_filtered.iterrows():
-          id_val = df_filtered.iloc[idx].get("ID_Siswa", None)
-          if pd.isna(id_val) or str(id_val).strip() == "":
+          # Pengaman agar tidak terjadi IndexError pada df_filtered.iloc[idx]
+        if len(df_filtered) > 0 and 0 <= idx < len(df_filtered):
+            id_val = df_filtered.iloc[idx].get("ID_Siswa", None)
+            nama_siswa_val = df_filtered.iloc[idx].get("Nama_Siswa", "Siswa")
+            kelas_val = df_filtered.iloc[idx].get("Kelas", kelas_pilih)
+        else:
+            id_val = None
+            nama_siswa_val = "Siswa"
+            kelas_val = kelas_pilih
+
+        if pd.isna(id_val) or str(id_val).strip() == "":
             continue
-          
-          nama_siswa_val = df_filtered.iloc[idx].get("Nama_Siswa", "Siswa")
-          kelas_val = df_filtered.iloc[idx].get("Kelas", kelas_pilih)
 
           s = bool(row.get("S", False))
           i = bool(row.get("I", False))
