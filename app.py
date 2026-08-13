@@ -997,15 +997,15 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
   st.markdown("### 📋 Sistem Pengelolaan Administrasi Siswa & Absensi (SIPENSIS)")
   
   # Import gspread_formatting untuk otomatisasi border dan checkbox
-  from gspread_formatting import (
-      Border,
-      Borders,
-      CellFormat,
-      DataValidationRule,
-      BooleanCondition,
-      format_cell_range,
-      set_data_validation,
-  )
+  # from gspread_formatting import (
+#     Border,
+#     Borders,
+#     CellFormat,
+#     DataValidationRule,
+#     BooleanCondition,
+#     format_cell_range,
+#     set_data_validation,
+# )
 
   # Membuat TAB untuk memisahkan Input dan Rekap
   tab1, tab2 = st.tabs(["✍️ Input Absensi", "📊 Laporan & Rekap"])
@@ -1097,6 +1097,32 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
             df_gabungan = df_hari_ini
 
           if save_sheet_data("Absensi_Harian", df_gabungan):
+            # --- OTOMATISASI CHECKBOX GOOGLE SHEETS ---
+            try:
+                import gspread
+                from gspread_formatting import (
+                    DataValidationRule,
+                    BooleanCondition,
+                    set_data_validation,
+                )
+                
+                gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
+                sh = gc.open("Database_PASTI_Pusat")
+                worksheet = sh.worksheet("Absensi_Harian")
+                
+                # Mengubah kolom I, J, K menjadi Checkbox otomatis
+                checkbox_rule = DataValidationRule(BooleanCondition('BOOLEAN', []), showCustomUi=True)
+                set_data_validation(worksheet, 'I2:K1000', checkbox_rule)
+            except Exception as e:
+                print(f"Catatan (bukan error fatal): {e}")
+            # ----------------------------------------
+
+            st.success("✅ Absensi berhasil disimpan dengan checkbox otomatis!")
+            st.balloons()
+          else:
+            st.error("❌ Gagal menyimpan ke Database.")
+        else:
+          st.warning("⚠️ Tidak ada data valid untuk disimpan.")
             # --- OTOMATISASI FORMAT GOOGLE SHEETS ---
             try:
                 # Menggunakan koneksi gspread yang sudah ada di aplikasi Anda
