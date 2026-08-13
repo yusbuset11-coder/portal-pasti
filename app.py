@@ -17,7 +17,6 @@ import streamlit as st
 # DIPINDAHKAN KE ATAS: Import modul formatting gspread untuk mencegah ImportError
 from gspread_formatting import (
     CellFormat, Border, Borders, Color, format_cell_range,
-    DataValidationRule, BooleanCondition, set_data_validation
 )
 
 st.set_page_config(
