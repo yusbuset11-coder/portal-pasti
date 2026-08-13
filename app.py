@@ -33,20 +33,25 @@ scope = [
     "https://www.googleapis.com/auth/drive",
 ]
 
+import base64
 import json
 import tempfile
 
+
 def get_gspread_client():
-  creds_dict = dict(st.secrets["gcp_service_account"])
+  # Ambil string base64 dari secrets
+  b64_string = st.secrets["gcp_base64"]
 
-  # Normalisasi private_key agar baris baru terbaca sempurna oleh Google Auth
-  if "private_key" in creds_dict:
-    creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+  # Decode kembali menjadi dictionary JSON yang bersih
+  json_bytes = base64.b64decode(b64_string)
+  creds_dict = json.loads(json_bytes.decode("utf-8"))
 
+  # Buat file JSON sementara di server secara aman
   with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
     json.dump(creds_dict, f)
     temp_filename = f.name
 
+  # Autentikasi gspread
   creds = Credentials.from_service_account_file(temp_filename, scopes=scope)
   client = gspread.authorize(creds)
   return client
