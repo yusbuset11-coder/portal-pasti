@@ -1037,9 +1037,16 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
       if st.button("💾 Simpan Absensi Harian"):
         data_baru_list = []
         for idx, row in edited_filtered.iterrows():
-          if pd.isna(row.get("ID_Siswa")): continue
+          # Ambil ID_Siswa dengan aman dari berbagai kemungkinan penulisan kolom
+          id_val = row.get("ID_Siswa", row.get("ID_siswa", row.get("Id_Siswa", None)))
+          if pd.isna(id_val) or str(id_val).strip() == "":
+            continue
           
-          s, i, a = bool(row["S"]), bool(row["I"]), bool(row["A"])
+          # Ambil Nama Siswa dan Kelas dengan aman
+          nama_siswa_val = row.get("Nama Siswa", row.get("Nama_Siswa", row.get("nama_siswa", "Siswa")))
+          kelas_val = row.get("Kelas", kelas_pilih)
+
+          s, i, a = bool(row.get("S", False)), bool(row.get("I", False)), bool(row.get("A", False))
           if s: status = "Sakit"
           elif i: status = "Izin"
           elif a: status = "Alpha"
@@ -1050,9 +1057,9 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
               "Sekolah": nama_sekolah,
               "Nama_Guru": nama_guru,
               "Mata_Pelajaran": mata_pelajaran,
-              "Kelas": row["Kelas"],
-              "ID_Siswa": row["ID_Siswa"],
-              "Nama Siswa": row["Nama Siswa"],
+              "Kelas": kelas_val,
+              "ID_Siswa": id_val,
+              "Nama Siswa": nama_siswa_val,
               "Status_Kehadiran": status,
               "S": s, "I": i, "A": a
           })
@@ -1060,22 +1067,39 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
         if data_baru_list:
           df_hari_ini = pd.DataFrame(data_baru_list)
           df_existing = load_sheet_data("Absensi_Harian")
-          df_gabungan = pd.concat([df_existing, df_hari_ini], ignore_index=True)
+          if not df_existing.empty:
+            df_existing.columns = df_existing.columns.str.strip()
+            if "ID_Siswa" in df_existing.columns:
+              df_existing = df_existing.dropna(subset=["ID_Siswa"])
+            df_gabungan = pd.concat([df_existing, df_hari_ini], ignore_index=True)
+          else:
+            df_gabungan = df_hari_ini
+
           if save_sheet_data("Absensi_Harian", df_gabungan):
-            st.success("✅ Berhasil disimpan!")
+            st.success("✅ Absensi berhasil disimpan dan direkap!")
+            st.balloons()
+          else:
+            st.error("❌ Gagal menyimpan ke Database.")
+        else:
+          st.warning("⚠️ Tidak ada data valid untuk disimpan.")
 
   # --- TAB 2: LAPORAN & REKAP ---
   with tab2:
-    st.subheader("📈 Laporan Rekapitulasi")
+    st.subheader("📈 Laporan Rekapitulasi Absensi")
     df_rekap = load_sheet_data("Absensi_Harian")
     
     if not df_rekap.empty:
-      df_rekap['Tanggal'] = pd.to_datetime(df_rekap['Tanggal'])
+      df_rekap.columns = df_rekap.columns.str.strip()
+      df_rekap['Tanggal'] = pd.to_datetime(df_rekap['Tanggal'], errors='coerce')
       
       jenis_rekap = st.radio("Pilih Jenis Rekap:", ["Bulanan", "Semester Ganjil", "Semester Genap"])
       
       if jenis_rekap == "Bulanan":
-        bulan = st.selectbox("Pilih Bulan:", range(1, 13), format_func=lambda x: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][x-1])
+        bulan = st.selectbox(
+            "Pilih Bulan:", 
+            range(1, 13), 
+            format_func=lambda x: ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][x-1]
+        )
         df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month == bulan]
       
       elif jenis_rekap == "Semester Ganjil":
@@ -1086,13 +1110,19 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
         # Semester Genap: Januari (1) s/d Juni (6)
         df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month.isin([1, 2, 3, 4, 5, 6])]
 
-      # Tampilkan Hasil
-      st.write(f"Menampilkan data {jenis_rekap}:")
-      st.dataframe(df_filtered_rekap, use_container_width=True)
+      # Tampilkan Hasil Rekap
+      st.write(f"Menampilkan data rekap **{jenis_rekap}**:")
+      st.dataframe(df_filtered_rekap, use_container_width=True, hide_index=True)
       
-      # Fitur Download
-      csv = df_filtered_rekap.to_csv(index=False).encode('utf-8')
-      st.download_button("📥 Download Rekap (CSV)", data=csv, file_name=f"Rekap_{jenis_rekap}.csv", mime="text/csv")
+      # Fitur Download CSV
+      if not df_filtered_rekap.empty:
+        csv = df_filtered_rekap.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            "📥 Download Rekap (CSV)", 
+            data=csv, 
+            file_name=f"Rekap_{jenis_rekap.replace(' ', '_')}.csv", 
+            mime="text/csv"
+        )
     else:
       st.warning("Belum ada data absensi untuk direkap.")
 # APLIKASI 3 & 4: DIGMA & SAKTI
