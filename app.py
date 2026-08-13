@@ -1096,7 +1096,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                     "S": s, "I": i, "A": a
                 })
 
-        if data_baru_list:
+if data_baru_list:
             df_hari_ini = pd.DataFrame(data_baru_list)
             df_existing = load_sheet_data("Absensi_Harian")
             if not df_existing.empty:
