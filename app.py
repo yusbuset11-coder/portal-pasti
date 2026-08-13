@@ -1012,7 +1012,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
         nama_sekolah = st.text_input("🏫 Nama Sekolah", value="SMK A")
       with col2:
         nama_guru = st.text_input("👨‍🏫 Nama Guru", value="Yustinus Budi Setyanta")
-        mata_pelajaran = st.text_input("📖 Mata Pelajaran", value="Pendidikan Pancasila")
+        mata_pelajaran = st.text_input("📖 Mata Pelajaran", value="Bahasa Indonesia")
 
       daftar_kelas = df_siswa["Kelas"].dropna().unique()
       kelas_pilih = st.selectbox("📚 Pilih Kelas:", daftar_kelas)
