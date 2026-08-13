@@ -990,42 +990,60 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
 
-# =========================================================================
+# =# =========================================================================
 # APLIKASI 2: SIPENSIS (Sistem Pengelolaan Administrasi Siswa)
 # =========================================================================
 elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
   st.markdown("### 📋 Sistem Pengelolaan Administrasi Siswa & Absensi (SIPENSIS)")
   st.write(
-      "Guru dapat langsung memilih kelas dan mengelola absensi siswa yang"
-      " terhubung ke **Database_PASTI_Pusat**."
+      "Lengkapi identitas pembelajaran di bawah ini, lalu lakukan absensi harian"
+      " siswa."
   )
 
   # Memuat data dari Database Pusat
   df_siswa = load_sheet_data("Siswa")
 
   if not df_siswa.empty:
-    # Memastikan kolom S, I, A ada di dataframe, jika belum buat default False (kosong)
-    for col in ["S", "I", "A"]:
-      if col not in df_siswa.columns:
-        df_siswa[col] = False
-      else:
-        df_siswa[col] = df_siswa[col].fillna(False).astype(bool)
+    st.markdown("---")
+    st.subheader("📌 Identitas Pembelajaran & Absensi")
 
-    # 1. Guru HANYA memilih Kelas (tanpa filter Sekolah)
+    # Kolom input identitas di bagian atas
+    col1, col2 = st.columns(2)
+    with col1:
+      tanggal_absensi = st.date_input("📅 Tanggal Absensi")
+      nama_sekolah = st.text_input("🏫 Nama Sekolah", value="SMK A")
+    with col2:
+      nama_guru = st.text_input(
+          "👨‍🏫 Nama Guru", value="Yustinus Budi Setyanta"
+      )
+      mata_pelajaran = st.text_input(
+          "📖 Mata Pelajaran", value="Pendidikan Pancasila"
+      )
+
+    # Filter Pilih Kelas
     daftar_kelas = df_siswa["Kelas"].dropna().unique()
     kelas_pilih = st.selectbox("📚 Pilih Kelas:", daftar_kelas)
 
     # Saring data khusus untuk kelas tersebut
     df_filtered = df_siswa[df_siswa["Kelas"] == kelas_pilih].copy()
 
+    # Pastikan kolom S, I, A ada dan bernilai False (tidak tercentang) secara default
+    for col in ["S", "I", "A"]:
+      if col not in df_filtered.columns:
+        df_filtered[col] = False
+      else:
+        df_filtered[col] = (
+            df_filtered[col].fillna(False).astype(bool)
+        )
+
     st.markdown("---")
     st.info(
-        f"Menampilkan daftar siswa untuk Kelas **{kelas_pilih}**. Silakan"
-        " centang kolom **S**, **I**, atau **A** jika siswa tidak hadir. Jika"
-        " kosong, otomatis dianggap **Hadir**."
+        f"Menampilkan daftar siswa Kelas **{kelas_pilih}** untuk tanggal"
+        f" **{tanggal_absensi}**. Centang **S**, **I**, atau **A** jika tidak"
+        " hadir (kosong = Hadir)."
     )
 
-    # Tabel interaktif khusus kelas terpilih dengan kolom S, I, A
+    # Tabel interaktif dengan checkbox default False (tidak tercentang)
     edited_filtered = st.data_editor(
         df_filtered,
         column_config={
@@ -1039,26 +1057,27 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
             "S": st.column_config.CheckboxColumn("S", default=False),
             "I": st.column_config.CheckboxColumn("I", default=False),
             "A": st.column_config.CheckboxColumn("A", default=False),
-            "Sekolah": None,  # Disembunyikan dari tampilan tabel sesuai permintaan
-            "Status_Kehadiran": None,  # Disembunyikan karena digantikan S-I-A
+            "Sekolah": None,
+            "Nama_Guru": None,
+            "Mata_Pelajaran": None,
+            "Status_Kehadiran": None,
         },
-        disabled=["ID_Siswa", "Kelas", "Nama Siswa", "Sekolah", "Status_Kehadiran"],
+        disabled=["ID_Siswa", "Kelas", "Nama Siswa"],
         hide_index=True,
         use_container_width=True,
-        key="editor_absensi_s_i_a",
+        key="editor_absensi_sia_baru",
     )
 
     # Tombol Simpan Perubahan Absensi ke Database Pusat
-    if st.button("💾 Simpan Perubahan Absensi ke Database Pusat", type="primary"):
-      with st.spinner("Menyimpan pembaruan absensi ke Database Pusat..."):
-        # Update nilai S, I, A ke dataframe utama (df_siswa) berdasarkan ID_Siswa
+    if st.button("💾 Simpan Absensi ke Database Pusat", type="primary"):
+      with st.spinner("Menyimpan data absensi..."):
         for idx, row in edited_filtered.iterrows():
           id_val = row["ID_Siswa"]
           s_val = row["S"]
           i_val = row["I"]
           a_val = row["A"]
 
-          # Tentukan status kehadiran otomatis berdasarkan S, I, A
+          # Logika Status Kehadiran Otomatis
           if s_val:
             status_final = "Sakit"
           elif i_val:
@@ -1068,20 +1087,25 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
           else:
             status_final = "Hadir"
 
-          # Masukkan kembali ke df_siswa
+          # Update nilai ke dataframe utama
+          df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "Tanggal"] = str(
+              tanggal_absensi
+          )
+          df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "Sekolah"] = nama_sekolah
+          df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "Nama_Guru"] = nama_guru
+          df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "Mata_Pelajaran"] = (
+              mata_pelajaran
+          )
           df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "S"] = s_val
           df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "I"] = i_val
-          df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "A"] = a_val
+          df_siswa.loc[df_siswa["ID_Sishwa"] == id_val, "A"] = a_val
           df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "Status_Kehadiran"] = (
               status_final
           )
 
         success = save_sheet_data("Siswa", df_siswa)
         if success:
-          st.success(
-              "✅ Data absensi kelas berhasil disimpan dan diperbarui di"
-              " Database Pusat!"
-          )
+          st.success("✅ Absensi berhasil disimpan ke Database Pusat!")
           st.rerun()
         else:
           st.error("❌ Gagal menyimpan data ke Database Pusat.")
