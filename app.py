@@ -1110,20 +1110,15 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                 sh = gc.open("Database_PASTI_Pusat")
                 worksheet = sh.worksheet("Absensi_Harian")
                 
-                # Mengubah kolom I, J, K menjadi Checkbox otomatis
+                # Menghitung baris terakhir secara dinamis berdasarkan data yang baru masuk
+                jumlah_baris = len(df_gabungan) + 1
+                
+                # Mengubah kolom I, J, K menjadi Checkbox otomatis sesuai baris data
                 checkbox_rule = DataValidationRule(BooleanCondition('BOOLEAN', []), showCustomUi=True)
-                set_data_validation(worksheet, 'I2:K1000', checkbox_rule)
+                set_data_validation(worksheet, f'I2:K{jumlah_baris}', checkbox_rule)
             except Exception as e:
                 print(f"Catatan (bukan error fatal): {e}")
             # ----------------------------------------
-
-            st.success("✅ Absensi berhasil disimpan dengan checkbox otomatis!")
-            st.balloons()
-          else:
-            st.error("❌ Gagal menyimpan ke Database.")
-        else:
-          st.warning("⚠️ Tidak ada data valid untuk disimpan.")
-
       # --- TAB 2: LAPORAN & REKAP ---
       with tab2:
         st.subheader("📈 Laporan Rekapitulasi Absensi")
