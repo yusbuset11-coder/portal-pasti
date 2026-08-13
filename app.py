@@ -995,157 +995,106 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
 # =========================================================================
 elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
   st.markdown("### 📋 Sistem Pengelolaan Administrasi Siswa & Absensi (SIPENSIS)")
-  st.write(
-      "Lengkapi identitas pembelajaran di bawah ini, lalu lakukan absensi harian"
-      " siswa. Data akan terekap secara otomatis."
-  )
+  
+  # Membuat TAB untuk memisahkan Input dan Rekap
+  tab1, tab2 = st.tabs(["✍️ Input Absensi", "📊 Laporan & Rekap"])
 
-  # Memuat data master siswa
-  df_siswa = load_sheet_data("Siswa")
+  # --- TAB 1: INPUT ABSENSI ---
+  with tab1:
+    df_siswa = load_sheet_data("Siswa")
+    if not df_siswa.empty:
+      df_siswa.columns = df_siswa.columns.str.strip()
+      
+      col1, col2 = st.columns(2)
+      with col1:
+        tanggal_absensi = st.date_input("📅 Tanggal Absensi")
+        nama_sekolah = st.text_input("🏫 Nama Sekolah", value="SMK A")
+      with col2:
+        nama_guru = st.text_input("👨‍🏫 Nama Guru", value="Yustinus Budi Setyanta")
+        mata_pelajaran = st.text_input("📖 Mata Pelajaran", value="Pendidikan Pancasila")
 
-  if not df_siswa.empty:
-    # Membersihkan spasi tersembunyi pada nama kolom
-    df_siswa.columns = df_siswa.columns.str.strip()
+      daftar_kelas = df_siswa["Kelas"].dropna().unique()
+      kelas_pilih = st.selectbox("📚 Pilih Kelas:", daftar_kelas)
 
-    st.markdown("---")
-    st.subheader("📌 Identitas Pembelajaran & Absensi")
+      df_filtered = df_siswa[df_siswa["Kelas"] == kelas_pilih].copy()
+      df_filtered = df_filtered.dropna(subset=["ID_Siswa"])
+      for col in ["S", "I", "A"]: df_filtered[col] = False
 
-    # Kolom input identitas di bagian atas
-    col1, col2 = st.columns(2)
-    with col1:
-      tanggal_absensi = st.date_input("📅 Tanggal Absensi")
-      nama_sekolah = st.text_input("🏫 Nama Sekolah", value="SMK A")
-    with col2:
-      nama_guru = st.text_input(
-          "👨‍🏫 Nama Guru", value="Yustinus Budi Setyanta"
+      edited_filtered = st.data_editor(
+          df_filtered,
+          column_config={
+              "ID_Siswa": st.column_config.NumberColumn("ID_Siswa", disabled=True),
+              "Kelas": st.column_config.TextColumn("Kelas", disabled=True),
+              "Nama Siswa": st.column_config.TextColumn("Nama Siswa", disabled=True),
+              "S": st.column_config.CheckboxColumn("S", default=False),
+              "I": st.column_config.CheckboxColumn("I", default=False),
+              "A": st.column_config.CheckboxColumn("A", default=False),
+              "Sekolah": None,
+          },
+          hide_index=True, use_container_width=True
       )
-      mata_pelajaran = st.text_input(
-          "📖 Mata Pelajaran", value="Pendidikan Pancasila"
-      )
 
-    # Filter Pilih Kelas berdasarkan master siswa
-    daftar_kelas = df_siswa["Kelas"].dropna().unique()
-    kelas_pilih = st.selectbox("📚 Pilih Kelas:", daftar_kelas)
-
-    # Saring data khusus untuk kelas tersebut
-    df_filtered = df_siswa[df_siswa["Kelas"] == kelas_pilih].copy()
-
-    # Pastikan hanya mengambil baris yang memiliki ID_Siswa valid
-    df_filtered = df_filtered.dropna(subset=["ID_Siswa"])
-
-    # Tambahkan kolom S, I, A default False untuk editor
-    for col in ["S", "I", "A"]:
-      df_filtered[col] = False
-
-    st.markdown("---")
-    st.info(
-        f"Menampilkan daftar siswa Kelas **{kelas_pilih}** untuk tanggal"
-        f" **{tanggal_absensi}**. Centang **S**, **I**, atau **A** jika tidak"
-        " hadir (kosong = Hadir)."
-    )
-
-    # Tabel interaktif untuk absensi harian
-    edited_filtered = st.data_editor(
-        df_filtered,
-        column_config={
-            "ID_Siswa": st.column_config.NumberColumn(
-                "ID_Siswa", disabled=True
-            ),
-            "Kelas": st.column_config.TextColumn("Kelas", disabled=True),
-            "Nama Siswa": st.column_config.TextColumn(
-                "Nama Siswa", disabled=True
-            ),
-            "S": st.column_config.CheckboxColumn("S", default=False),
-            "I": st.column_config.CheckboxColumn("I", default=False),
-            "A": st.column_config.CheckboxColumn("A", default=False),
-            "Sekolah": None,
-        },
-        disabled=["ID_Siswa", "Kelas", "Nama Siswa"],
-        hide_index=True,
-        use_container_width=True,
-        key="editor_absensi_harian_v3",
-    )
-
-    # Tombol Simpan Absensi Harian
-    if st.button("💾 Simpan Absensi Harian ke Rekap", type="primary"):
-      with st.spinner("Menyimpan rekap absensi harian..."):
+      if st.button("💾 Simpan Absensi Harian"):
         data_baru_list = []
-
         for idx, row in edited_filtered.iterrows():
-          id_siswa_val = row.get("ID_Siswa", None)
+          if pd.isna(row.get("ID_Siswa")): continue
+          
+          s, i, a = bool(row["S"]), bool(row["I"]), bool(row["A"])
+          if s: status = "Sakit"
+          elif i: status = "Izin"
+          elif a: status = "Alpha"
+          else: status = "Hadir"
 
-          # Abaikan baris jika ID_Siswa kosong atau tidak valid
-          if pd.isna(id_siswa_val) or str(id_siswa_val).strip() == "":
-            continue
-
-          s_val = bool(row["S"])
-          i_val = bool(row["I"])
-          a_val = bool(row["A"])
-
-          # Logika Status Kehadiran Otomatis
-          if s_val:
-            status_final = "Sakit"
-          elif i_val:
-            status_final = "Izin"
-          elif a_val:
-            status_final = "Alpha"
-          else:
-            status_final = "Hadir"
-
-          kelas_val = row.get("Kelas", kelas_pilih)
-          nama_siswa_val = row.get("Nama Siswa", "Siswa")
-
-          # Susun baris data absensi harian yang valid saja
           data_baru_list.append({
               "Tanggal": str(tanggal_absensi),
               "Sekolah": nama_sekolah,
               "Nama_Guru": nama_guru,
               "Mata_Pelajaran": mata_pelajaran,
-              "Kelas": kelas_val,
-              "ID_Siswa": id_siswa_val,
-              "Nama Siswa": nama_siswa_val,
-              "Status_Kehadiran": status_final,
-              "S": s_val,
-              "I": i_val,
-              "A": a_val,
+              "Kelas": row["Kelas"],
+              "ID_Siswa": row["ID_Siswa"],
+              "Nama Siswa": row["Nama Siswa"],
+              "Status_Kehadiran": status,
+              "S": s, "I": i, "A": a
           })
 
         if data_baru_list:
           df_hari_ini = pd.DataFrame(data_baru_list)
+          df_existing = load_sheet_data("Absensi_Harian")
+          df_gabungan = pd.concat([df_existing, df_hari_ini], ignore_index=True)
+          if save_sheet_data("Absensi_Harian", df_gabungan):
+            st.success("✅ Berhasil disimpan!")
 
-          # Muat riwayat absensi yang sudah ada di Google Sheets
-          df_existing_rekap = load_sheet_data("Absensi_Harian")
+  # --- TAB 2: LAPORAN & REKAP ---
+  with tab2:
+    st.subheader("📈 Laporan Rekapitulasi")
+    df_rekap = load_sheet_data("Absensi_Harian")
+    
+    if not df_rekap.empty:
+      df_rekap['Tanggal'] = pd.to_datetime(df_rekap['Tanggal'])
+      
+      jenis_rekap = st.radio("Pilih Jenis Rekap:", ["Bulanan", "Semester Ganjil", "Semester Genap"])
+      
+      if jenis_rekap == "Bulanan":
+        bulan = st.selectbox("Pilih Bulan:", range(1, 13), format_func=lambda x: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][x-1])
+        df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month == bulan]
+      
+      elif jenis_rekap == "Semester Ganjil":
+        # Semester Ganjil: Juli (7) s/d Desember (12)
+        df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month.isin([7, 8, 9, 10, 11, 12])]
+        
+      elif jenis_rekap == "Semester Genap":
+        # Semester Genap: Januari (1) s/d Juni (6)
+        df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month.isin([1, 2, 3, 4, 5, 6])]
 
-          if df_existing_rekap.empty:
-            df_gabungan = df_hari_ini
-          else:
-            df_existing_rekap.columns = df_existing_rekap.columns.str.strip()
-            # Bersihkan baris kosong dari data lama agar rekap tetap bersih
-            if "ID_Siswa" in df_existing_rekap.columns:
-              df_existing_rekap = df_existing_rekap.dropna(subset=["ID_Siswa"])
-
-            # Gabungkan data lama dengan data absensi hari ini
-            df_gabungan = pd.concat(
-                [df_existing_rekap, df_hari_ini], ignore_index=True
-            )
-
-          # Simpan kembali ke sheet Absensi_Harian
-          success = save_sheet_data("Absensi_Harian", df_gabungan)
-
-          if success:
-            st.success(
-                "✅ Absensi tanggal "
-                + str(tanggal_absensi)
-                + " berhasil direkap dengan bersih!"
-            )
-            st.balloons()
-          else:
-            st.error("❌ Gagal menyimpan rekap absensi ke Database.")
-        else:
-          st.warning("⚠️ Tidak ada data siswa yang valid untuk disimpan.")
-
-  else:
-    st.warning("⚠️ Data master siswa belum termuat atau tab 'Siswa' kosong.")
+      # Tampilkan Hasil
+      st.write(f"Menampilkan data {jenis_rekap}:")
+      st.dataframe(df_filtered_rekap, use_container_width=True)
+      
+      # Fitur Download
+      csv = df_filtered_rekap.to_csv(index=False).encode('utf-8')
+      st.download_button("📥 Download Rekap (CSV)", data=csv, file_name=f"Rekap_{jenis_rekap}.csv", mime="text/csv")
+    else:
+      st.warning("Belum ada data absensi untuk direkap.")
 # APLIKASI 3 & 4: DIGMA & SAKTI
 # =========================================================================
 elif pilih_app.startswith("3."):
