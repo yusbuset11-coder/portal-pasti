@@ -996,73 +996,87 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
 elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
   st.markdown("### 📋 Sistem Pengelolaan Administrasi Siswa & Absensi (SIPENSIS)")
   st.write(
-      "Guru dapat langsung melihat, menambah, mengedit, atau menghapus data"
-      " siswa yang terhubung ke **Database_PASTI_Pusat**."
+      "Guru dapat langsung memilih kelas dan mengelola absensi siswa yang"
+      " terhubung ke **Database_PASTI_Pusat**."
   )
 
-  # Memuat data dari Database Pusat menggunakan fungsi Google Sheets Anda
-  df_siswa = load_sheet_data("Siswa")  # Sesuaikan nama fungsi lama Anda
+  # Memuat data dari Database Pusat
+  df_siswa = load_sheet_data("Siswa")
 
   if not df_siswa.empty:
-    # Memastikan kolom status kehadiran ada
-    if "Status_Kehadiran" not in df_siswa.columns:
-      df_siswa["Status_Kehadiran"] = "Hadir"
-    else:
-      df_siswa["Status_Kehadiran"] = df_siswa["Status_Kehadiran"].fillna("Hadir")
+    # Memastikan kolom S, I, A ada di dataframe, jika belum buat default False (kosong)
+    for col in ["S", "I", "A"]:
+      if col not in df_siswa.columns:
+        df_siswa[col] = False
+      else:
+        df_siswa[col] = df_siswa[col].fillna(False).astype(bool)
 
-    # 1. Filter Pilih Sekolah
-    daftar_sekolah = df_siswa["Sekolah"].dropna().unique()
-    sekolah_pilih = st.selectbox("🏫 Pilih Sekolah:", daftar_sekolah)
-
-    df_sekolah = df_siswa[df_siswa["Sekolah"] == sekolah_pilih]
-
-    # 2. Filter Pilih Kelas berdasarkan Sekolah
-    daftar_kelas = df_sekolah["Kelas"].dropna().unique()
+    # 1. Guru HANYA memilih Kelas (tanpa filter Sekolah)
+    daftar_kelas = df_siswa["Kelas"].dropna().unique()
     kelas_pilih = st.selectbox("📚 Pilih Kelas:", daftar_kelas)
 
-    # Saring data khusus untuk sekolah dan kelas tersebut
-    df_filtered = df_sekolah[df_sekolah["Kelas"] == kelas_pilih].copy()
+    # Saring data khusus untuk kelas tersebut
+    df_filtered = df_siswa[df_siswa["Kelas"] == kelas_pilih].copy()
 
     st.markdown("---")
     st.info(
-        f"Menampilkan daftar siswa untuk **{sekolah_pilih}** - Kelas"
-        f" **{kelas_pilih}**. Silakan ubah status kehadiran siswa pada kolom"
-        " tabel di bawah."
+        f"Menampilkan daftar siswa untuk Kelas **{kelas_pilih}**. Silakan"
+        " centang kolom **S**, **I**, atau **A** jika siswa tidak hadir. Jika"
+        " kosong, otomatis dianggap **Hadir**."
     )
 
-    # Pilihan status absensi
-    opsi_kehadiran = ["Hadir", "Sakit (S)", "Izin (I)", "Tanpa Keterangan (A)"]
-
-    # Tabel interaktif khusus kelas terpilih
+    # Tabel interaktif khusus kelas terpilih dengan kolom S, I, A
     edited_filtered = st.data_editor(
         df_filtered,
         column_config={
-            "Status_Kehadiran": st.column_config.SelectboxColumn(
-                "Status Kehadiran",
-                help="Pilih status kehadiran siswa",
-                options=opsi_kehadiran,
-                required=True,
-            )
+            "ID_Siswa": st.column_config.NumberColumn(
+                "ID_Siswa", disabled=True
+            ),
+            "Kelas": st.column_config.TextColumn("Kelas", disabled=True),
+            "Nama Siswa": st.column_config.TextColumn(
+                "Nama Siswa", disabled=True
+            ),
+            "S": st.column_config.CheckboxColumn("S", default=False),
+            "I": st.column_config.CheckboxColumn("I", default=False),
+            "A": st.column_config.CheckboxColumn("A", default=False),
+            "Sekolah": None,  # Disembunyikan dari tampilan tabel sesuai permintaan
+            "Status_Kehadiran": None,  # Disembunyikan karena digantikan S-I-A
         },
-        disabled=["ID_Siswa", "Sekolah", "Kelas", "Nama Siswa"],
+        disabled=["ID_Siswa", "Kelas", "Nama Siswa", "Sekolah", "Status_Kehadiran"],
         hide_index=True,
         use_container_width=True,
-        key="editor_absensi_kelas",
+        key="editor_absensi_s_i_a",
     )
 
-    # Tombol Simpan Perubahan Tabel Interaktif
+    # Tombol Simpan Perubahan Absensi ke Database Pusat
     if st.button("💾 Simpan Perubahan Absensi ke Database Pusat", type="primary"):
       with st.spinner("Menyimpan pembaruan absensi ke Database Pusat..."):
+        # Update nilai S, I, A ke dataframe utama (df_siswa) berdasarkan ID_Siswa
         for idx, row in edited_filtered.iterrows():
           id_val = row["ID_Siswa"]
-          status_val = row["Status_Kehadiran"]
+          s_val = row["S"]
+          i_val = row["I"]
+          a_val = row["A"]
+
+          # Tentukan status kehadiran otomatis berdasarkan S, I, A
+          if s_val:
+            status_final = "Sakit"
+          elif i_val:
+            status_final = "Izin"
+          elif a_val:
+            status_final = "Alpha"
+          else:
+            status_final = "Hadir"
+
+          # Masukkan kembali ke df_siswa
+          df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "S"] = s_val
+          df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "I"] = i_val
+          df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "A"] = a_val
           df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "Status_Kehadiran"] = (
-              status_val
+              status_final
           )
 
-        success = save_sheet_data(
-            "Siswa", df_siswa
-        )  # Sesuaikan fungsi simpan lama Anda
+        success = save_sheet_data("Siswa", df_siswa)
         if success:
           st.success(
               "✅ Data absensi kelas berhasil disimpan dan diperbarui di"
@@ -1072,61 +1086,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
         else:
           st.error("❌ Gagal menyimpan data ke Database Pusat.")
 
-    # =====================================================================
-    # FITUR TAMBAHAN: DOWNLOAD TEMPLATE & UPLOAD EXCEL/CSV UNTUK GURU
-    # =====================================================================
-    st.markdown("---")
-    st.subheader("📂 Atau Kelola Data via Upload / Download Excel")
-    st.write(
-        "Jika ingin memperbarui data dalam jumlah banyak sekaligus, Anda dapat"
-        " menggunakan template di bawah ini."
-    )
-
-    # 1. Fitur Download Template
-    df_template = pd.DataFrame(
-        columns=[
-            "ID_Siswa",
-            "Sekolah",
-            "Kelas",
-            "Nama Siswa",
-            "Status_Kehadiran",
-        ]
-    )
-    csv_template = df_template.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        label="📥 Download Template Excel/CSV Siswa",
-        data=csv_template,
-        file_name="Template_SIPENSIS_Pusat.csv",
-        mime="text/csv",
-        help="Unduh template kosong untuk diisi oleh guru.",
-    )
-
-    # 2. Fitur Upload File Excel/CSV Guru
-    uploaded_excel = st.file_uploader(
-        "⬆️ Upload File Excel/CSV yang Telah Diisi Guru", type=["csv", "xlsx"]
-    )
-    if uploaded_excel is not None:
-      try:
-        if uploaded_excel.name.endswith(".csv"):
-          df_upload = pd.read_csv(uploaded_excel)
-        else:
-          df_upload = pd.read_excel(uploaded_excel)
-
-        st.write("Preview Data yang Di-upload:")
-        st.dataframe(df_upload.head())
-
-        if st.button("🔄 Sinkronkan & Timpa ke Database Pusat"):
-          with st.spinner("Sedang memperbarui Database Pusat..."):
-            success = save_sheet_data("Siswa", df_upload)
-            if success:
-              st.success(
-                  "✅ Data dari file berhasil disinkronkan ke Database Pusat!"
-              )
-              st.rerun()
-            else:
-              st.error("❌ Gagal menyimpan data upload ke database pusat.")
-      except Exception as e:
-        st.error(f"Terjadi kesalahan saat membaca file: {e}")
   else:
     st.warning("⚠️ Data siswa belum termuat atau tab 'Siswa' pada database kosong.")
 # =========================================================================
