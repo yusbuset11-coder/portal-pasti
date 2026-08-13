@@ -16,7 +16,7 @@ import streamlit as st
 
 # DIPINDAHKAN KE ATAS: Import modul formatting gspread untuk mencegah ImportError
 from gspread_formatting import (
-    CellFormat, Border, Borders, Color, format_cell_range,
+    CellFormat, Border, Borders, Color, format_cell_range
 )
 
 st.set_page_config(
@@ -1034,61 +1034,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                 hide_index=True, use_container_width=True
             )
 
-            if st.button("💾 Simpan Absensi Harian", type="primary"):
-                with st.spinner("Menyimpan data..."):
-                    # Proses data ke list
-                    data_baru_list = []
-                    for _, row in edited_df.iterrows():
-                        status = "Hadir"
-                        if row["S"]: status = "Sakit"
-                        elif row["I"]: status = "Izin"
-                        elif row["A"]: status = "Alpha"
-                        
-                        data_baru_list.append({
-                            "Tanggal": str(tanggal_absensi),
-                            "Sekolah": nama_sekolah_otomatis,
-                            "Nama_Guru": nama_guru,
-                            "Mata_Pelajaran": mata_pelajaran,
-                            "Kelas": kelas_pilih,
-                            "ID_Siswa": row["ID_Siswa"],
-                            "Nama_Siswa": row["Nama_Siswa"],
-                            "Status_Kehadiran": status,
-                            "S": row["S"], "I": row["I"], "A": row["A"]
-                        })
-
-                    # Gabungkan dengan data lama
-                    df_hari_ini = pd.DataFrame(data_baru_list)
-                    df_existing = load_sheet_data("Absensi_Harian")
-                    df_final = pd.concat([df_existing, df_hari_ini], ignore_index=True) if not df_existing.empty else df_hari_ini
-
-                    # Simpan ke Sheets
-                    if save_sheet_data("Absensi_Harian", df_final):
-                        # --- OTOMATISASI FORMATTING (Border & Checkbox) ---
-                        try:
-                            client = get_gspread_client()
-                            spreadsheet = client.open("Database_PASTI_Pusat")
-                            worksheet = spreadsheet.worksheet("Absensi_Harian")
-                            
-                            # 1. Apply Border
-                            last_row = len(df_final) + 1
-                            fmt = CellFormat(borders=Borders(
-                                top=Border('SOLID', Color(0,0,0)), bottom=Border('SOLID', Color(0,0,0)),
-                                left=Border('SOLID', Color(0,0,0)), right=Border('SOLID', Color(0,0,0))
-                            ))
-                            format_cell_range(worksheet, f'A1:K{last_row}', fmt)
-                            
-                            # 2. Set Checkbox (Kolom S, I, A - sesuaikan index kolom: A=1, B=2, dst)
-                            # Asumsi kolom S, I, A berada di kolom ke 9, 10, 11 (I, J, K)
-                            rule = DataValidationRule(BooleanCondition('BOOLEAN', []), showCustomUi=True)
-                            set_data_validation(worksheet, f'I2:K{last_row}', rule)
-                            
-                            st.success("✅ Absensi disimpan & format diperbarui!")
-                            st.balloons()
-                        except Exception as e:
-                            st.warning(f"Data tersimpan, namun format (border/checkbox) gagal diterapkan: {e}")
-                    else:
-                        st.error("❌ Gagal menyimpan ke Database.")
-
+            if st.button
     # --- TAB 2: LAPORAN & REKAP ---
     with tab2:
         st.subheader("📊 Laporan Rekapitulasi")
