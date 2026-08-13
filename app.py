@@ -1034,7 +1034,55 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                 hide_index=True, use_container_width=True
             )
 
-            if st.button("💾 Simpan Absensi Harian", type="primary"):
+if st.button("💾 Simpan Absensi Harian", type="primary"):
+                with st.spinner("Menyimpan data..."):
+                    # Proses data ke list
+                    data_baru_list = []
+                    for _, row in edited_df.iterrows():
+                        status = "Hadir"
+                        if row["S"]: status = "Sakit"
+                        elif row["I"]: status = "Izin"
+                        elif row["A"]: status = "Alpha"
+                        
+                        data_baru_list.append({
+                            "Tanggal": str(tanggal_absensi),
+                            "Sekolah": nama_sekolah_otomatis,
+                            "Nama_Guru": nama_guru,
+                            "Mata_Pelajaran": mata_pelajaran,
+                            "Kelas": kelas_pilih,
+                            "ID_Siswa": row["ID_Siswa"],
+                            "Nama_Siswa": row["Nama_Siswa"],
+                            "Status_Kehadiran": status,
+                            "S": row["S"], "I": row["I"], "A": row["A"]
+                        })
+
+                    # Gabungkan dengan data lama
+                    df_hari_ini = pd.DataFrame(data_baru_list)
+                    df_existing = load_sheet_data("Absensi_Harian")
+                    df_final = pd.concat([df_existing, df_hari_ini], ignore_index=True) if not df_existing.empty else df_hari_ini
+
+                    # Simpan ke Sheets
+                    if save_sheet_data("Absensi_Harian", df_final):
+                        # Terapkan Border otomatis secara aman
+                        try:
+                            client = get_gspread_client()
+                            spreadsheet = client.open("Database_PASTI_Pusat")
+                            worksheet = spreadsheet.worksheet("Absensi_Harian")
+                            
+                            last_row = len(df_final) + 1
+                            fmt = CellFormat(borders=Borders(
+                                top=Border('SOLID', Color(0,0,0)), bottom=Border('SOLID', Color(0,0,0)),
+                                left=Border('SOLID', Color(0,0,0)), right=Border('SOLID', Color(0,0,0))
+                            ))
+                            format_cell_range(worksheet, f'A1:K{last_row}', fmt)
+                        except Exception as fmt_err:
+                            pass
+                        
+                        st.success("✅ Absensi Berhasil Disimpan ke Database Pusat!")
+                        st.balloons()
+                    else:
+                        st.error("❌ Gagal menyimpan ke Database.")
+
     # --- TAB 2: LAPORAN & REKAP ---
     with tab2:
         st.subheader("📊 Laporan Rekapitulasi")
