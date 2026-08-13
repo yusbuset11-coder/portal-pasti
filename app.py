@@ -990,32 +990,20 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
 
-# =# =========================================================================
+# =========================================================================
 # APLIKASI 2: SIPENSIS (Sistem Pengelolaan Administrasi Siswa)
 # =========================================================================
 elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
   st.markdown("### 📋 Sistem Pengelolaan Administrasi Siswa & Absensi (SIPENSIS)")
   st.write(
       "Lengkapi identitas pembelajaran di bawah ini, lalu lakukan absensi harian"
-      " siswa."
+      " siswa. Data akan terekap secara otomatis."
   )
 
-  # Memuat data dari Database Pusat
+  # Memuat data master siswa
   df_siswa = load_sheet_data("Siswa")
 
   if not df_siswa.empty:
-    # Konversi kolom S, I, A agar aman dari TypeError tipe data string/boolean
-    for col in ["S", "I", "A"]:
-      if col in df_siswa.columns:
-        df_siswa[col] = (
-            df_siswa[col]
-            .astype(str)
-            .str.lower()
-            .isin(["true", "1", "t", "yes"])
-        )
-      else:
-        df_siswa[col] = False
-
     st.markdown("---")
     st.subheader("📌 Identitas Pembelajaran & Absensi")
 
@@ -1032,12 +1020,16 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
           "📖 Mata Pelajaran", value="Pendidikan Pancasila"
       )
 
-    # Filter Pilih Kelas
+    # Filter Pilih Kelas berdasarkan master siswa
     daftar_kelas = df_siswa["Kelas"].dropna().unique()
     kelas_pilih = st.selectbox("📚 Pilih Kelas:", daftar_kelas)
 
     # Saring data khusus untuk kelas tersebut
     df_filtered = df_siswa[df_siswa["Kelas"] == kelas_pilih].copy()
+
+    # Tambahkan kolom S, I, A default False (tidak tercentang) untuk tampilan editor
+    for col in ["S", "I", "A"]:
+      df_filtered[col] = False
 
     st.markdown("---")
     st.info(
@@ -1046,7 +1038,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
         " hadir (kosong = Hadir)."
     )
 
-    # Tabel interaktif dengan checkbox
+    # Tabel interaktif untuk absensi harian
     edited_filtered = st.data_editor(
         df_filtered,
         column_config={
@@ -1060,23 +1052,20 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
             "S": st.column_config.CheckboxColumn("S", default=False),
             "I": st.column_config.CheckboxColumn("I", default=False),
             "A": st.column_config.CheckboxColumn("A", default=False),
-            "Sekolah": None,
-            "Nama_Guru": None,
-            "Mata_Pelajaran": None,
-            "Tanggal": None,
-            "Status_Kehadiran": None,
+            "Sekolah": None,  # Disembunyikan agar tabel bersih
         },
         disabled=["ID_Siswa", "Kelas", "Nama Siswa"],
         hide_index=True,
         use_container_width=True,
-        key="editor_absensi_sia_v2",
+        key="editor_absensi_harian",
     )
 
-    # Tombol Simpan Perubahan Absensi ke Database Pusat
-    if st.button("💾 Simpan Absensi ke Database Pusat", type="primary"):
-      with st.spinner("Menyimpan data absensi..."):
+    # Tombol Simpan Absensi Harian
+    if st.button("💾 Simpan Absensi Harian ke Rekap", type="primary"):
+      with st.spinner("Menyimpan rekap absensi harian..."):
+        data_baru_list = []
+
         for idx, row in edited_filtered.iterrows():
-          id_val = row["ID_Siswa"]
           s_val = bool(row["S"])
           i_val = bool(row["I"])
           a_val = bool(row["A"])
@@ -1091,27 +1080,49 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
           else:
             status_final = "Hadir"
 
-          # Update nilai ke dataframe utama menggunakan masking baris yang aman
-          mask = df_siswa["ID_Siswa"] == id_val
-          df_siswa.loc[mask, "Tanggal"] = str(tanggal_absensi)
-          df_siswa.loc[mask, "Sekolah"] = nama_sekolah
-          df_siswa.loc[mask, "Nama_Guru"] = nama_guru
-          df_siswa.loc[mask, "Mata_Pelajaran"] = mata_pelajaran
-          df_siswa.loc[mask, "S"] = s_val
-          df_siswa.loc[mask, "I"] = i_val
-          df_siswa.loc[mask, "A"] = a_val
-          df_siswa.loc[mask, "Status_Kehadiran"] = status_final
+          # Susun baris data absensi harian
+          data_baru_list.append({
+              "Tanggal": str(tanggal_absensi),
+              "Sekolah": nama_sekolah,
+              "Nama_Guru": nama_guru,
+              "Mata_Pelajaran": mata_pelajaran,
+              "Kelas": row["Kelas"],
+              "ID_Siswa": row["ID_Siswa"],
+              "Nama Siswa": row["Nama Siswa"],
+              "Status_Kehadiran": status_final,
+              "S": s_val,
+              "I": i_val,
+              "A": a_val,
+          })
 
-        success = save_sheet_data("Siswa", df_siswa)
-        if success:
-          st.success("✅ Absensi berhasil disimpan ke Database Pusat!")
-          st.rerun()
+        df_hari_ini = pd.DataFrame(data_baru_list)
+
+        # Muat riwayat absensi yang sudah ada sebelumnya di Google Sheets
+        df_existing_rekap = load_sheet_data("Absensi_Harian")
+
+        if df_existing_rekap.empty:
+          df_gabungan = df_hari_ini
         else:
-          st.error("❌ Gagal menyimpan data ke Database Pusat.")
+          # Gabungkan data lama dengan data absensi hari ini (Append ke bawah)
+          df_gabungan = pd.concat(
+              [df_existing_rekap, df_hari_ini], ignore_index=True
+          )
+
+        # Simpan kembali ke sheet Absensi_Harian
+        success = save_sheet_data("Absensi_Harian", df_gabungan)
+
+        if success:
+          st.success(
+              "✅ Absensi tanggal "
+              + str(tanggal_absensi)
+              + " berhasil direkap dan ditambahkan ke database!"
+          )
+          st.balloons()
+        else:
+          st.error("❌ Gagal menyimpan rekap absensi ke Database.")
 
   else:
-    st.warning("⚠️ Data siswa belum termuat atau tab 'Siswa' pada database kosong.")
-# =========================================================================
+    st.warning("⚠️ Data master siswa belum termuat atau tab 'Siswa' kosong.")
 # APLIKASI 3 & 4: DIGMA & SAKTI
 # =========================================================================
 elif pilih_app.startswith("3."):
