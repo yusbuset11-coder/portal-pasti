@@ -1034,7 +1034,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                 hide_index=True, use_container_width=True
             )
 
-            if st.button
+            if st.button("💾 Simpan Absensi Harian", type="primary"):
     # --- TAB 2: LAPORAN & REKAP ---
     with tab2:
         st.subheader("📊 Laporan Rekapitulasi")
