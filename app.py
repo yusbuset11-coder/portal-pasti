@@ -1108,7 +1108,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                 
                 jumlah_baris = len(df_gabungan) + 1
                 
-                # 1. Membuat Checkbox otomatis (menggunakan batch_update agar aman)
+                # 1. Membuat Checkbox otomatis menggunakan batch_update
                 validation_body = {
                     "requests": [{
                         "setDataValidation": {
@@ -1143,17 +1143,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
             st.error("❌ Gagal menyimpan ke Database.")
         else:
           st.warning("⚠️ Tidak ada data valid untuk disimpan.")
-            # --------------------------------------------------
-
-            # BAGIAN INI YANG MEMUNCULKAN NOTIFIKASI & BALON
-            st.success("✅ Absensi berhasil disimpan dengan checkbox & border otomatis!")
-            st.balloons()
-            
-          else:
-            st.error("❌ Gagal menyimpan ke Database.")
-        else:
-          st.warning("⚠️ Tidak ada data valid untuk disimpan.")
-            # ----------------------------------------
       # --- TAB 2: LAPORAN & REKAP ---
       with tab2:
         st.subheader("📈 Laporan Rekapitulasi Absensi")
