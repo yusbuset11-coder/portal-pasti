@@ -1023,7 +1023,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
       else:
         nama_sekolah_otomatis = "Tidak Diketahui"
 
-      # Tampilkan informasi Nama Sekolah yang sinkron dengan database
       st.info(f"🏫 **Nama Sekolah (Sinkron Database):** {nama_sekolah_otomatis}")
 
       # Saring data khusus untuk kelas tersebut
@@ -1031,12 +1030,12 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
       df_filtered = df_filtered.dropna(subset=["ID_Siswa"])
       for col in ["S", "I", "A"]: df_filtered[col] = False
 
-      # Tabel Editor Input: Hanya ID_Siswa, Nama Siswa, S, I, A
+      # Tabel Editor Input: Menggunakan 'Nama_Siswa' sesuai database
       edited_filtered = st.data_editor(
           df_filtered,
           column_config={
               "ID_Siswa": st.column_config.NumberColumn("ID_Siswa", disabled=True),
-              "Nama Siswa": st.column_config.TextColumn("Nama Siswa", disabled=True),
+              "Nama_Siswa": st.column_config.TextColumn("Nama Siswa", disabled=True),
               "S": st.column_config.CheckboxColumn("S", default=False),
               "I": st.column_config.CheckboxColumn("I", default=False),
               "A": st.column_config.CheckboxColumn("A", default=False),
@@ -1054,12 +1053,12 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
       if st.button("💾 Simpan Absensi Harian", type="primary"):
         data_baru_list = []
         for idx, row in edited_filtered.iterrows():
-          # Ambil ID_Siswa asli dari df_filtered berdasarkan indeks baris
           id_val = df_filtered.iloc[idx].get("ID_Siswa", None)
           if pd.isna(id_val) or str(id_val).strip() == "":
             continue
           
-          nama_siswa_val = df_filtered.iloc[idx].get("Nama Siswa", "Siswa")
+          # Diambil menggunakan 'Nama_Siswa' agar sesuai dengan database
+          nama_siswa_val = df_filtered.iloc[idx].get("Nama_Siswa", "Siswa")
           kelas_val = df_filtered.iloc[idx].get("Kelas", kelas_pilih)
 
           s = bool(row.get("S", False))
@@ -1073,12 +1072,12 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
 
           data_baru_list.append({
               "Tanggal": str(tanggal_absensi),
-              "Sekolah": str(nama_sekolah_otomatis),  # Menggunakan nama sekolah otomatis dari database
+              "Sekolah": str(nama_sekolah_otomatis),
               "Nama_Guru": nama_guru,
               "Mata_Pelajaran": mata_pelajaran,
               "Kelas": str(kelas_val),
               "ID_Siswa": id_val,
-              "Nama Siswa": nama_siswa_val,
+              "Nama_Siswa": nama_siswa_val,  # Disimpan ke kolom Nama_Siswa di Absensi_Harian
               "Status_Kehadiran": status,
               "S": s, "I": i, "A": a
           })
@@ -1093,7 +1092,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
             df_gabungan = df_hari_ini
 
           if save_sheet_data("Absensi_Harian", df_gabungan):
-            st.success("✅ Absensi berhasil disimpan dengan nama sekolah yang sinkron dari database!")
+            st.success("✅ Absensi dan nama siswa berhasil disimpan dengan benar!")
             st.balloons()
           else:
             st.error("❌ Gagal menyimpan ke Database.")
@@ -1125,7 +1124,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
       elif jenis_rekap == "Semester Genap":
         df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month.isin([1, 2, 3, 4, 5, 6])]
 
-      # Sembunyikan kolom pendukung di tabel rekap tampilan agar bersih
       kolom_disembunyikan = ["Nama_Guru", "Mata_Pelajaran", "Sekolah"]
       df_tampil = df_filtered_rekap.drop(columns=[col for col in kolom_disembunyikan if col in df_filtered_rekap.columns])
 
