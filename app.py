@@ -1071,14 +1071,18 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                 if pd.isna(id_val) or str(id_val).strip() == "":
                     continue
 
-                s = bool(row.get("S", False))
+s = bool(row.get("S", False))
                 i = bool(row.get("I", False))
                 a = bool(row.get("A", False))
 
-          if s: status = "Sakit"
-          elif i: status = "Izin"
-          elif a: status = "Alpha"
-          else: status = "Hadir"
+                if s:
+                    status = "Sakit"
+                elif i:
+                    status = "Izin"
+                elif a:
+                    status = "Alpha"
+                else:
+                    status = "Hadir"
 
           data_baru_list.append({
               "Tanggal": str(tanggal_absensi),
