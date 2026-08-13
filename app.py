@@ -33,13 +33,26 @@ scope = [
     "https://www.googleapis.com/auth/drive",
 ]
 
+import json
+import tempfile
+
 def get_gspread_client():
-    creds = Credentials.from_service_account_file(
-        "portal-pasti-6a664a3db407.json", 
-        scopes=scope
-    )
-    client = gspread.authorize(creds)
-    return client
+  # Ambil data dari Streamlit Secrets
+  creds_dict = dict(st.secrets["gcp_service_account"])
+
+  # Normalisasi private key jika ada karakter \n literal
+  if "private_key" in creds_dict:
+    creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+
+  # Buat file JSON sementara secara otomatis di server
+  with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
+    json.dump(creds_dict, f)
+    temp_filename = f.name
+
+  # Baca kredensial dari file JSON sementara tersebut
+  creds = Credentials.from_service_account_file(temp_filename, scopes=scope)
+  client = gspread.authorize(creds)
+  return client
 
 def load_sheet_data(sheet_name):
     try:
