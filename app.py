@@ -994,205 +994,133 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
 # APLIKASI 2: SIPENSIS (Sistem Pengelolaan Administrasi Siswa)
 # =========================================================================
 elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
-  st.markdown("### 📋 Sistem Pengelolaan Administrasi Siswa & Absensi (SIPENSIS)")
-  
-  # Import gspread_formatting untuk otomatisasi border dan checkbox
-  # from gspread_formatting import (
-#     Border,
-#     Borders,
-#     CellFormat,
-#     DataValidationRule,
-#     BooleanCondition,
-#     format_cell_range,
-#     set_data_validation,
-# )
+    st.markdown("### 📋 Sistem Pengelolaan Administrasi Siswa & Absensi (SIPENSIS)")
+    
+    # Import library untuk format spreadsheet
+    from gspread_formatting import (
+        CellFormat, Border, Borders, Color, format_cell_range,
+        DataValidationRule, BooleanCondition, set_data_validation
+    )
 
-  # Membuat TAB untuk memisahkan Input dan Rekap
-  tab1, tab2 = st.tabs(["✍️ Input Absensi", "📊 Laporan & Rekap"])
+    # Tab Navigasi
+    tab1, tab2 = st.tabs(["✍️ Input Absensi", "📊 Laporan & Rekap"])
 
-  # --- TAB 1: INPUT ABSENSI ---
-  with tab1:
-    df_siswa = load_sheet_data("Siswa")
-    if not df_siswa.empty:
-      df_siswa.columns = df_siswa.columns.str.strip()
-      
-      daftar_kelas = df_siswa["Kelas"].dropna().unique()
-      
-      col1, col2 = st.columns(2)
-      with col1:
-        tanggal_absensi = st.date_input("📅 Tanggal Absensi")
-        kelas_pilih = st.selectbox("📚 Pilih Kelas:", daftar_kelas)
-      with col2:
-        nama_guru = st.text_input("👨‍🏫 Nama Guru", value="Yustinus Budi Setyanta")
-        mata_pelajaran = st.text_input("📖 Mata Pelajaran", value="Pendidikan Pancasila")
+    # --- TAB 1: INPUT ABSENSI ---
+    with tab1:
+        df_siswa = load_sheet_data("Siswa")
+        
+        if not df_siswa.empty:
+            df_siswa.columns = df_siswa.columns.str.strip()
+            daftar_kelas = df_siswa["Kelas"].dropna().unique()
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                tanggal_absensi = st.date_input("📅 Tanggal Absensi")
+                kelas_pilih = st.selectbox("📚 Pilih Kelas:", daftar_kelas)
+            with col2:
+                nama_guru = st.text_input("👨‍🏫 Nama Guru", value=st.session_state.get("user_nama", ""))
+                mata_pelajaran = st.text_input("📖 Mata Pelajaran", value="Pendidikan Pancasila")
 
-      df_filtered_sekolah = df_siswa[df_siswa["Kelas"] == kelas_pilih]
-      if not df_filtered_sekolah.empty and "Sekolah" in df_filtered_sekolah.columns:
-        nama_sekolah_otomatis = df_filtered_sekolah["Sekolah"].iloc[0]
-      else:
-        nama_sekolah_otomatis = "Tidak Diketahui"
+            # Filter data siswa berdasarkan kelas
+            df_filtered = df_siswa[df_siswa["Kelas"] == kelas_pilih].copy()
+            nama_sekolah_otomatis = df_filtered["Sekolah"].iloc[0] if "Sekolah" in df_filtered.columns else "Tidak Diketahui"
 
-      st.info(f"🏫 **Nama Sekolah (Sinkron Database):** {nama_sekolah_otomatis}")
+            st.info(f"🏫 **Sekolah:** {nama_sekolah_otomatis}")
 
-      df_filtered = df_filtered_sekolah.copy()
-      df_filtered = df_filtered.dropna(subset=["ID_Siswa"])
-      for col in ["S", "I", "A"]: df_filtered[col] = False
+            # Persiapan tabel input
+            df_input = df_filtered[["ID_Siswa", "Nama_Siswa"]].copy()
+            df_input["S"] = False
+            df_input["I"] = False
+            df_input["A"] = False
 
-      edited_filtered = st.data_editor(
-          df_filtered,
-          column_config={
-              "ID_Siswa": st.column_config.NumberColumn("ID_Siswa", disabled=True),
-              "Nama_Siswa": st.column_config.TextColumn("Nama Siswa", disabled=True),
-              "S": st.column_config.CheckboxColumn("S", default=False),
-              "I": st.column_config.CheckboxColumn("I", default=False),
-              "A": st.column_config.CheckboxColumn("A", default=False),
-              "Kelas": None,
-              "Sekolah": None,
-              "Nama_Guru": None,
-              "Mata_Pelajaran": None,
-              "Tanggal": None,
-              "Status_Kehadiran": None,
-          },
-          hide_index=True, use_container_width=True
-      )
+            edited_df = st.data_editor(
+                df_input,
+                column_config={
+                    "ID_Siswa": st.column_config.NumberColumn("ID", disabled=True),
+                    "Nama_Siswa": st.column_config.TextColumn("Nama Siswa", disabled=True),
+                    "S": st.column_config.CheckboxColumn("Sakit"),
+                    "I": st.column_config.CheckboxColumn("Izin"),
+                    "A": st.column_config.CheckboxColumn("Alpha"),
+                },
+                hide_index=True, use_container_width=True
+            )
 
-      if st.button("💾 Simpan Absensi Harian", type="primary"):
-            data_baru_list = []
-            for idx, row in edited_filtered.iterrows():
-                if len(df_filtered) > 0 and 0 <= idx < len(df_filtered):
-                    id_val = df_filtered.iloc[idx].get("ID_Siswa", None)
-                    nama_siswa_val = df_filtered.iloc[idx].get("Nama_Siswa", "Siswa")
-                    kelas_val = df_filtered.iloc[idx].get("Kelas", kelas_pilih)
-                else:
-                    id_val = None
-                    nama_siswa_val = "Siswa"
-                    kelas_val = kelas_pilih
+            if st.button("💾 Simpan Absensi Harian", type="primary"):
+                with st.spinner("Menyimpan data..."):
+                    # Proses data ke list
+                    data_baru_list = []
+                    for _, row in edited_df.iterrows():
+                        status = "Hadir"
+                        if row["S"]: status = "Sakit"
+                        elif row["I"]: status = "Izin"
+                        elif row["A"]: status = "Alpha"
+                        
+                        data_baru_list.append({
+                            "Tanggal": str(tanggal_absensi),
+                            "Sekolah": nama_sekolah_otomatis,
+                            "Nama_Guru": nama_guru,
+                            "Mata_Pelajaran": mata_pelajaran,
+                            "Kelas": kelas_pilih,
+                            "ID_Siswa": row["ID_Siswa"],
+                            "Nama_Siswa": row["Nama_Siswa"],
+                            "Status_Kehadiran": status,
+                            "S": row["S"], "I": row["I"], "A": row["A"]
+                        })
 
-                if pd.isna(id_val) or str(id_val).strip() == "":
-                    continue
+                    # Gabungkan dengan data lama
+                    df_hari_ini = pd.DataFrame(data_baru_list)
+                    df_existing = load_sheet_data("Absensi_Harian")
+                    df_final = pd.concat([df_existing, df_hari_ini], ignore_index=True) if not df_existing.empty else df_hari_ini
 
-                s = bool(row.get("S", False))
-                i = bool(row.get("I", False))
-                a = bool(row.get("A", False))
+                    # Simpan ke Sheets
+                    if save_sheet_data("Absensi_Harian", df_final):
+                        # --- OTOMATISASI FORMATTING (Border & Checkbox) ---
+                        try:
+                            client = get_gspread_client()
+                            spreadsheet = client.open("Database_PASTI_Pusat")
+                            worksheet = spreadsheet.worksheet("Absensi_Harian")
+                            
+                            # 1. Apply Border
+                            last_row = len(df_final) + 1
+                            fmt = CellFormat(borders=Borders(
+                                top=Border('SOLID', Color(0,0,0)), bottom=Border('SOLID', Color(0,0,0)),
+                                left=Border('SOLID', Color(0,0,0)), right=Border('SOLID', Color(0,0,0))
+                            ))
+                            format_cell_range(worksheet, f'A1:K{last_row}', fmt)
+                            
+                            # 2. Set Checkbox (Kolom S, I, A - sesuaikan index kolom: A=1, B=2, dst)
+                            # Asumsi kolom S, I, A berada di kolom ke 9, 10, 11 (I, J, K)
+                            rule = DataValidationRule(BooleanCondition('BOOLEAN', []), showCustomUi=True)
+                            set_data_validation(worksheet, f'I2:K{last_row}', rule)
+                            
+                            st.success("✅ Absensi disimpan & format diperbarui!")
+                            st.balloons()
+                        except Exception as e:
+                            st.warning(f"Data tersimpan, namun format (border/checkbox) gagal diterapkan: {e}")
+                    else:
+                        st.error("❌ Gagal menyimpan ke Database.")
 
-                if s:
-                    status = "Sakit"
-                elif i:
-                    status = "Izin"
-                elif a:
-                    status = "Alpha"
-                else:
-                    status = "Hadir"
-
-                data_baru_list.append({
-                    "Tanggal": str(tanggal_absensi),
-                    "Sekolah": str(nama_sekolah_otomatis),
-                    "Nama_Guru": nama_guru,
-                    "Mata_Pelajaran": mata_pelajaran,
-                    "Kelas": str(kelas_val),
-                    "ID_Siswa": id_val,
-                    "Nama_Siswa": nama_siswa_val,
-                    "Status_Kehadiran": status,
-                    "S": s, "I": i, "A": a
-                })
-
-            if data_baru_list:
-                df_hari_ini = pd.DataFrame(data_baru_list)
-                df_existing = load_sheet_data("Absensi_Harian")
-                if not df_existing.empty:
-                    df_existing.columns = df_existing.columns.str.strip()
-                    df_gabungan = pd.concat([df_existing, df_hari_ini], ignore_index=True)
-                else:
-                    df_gabungan = df_hari_ini
-
-                if save_sheet_data("Absensi_Harian", df_gabungan):
-                # --- OTOMATISASI CHECKBOX & BORDER (TANPA NOTIFIKASI ERROR) ---
-                try:
-                    import gspread
-                    from gspread_formatting import CellFormat, Border, Borders, Color, format_cell_range
-
-                    gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
-                    sh = gc.open("Database_PASTI_Pusat")
-                    worksheet = sh.worksheet("Absensi_Harian")
-
-                    jumlah_baris = len(df_gabungan) + 1
-                
-                # 1. Membuat Checkbox otomatis menggunakan batch_update
-                validation_body = {
-                    "requests": [{
-                        "setDataValidation": {
-                            "range": {
-                                "sheetId": worksheet.id,
-                                "startRowIndex": 1,
-                                "endRowIndex": jumlah_baris,
-                                "startColumnIndex": 8,
-                                "endColumnIndex": 11
-                            },
-                            "rule": {
-                                "condition": {"type": "BOOLEAN"},
-                                "showCustomUi": True
-                            }
-                        }
-                    }]
-                }
-                sh.batch_update(validation_body)
-                
-                # 2. Memberikan Border / Garis Pembatas
-                thin_border = Border(style='SOLID', color=Color(0, 0, 0))
-                cell_format = CellFormat(borders=Borders(top=thin_border, bottom=thin_border, left=thin_border, right=thin_border))
-                format_cell_range(worksheet, f'A2:K{jumlah_baris}', cell_format)
-                
-            except Exception:
-                pass # Notifikasi error disembunyikan
-            # --------------------------------------------------
-
-            st.success("✅ Absensi berhasil disimpan lengkap dengan checkbox & border!")
-            st.balloons()
-          else:
-            st.error("❌ Gagal menyimpan ke Database.")
-        else:
-          st.warning("⚠️ Tidak ada data valid untuk disimpan.")
-      # --- TAB 2: LAPORAN & REKAP ---
-      with tab2:
-        st.subheader("📈 Laporan Rekapitulasi Absensi")
+    # --- TAB 2: LAPORAN & REKAP ---
+    with tab2:
+        st.subheader("📊 Laporan Rekapitulasi")
         df_rekap = load_sheet_data("Absensi_Harian")
         
         if not df_rekap.empty:
-          df_rekap.columns = df_rekap.columns.str.strip()
-          df_rekap['Tanggal'] = pd.to_datetime(df_rekap['Tanggal'], errors='coerce')
-          
-          jenis_rekap = st.radio("Pilih Jenis Rekap:", ["Bulanan", "Semester Ganjil", "Semester Genap"])
-          
-          if jenis_rekap == "Bulanan":
-            bulan = st.selectbox(
-                "Pilih Bulan:", 
-                range(1, 13), 
-                format_func=lambda x: ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][x-1]
-            )
-            df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month == bulan]
-          
-          elif jenis_rekap == "Semester Ganjil":
-            df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month.isin([7, 8, 9, 10, 11, 12])]
+            df_rekap['Tanggal'] = pd.to_datetime(df_rekap['Tanggal'])
             
-          elif jenis_rekap == "Semester Genap":
-            df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month.isin([1, 2, 3, 4, 5, 6])]
-
-          kolom_disembunyikan = ["Nama_Guru", "Mata_Pelajaran", "Sekolah"]
-          df_tampil = df_filtered_rekap.drop(columns=[col for col in kolom_disembunyikan if col in df_filtered_rekap.columns])
-
-          st.write(f"Menampilkan data rekap **{jenis_rekap}**:")
-          st.dataframe(df_tampil, use_container_width=True, hide_index=True)
-          
-          if not df_filtered_rekap.empty:
-            csv = df_filtered_rekap.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                "📥 Download Rekap (CSV)", 
-                data=csv, 
-                file_name=f"Rekap_{jenis_rekap.replace(' ', '_')}.csv", 
-                mime="text/csv"
-            )
+            # Filter Sederhana
+            kelas_filter = st.selectbox("Pilih Kelas untuk Laporan:", ["Semua"] + sorted(df_rekap["Kelas"].unique().tolist()))
+            
+            if kelas_filter != "Semua":
+                df_rekap = df_rekap[df_rekap["Kelas"] == kelas_filter]
+                
+            st.dataframe(df_rekap, use_container_width=True)
+            
+            # Download CSV
+            csv = df_rekap.to_csv(index=False).encode('utf-8')
+            st.download_button("📥 Download Data Absensi (CSV)", csv, "Rekap_Absensi.csv", "text/csv")
         else:
-          st.warning("Belum ada data absensi untuk direkap.")
+            st.warning("Data absensi belum tersedia.")
 # =========================================================================
 elif pilih_app.startswith("3."):
   st.markdown("### 📊 DIGMA (Digital Management)")
