@@ -1004,7 +1004,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
   df_siswa = load_sheet_data("Siswa")
 
   if not df_siswa.empty:
-    # Membersihkan spasi tersembunyi pada nama kolom dari Google Sheets
+    # Membersihkan spasi tersembunyi pada nama kolom
     df_siswa.columns = df_siswa.columns.str.strip()
 
     st.markdown("---")
@@ -1030,7 +1030,10 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
     # Saring data khusus untuk kelas tersebut
     df_filtered = df_siswa[df_siswa["Kelas"] == kelas_pilih].copy()
 
-    # Tambahkan kolom S, I, A default False (tidak tercentang) untuk tampilan editor
+    # Pastikan hanya mengambil baris yang memiliki ID_Siswa valid
+    df_filtered = df_filtered.dropna(subset=["ID_Siswa"])
+
+    # Tambahkan kolom S, I, A default False untuk editor
     for col in ["S", "I", "A"]:
       df_filtered[col] = False
 
@@ -1060,7 +1063,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
         disabled=["ID_Siswa", "Kelas", "Nama Siswa"],
         hide_index=True,
         use_container_width=True,
-        key="editor_absensi_harian_v2",
+        key="editor_absensi_harian_v3",
     )
 
     # Tombol Simpan Absensi Harian
@@ -1069,6 +1072,12 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
         data_baru_list = []
 
         for idx, row in edited_filtered.iterrows():
+          id_siswa_val = row.get("ID_Siswa", None)
+
+          # Abaikan baris jika ID_Siswa kosong atau tidak valid
+          if pd.isna(id_siswa_val) or str(id_siswa_val).strip() == "":
+            continue
+
           s_val = bool(row["S"])
           i_val = bool(row["I"])
           a_val = bool(row["A"])
@@ -1083,16 +1092,10 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
           else:
             status_final = "Hadir"
 
-          # Ambil nilai kolom dengan aman (mendukung variasi spasi/underscore)
-          id_siswa_val = row.get(
-              "ID_Siswa", row.get("ID_siswa", row.get("Id_Siswa", ""))
-          )
           kelas_val = row.get("Kelas", kelas_pilih)
-          nama_siswa_val = row.get(
-              "Nama Siswa", row.get("Nama_Siswa", "Siswa")
-          )
+          nama_siswa_val = row.get("Nama Siswa", "Siswa")
 
-          # Susun baris data absensi harian
+          # Susun baris data absensi harian yang valid saja
           data_baru_list.append({
               "Tanggal": str(tanggal_absensi),
               "Sekolah": nama_sekolah,
@@ -1107,32 +1110,39 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
               "A": a_val,
           })
 
-        df_hari_ini = pd.DataFrame(data_baru_list)
+        if data_baru_list:
+          df_hari_ini = pd.DataFrame(data_baru_list)
 
-        # Muat riwayat absensi yang sudah ada sebelumnya di Google Sheets
-        df_existing_rekap = load_sheet_data("Absensi_Harian")
+          # Muat riwayat absensi yang sudah ada di Google Sheets
+          df_existing_rekap = load_sheet_data("Absensi_Harian")
 
-        if df_existing_rekap.empty:
-          df_gabungan = df_hari_ini
+          if df_existing_rekap.empty:
+            df_gabungan = df_hari_ini
+          else:
+            df_existing_rekap.columns = df_existing_rekap.columns.str.strip()
+            # Bersihkan baris kosong dari data lama agar rekap tetap bersih
+            if "ID_Siswa" in df_existing_rekap.columns:
+              df_existing_rekap = df_existing_rekap.dropna(subset=["ID_Siswa"])
+
+            # Gabungkan data lama dengan data absensi hari ini
+            df_gabungan = pd.concat(
+                [df_existing_rekap, df_hari_ini], ignore_index=True
+            )
+
+          # Simpan kembali ke sheet Absensi_Harian
+          success = save_sheet_data("Absensi_Harian", df_gabungan)
+
+          if success:
+            st.success(
+                "✅ Absensi tanggal "
+                + str(tanggal_absensi)
+                + " berhasil direkap dengan bersih!"
+            )
+            st.balloons()
+          else:
+            st.error("❌ Gagal menyimpan rekap absensi ke Database.")
         else:
-          df_existing_rekap.columns = df_existing_rekap.columns.str.strip()
-          # Gabungkan data lama dengan data absensi hari ini (Append ke bawah)
-          df_gabungan = pd.concat(
-              [df_existing_rekap, df_hari_ini], ignore_index=True
-          )
-
-        # Simpan kembali ke sheet Absensi_Harian
-        success = save_sheet_data("Absensi_Harian", df_gabungan)
-
-        if success:
-          st.success(
-              "✅ Absensi tanggal "
-              + str(tanggal_absensi)
-              + " berhasil direkap dan ditambahkan ke database!"
-          )
-          st.balloons()
-        else:
-          st.error("❌ Gagal menyimpan rekap absensi ke Database.")
+          st.warning("⚠️ Tidak ada data siswa yang valid untuk disimpan.")
 
   else:
     st.warning("⚠️ Data master siswa belum termuat atau tab 'Siswa' kosong.")
