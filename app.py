@@ -1097,27 +1097,48 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
             df_gabungan = df_hari_ini
 
           if save_sheet_data("Absensi_Harian", df_gabungan):
-            # --- OTOMATISASI CHECKBOX GOOGLE SHEETS ---
+            # --- OTOMATISASI CHECKBOX & BORDER GOOGLE SHEETS ---
             try:
                 import gspread
                 from gspread_formatting import (
                     DataValidationRule,
                     BooleanCondition,
                     set_data_validation,
+                    CellFormat,
+                    Border,
+                    Borders,
+                    Color,
+                    format_cell_range
                 )
                 
                 gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
                 sh = gc.open("Database_PASTI_Pusat")
                 worksheet = sh.worksheet("Absensi_Harian")
                 
-                # Menghitung baris terakhir secara dinamis berdasarkan data yang baru masuk
+                # Menghitung baris terakhir secara dinamis
                 jumlah_baris = len(df_gabungan) + 1
                 
-                # Mengubah kolom I, J, K menjadi Checkbox otomatis sesuai baris data
+                # 1. Mengubah kolom I, J, K menjadi Checkbox otomatis
                 checkbox_rule = DataValidationRule(BooleanCondition('BOOLEAN', []), showCustomUi=True)
                 set_data_validation(worksheet, f'I2:K{jumlah_baris}', checkbox_rule)
+                
+                # 2. Memberikan Border / Garis Pembatas
+                thin_border = Border(style='SOLID', color=Color(0, 0, 0))
+                cell_format = CellFormat(borders=Borders(top=thin_border, bottom=thin_border, left=thin_border, right=thin_border))
+                format_cell_range(worksheet, f'A2:K{jumlah_baris}', cell_format)
+                
             except Exception as e:
-                print(f"Catatan (bukan error fatal): {e}")
+                st.sidebar.warning(f"Info Format Sheets: {e}")
+            # --------------------------------------------------
+
+            # BAGIAN INI YANG MEMUNCULKAN NOTIFIKASI & BALON
+            st.success("✅ Absensi berhasil disimpan dengan checkbox & border otomatis!")
+            st.balloons()
+            
+          else:
+            st.error("❌ Gagal menyimpan ke Database.")
+        else:
+          st.warning("⚠️ Tidak ada data valid untuk disimpan.")
             # ----------------------------------------
       # --- TAB 2: LAPORAN & REKAP ---
       with tab2:
