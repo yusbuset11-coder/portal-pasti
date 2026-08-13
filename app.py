@@ -1123,81 +1123,48 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
             st.error("❌ Gagal menyimpan ke Database.")
         else:
           st.warning("⚠️ Tidak ada data valid untuk disimpan.")
-            # --- OTOMATISASI FORMAT GOOGLE SHEETS ---
-            try:
-                # Menggunakan koneksi gspread yang sudah ada di aplikasi Anda
-                import gspread
-                import json
-                import streamlit as st
-                
-                # Membuka koneksi spreadsheet (mengikuti fungsi koneksi yang Anda miliki)
-                # Pastikan variabel koneksi client dan nama spreadsheet sesuai dengan kode utama Anda
-                gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
-                sh = gc.open("Database_PASTI_Pusat")
-                worksheet = sh.worksheet("Absensi_Harian")
-                
-                # 1. Ubah kolom I, J, K menjadi Checkbox otomatis
-                checkbox_rule = DataValidationRule(BooleanCondition('BOOLEAN', []), showCustomUi=True)
-                set_data_validation(worksheet, 'I2:K1000', checkbox_rule)
-                
-                # 2. Beri Border otomatis pada baris yang terisi data
-                border_style = Border(style='SOLID', color=Color(0, 0, 0))
-                cell_format = CellFormat(borders=Borders(top=border_style, bottom=border_style, left=border_style, right=border_style))
-                last_row = len(worksheet.get_all_values())
-                if last_row > 1:
-                    format_cell_range(worksheet, f'A2:K{last_row}', cell_format)
-            except Exception as e:
-                print(f"Gagal memformat sheet: {e}")
-            # ----------------------------------------
 
-            st.success("✅ Absensi berhasil disimpan lengkap dengan format checkbox & border otomatis!")
-            st.balloons()
-          else:
-            st.error("❌ Gagal menyimpan ke Database.")
-        else:
-          st.warning("⚠️ Tidak ada data valid untuk disimpan.")
-
-  # --- TAB 2: LAPORAN & REKAP ---
-  with tab2:
-    st.subheader("📈 Laporan Rekapitulasi Absensi")
-    df_rekap = load_sheet_data("Absensi_Harian")
-    
-    if not df_rekap.empty:
-      df_rekap.columns = df_rekap.columns.str.strip()
-      df_rekap['Tanggal'] = pd.to_datetime(df_rekap['Tanggal'], errors='coerce')
-      
-      jenis_rekap = st.radio("Pilih Jenis Rekap:", ["Bulanan", "Semester Ganjil", "Semester Genap"])
-      
-      if jenis_rekap == "Bulanan":
-        bulan = st.selectbox(
-            "Pilih Bulan:", 
-            range(1, 13), 
-            format_func=lambda x: ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][x-1]
-        )
-        df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month == bulan]
-      
-      elif jenis_rekap == "Semester Ganjil":
-        df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month.isin([7, 8, 9, 10, 11, 12])]
+      # --- TAB 2: LAPORAN & REKAP ---
+      with tab2:
+        st.subheader("📈 Laporan Rekapitulasi Absensi")
+        df_rekap = load_sheet_data("Absensi_Harian")
         
-      elif jenis_rekap == "Semester Genap":
-        df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month.isin([1, 2, 3, 4, 5, 6])]
+        if not df_rekap.empty:
+          df_rekap.columns = df_rekap.columns.str.strip()
+          df_rekap['Tanggal'] = pd.to_datetime(df_rekap['Tanggal'], errors='coerce')
+          
+          jenis_rekap = st.radio("Pilih Jenis Rekap:", ["Bulanan", "Semester Ganjil", "Semester Genap"])
+          
+          if jenis_rekap == "Bulanan":
+            bulan = st.selectbox(
+                "Pilih Bulan:", 
+                range(1, 13), 
+                format_func=lambda x: ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][x-1]
+            )
+            df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month == bulan]
+          
+          elif jenis_rekap == "Semester Ganjil":
+            df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month.isin([7, 8, 9, 10, 11, 12])]
+            
+          elif jenis_rekap == "Semester Genap":
+            df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month.isin([1, 2, 3, 4, 5, 6])]
 
-      kolom_disembunyikan = ["Nama_Guru", "Mata_Pelajaran", "Sekolah"]
-      df_tampil = df_filtered_rekap.drop(columns=[col for col in kolom_disembunyikan if col in df_filtered_rekap.columns])
+          kolom_disembunyikan = ["Nama_Guru", "Mata_Pelajaran", "Sekolah"]
+          df_tampil = df_filtered_rekap.drop(columns=[col for col in kolom_disembunyikan if col in df_filtered_rekap.columns])
 
-      st.write(f"Menampilkan data rekap **{jenis_rekap}**:")
-      st.dataframe(df_tampil, use_container_width=True, hide_index=True)
-      
-      if not df_filtered_rekap.empty:
-        csv = df_filtered_rekap.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            "📥 Download Rekap (CSV)", 
-            data=csv, 
-            file_name=f"Rekap_{jenis_rekap.replace(' ', '_')}.csv", 
-            mime="text/csv"
-        )
-    else:
-      st.warning("Belum ada data absensi untuk direkap.")
+          st.write(f"Menampilkan data rekap **{jenis_rekap}**:")
+          st.dataframe(df_tampil, use_container_width=True, hide_index=True)
+          
+          if not df_filtered_rekap.empty:
+            csv = df_filtered_rekap.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                "📥 Download Rekap (CSV)", 
+                data=csv, 
+                file_name=f"Rekap_{jenis_rekap.replace(' ', '_')}.csv", 
+                mime="text/csv"
+            )
+        else:
+          st.warning("Belum ada data absensi untuk direkap.")
 # =========================================================================
 elif pilih_app.startswith("3."):
   st.markdown("### 📊 DIGMA (Digital Management)")
