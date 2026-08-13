@@ -1097,15 +1097,15 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                 })
 
         if data_baru_list:
-          df_hari_ini = pd.DataFrame(data_baru_list)
-          df_existing = load_sheet_data("Absensi_Harian")
-          if not df_existing.empty:
-            df_existing.columns = df_existing.columns.str.strip()
-            df_gabungan = pd.concat([df_existing, df_hari_ini], ignore_index=True)
-          else:
-            df_gabungan = df_hari_ini
+            df_hari_ini = pd.DataFrame(data_baru_list)
+            df_existing = load_sheet_data("Absensi_Harian")
+            if not df_existing.empty:
+                df_existing.columns = df_existing.columns.str.strip()
+                df_gabungan = pd.concat([df_existing, df_hari_ini], ignore_index=True)
+            else:
+                df_gabungan = df_hari_ini
 
-          if save_sheet_data("Absensi_Harian", df_gabungan):
+            if save_sheet_data("Absensi_Harian", df_gabungan):
             # --- OTOMATISASI CHECKBOX & BORDER (TANPA NOTIFIKASI ERROR) ---
             try:
                 import gspread
