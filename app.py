@@ -1,5 +1,7 @@
 from io import BytesIO
 import json
+import base64
+import tempfile
 import docx
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -12,6 +14,12 @@ from google.oauth2.service_account import Credentials
 import pandas as pd
 import streamlit as st
 
+# DIPINDAHKAN KE ATAS: Import modul formatting gspread untuk mencegah ImportError
+from gspread_formatting import (
+    CellFormat, Border, Borders, Color, format_cell_range,
+    DataValidationRule, BooleanCondition, set_data_validation
+)
+
 st.set_page_config(
     page_title="PORTAL PASTI - Portal Administrasi Siswa Terintegrasi",
     page_icon="🏫",
@@ -21,22 +29,10 @@ st.set_page_config(
 # ID Google Spreadsheet Database_PASTI_Pusat
 SHEET_ID = "1terQDxNZX1aESF0GO02uSn9R7eKLKDGbkiT11GpX1pA"
 
-
-import gspread # Pastikan baris import ini ada di paling atas
-import pandas as pd
-import streamlit as st
-from google.oauth2.service_account import Credentials
-
-# --- TEMPEL KODE FUNGSI GSPREAD DI SINI ---
 scope = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
 ]
-
-import base64
-import json
-import tempfile
-
 
 def get_gspread_client():
   # Ambil string base64 dari secrets
@@ -995,12 +991,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
 # =========================================================================
 elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
     st.markdown("### 📋 Sistem Pengelolaan Administrasi Siswa & Absensi (SIPENSIS)")
-    
-    # Import library untuk format spreadsheet
-    from gspread_formatting import (
-        CellFormat, Border, Borders, Color, format_cell_range,
-        DataValidationRule, BooleanCondition, set_data_validation
-    )
 
     # Tab Navigasi
     tab1, tab2 = st.tabs(["✍️ Input Absensi", "📊 Laporan & Rekap"])
