@@ -1084,17 +1084,17 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                 else:
                     status = "Hadir"
 
-          data_baru_list.append({
-              "Tanggal": str(tanggal_absensi),
-              "Sekolah": str(nama_sekolah_otomatis),
-              "Nama_Guru": nama_guru,
-              "Mata_Pelajaran": mata_pelajaran,
-              "Kelas": str(kelas_val),
-              "ID_Siswa": id_val,
-              "Nama_Siswa": nama_siswa_val,
-              "Status_Kehadiran": status,
-              "S": s, "I": i, "A": a
-          })
+                data_baru_list.append({
+                    "Tanggal": str(tanggal_absensi),
+                    "Sekolah": str(nama_sekolah_otomatis),
+                    "Nama_Guru": nama_guru,
+                    "Mata_Pelajaran": mata_pelajaran,
+                    "Kelas": str(kelas_val),
+                    "ID_Siswa": id_val,
+                    "Nama_Siswa": nama_siswa_val,
+                    "Status_Kehadiran": status,
+                    "S": s, "I": i, "A": a
+                })
 
         if data_baru_list:
           df_hari_ini = pd.DataFrame(data_baru_list)
