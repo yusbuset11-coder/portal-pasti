@@ -1037,12 +1037,10 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
       if st.button("💾 Simpan Absensi Harian"):
         data_baru_list = []
         for idx, row in edited_filtered.iterrows():
-          # Ambil ID_Siswa dengan aman dari berbagai kemungkinan penulisan kolom
           id_val = row.get("ID_Siswa", row.get("ID_siswa", row.get("Id_Siswa", None)))
           if pd.isna(id_val) or str(id_val).strip() == "":
             continue
           
-          # Ambil Nama Siswa dan Kelas dengan aman
           nama_siswa_val = row.get("Nama Siswa", row.get("Nama_Siswa", row.get("nama_siswa", "Siswa")))
           kelas_val = row.get("Kelas", kelas_pilih)
 
@@ -1103,18 +1101,19 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
         df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month == bulan]
       
       elif jenis_rekap == "Semester Ganjil":
-        # Semester Ganjil: Juli (7) s/d Desember (12)
         df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month.isin([7, 8, 9, 10, 11, 12])]
         
       elif jenis_rekap == "Semester Genap":
-        # Semester Genap: Januari (1) s/d Juni (6)
         df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month.isin([1, 2, 3, 4, 5, 6])]
 
-      # Tampilkan Hasil Rekap
+      # Sembunyikan kolom Nama_Guru dan Mata_Pelajaran dari tampilan tabel rekap agar lebih simpel
+      kolom_disembunyikan = ["Nama_Guru", "Mata_Pelajaran"]
+      df_tampil = df_filtered_rekap.drop(columns=[col for col in kolom_disembunyikan if col in df_filtered_rekap.columns])
+
       st.write(f"Menampilkan data rekap **{jenis_rekap}**:")
-      st.dataframe(df_filtered_rekap, use_container_width=True, hide_index=True)
+      st.dataframe(df_tampil, use_container_width=True, hide_index=True)
       
-      # Fitur Download CSV
+      # Fitur Download CSV (tetap mendownload data lengkap utuh)
       if not df_filtered_rekap.empty:
         csv = df_filtered_rekap.to_csv(index=False).encode('utf-8')
         st.download_button(
