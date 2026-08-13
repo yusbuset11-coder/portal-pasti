@@ -1110,12 +1110,12 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                 try:
                     import gspread
                     from gspread_formatting import CellFormat, Border, Borders, Color, format_cell_range
-                
-                gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
-                sh = gc.open("Database_PASTI_Pusat")
-                worksheet = sh.worksheet("Absensi_Harian")
-                
-                jumlah_baris = len(df_gabungan) + 1
+
+                    gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
+                    sh = gc.open("Database_PASTI_Pusat")
+                    worksheet = sh.worksheet("Absensi_Harian")
+
+                    jumlah_baris = len(df_gabungan) + 1
                 
                 # 1. Membuat Checkbox otomatis menggunakan batch_update
                 validation_body = {
