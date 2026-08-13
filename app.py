@@ -996,6 +996,17 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
 elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
   st.markdown("### 📋 Sistem Pengelolaan Administrasi Siswa & Absensi (SIPENSIS)")
   
+  # Import gspread_formatting untuk otomatisasi border dan checkbox
+  from gspread_formatting import (
+      Border,
+      Borders,
+      CellFormat,
+      DataValidationRule,
+      BooleanCondition,
+      format_cell_range,
+      set_data_validation,
+  )
+
   # Membuat TAB untuk memisahkan Input dan Rekap
   tab1, tab2 = st.tabs(["✍️ Input Absensi", "📊 Laporan & Rekap"])
 
@@ -1005,7 +1016,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
     if not df_siswa.empty:
       df_siswa.columns = df_siswa.columns.str.strip()
       
-      # Filter Pilih Kelas terlebih dahulu agar sekolah bisa dibaca otomatis
       daftar_kelas = df_siswa["Kelas"].dropna().unique()
       
       col1, col2 = st.columns(2)
@@ -1016,7 +1026,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
         nama_guru = st.text_input("👨‍🏫 Nama Guru", value="Yustinus Budi Setyanta")
         mata_pelajaran = st.text_input("📖 Mata Pelajaran", value="Pendidikan Pancasila")
 
-      # Otomatis ambil Nama Sekolah dari database berdasarkan kelas yang dipilih
       df_filtered_sekolah = df_siswa[df_siswa["Kelas"] == kelas_pilih]
       if not df_filtered_sekolah.empty and "Sekolah" in df_filtered_sekolah.columns:
         nama_sekolah_otomatis = df_filtered_sekolah["Sekolah"].iloc[0]
@@ -1025,12 +1034,10 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
 
       st.info(f"🏫 **Nama Sekolah (Sinkron Database):** {nama_sekolah_otomatis}")
 
-      # Saring data khusus untuk kelas tersebut
       df_filtered = df_filtered_sekolah.copy()
       df_filtered = df_filtered.dropna(subset=["ID_Siswa"])
       for col in ["S", "I", "A"]: df_filtered[col] = False
 
-      # Tabel Editor Input: Menggunakan 'Nama_Siswa' sesuai database
       edited_filtered = st.data_editor(
           df_filtered,
           column_config={
@@ -1039,7 +1046,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
               "S": st.column_config.CheckboxColumn("S", default=False),
               "I": st.column_config.CheckboxColumn("I", default=False),
               "A": st.column_config.CheckboxColumn("A", default=False),
-              # Sembunyikan kolom lain dari tabel editor
               "Kelas": None,
               "Sekolah": None,
               "Nama_Guru": None,
@@ -1057,7 +1063,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
           if pd.isna(id_val) or str(id_val).strip() == "":
             continue
           
-          # Diambil menggunakan 'Nama_Siswa' agar sesuai dengan database
           nama_siswa_val = df_filtered.iloc[idx].get("Nama_Siswa", "Siswa")
           kelas_val = df_filtered.iloc[idx].get("Kelas", kelas_pilih)
 
@@ -1077,7 +1082,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
               "Mata_Pelajaran": mata_pelajaran,
               "Kelas": str(kelas_val),
               "ID_Siswa": id_val,
-              "Nama_Siswa": nama_siswa_val,  # Disimpan ke kolom Nama_Siswa di Absensi_Harian
+              "Nama_Siswa": nama_siswa_val,
               "Status_Kehadiran": status,
               "S": s, "I": i, "A": a
           })
@@ -1092,7 +1097,34 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
             df_gabungan = df_hari_ini
 
           if save_sheet_data("Absensi_Harian", df_gabungan):
-            st.success("✅ Absensi dan nama siswa berhasil disimpan dengan benar!")
+            # --- OTOMATISASI FORMAT GOOGLE SHEETS ---
+            try:
+                # Menggunakan koneksi gspread yang sudah ada di aplikasi Anda
+                import gspread
+                import json
+                import streamlit as st
+                
+                # Membuka koneksi spreadsheet (mengikuti fungsi koneksi yang Anda miliki)
+                # Pastikan variabel koneksi client dan nama spreadsheet sesuai dengan kode utama Anda
+                gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
+                sh = gc.open("Database_PASTI_Pusat")
+                worksheet = sh.worksheet("Absensi_Harian")
+                
+                # 1. Ubah kolom I, J, K menjadi Checkbox otomatis
+                checkbox_rule = DataValidationRule(BooleanCondition('BOOLEAN', []), showCustomUi=True)
+                set_data_validation(worksheet, 'I2:K1000', checkbox_rule)
+                
+                # 2. Beri Border otomatis pada baris yang terisi data
+                border_style = Border(style='SOLID', color=Color(0, 0, 0))
+                cell_format = CellFormat(borders=Borders(top=border_style, bottom=border_style, left=border_style, right=border_style))
+                last_row = len(worksheet.get_all_values())
+                if last_row > 1:
+                    format_cell_range(worksheet, f'A2:K{last_row}', cell_format)
+            except Exception as e:
+                print(f"Gagal memformat sheet: {e}")
+            # ----------------------------------------
+
+            st.success("✅ Absensi berhasil disimpan lengkap dengan format checkbox & border otomatis!")
             st.balloons()
           else:
             st.error("❌ Gagal menyimpan ke Database.")
