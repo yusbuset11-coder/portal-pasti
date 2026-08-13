@@ -1,2 +1,3 @@
 gspread
 gspread-formatting
+python-docx
