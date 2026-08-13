@@ -1005,14 +1005,13 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
     if not df_siswa.empty:
       df_siswa.columns = df_siswa.columns.str.strip()
       
-      # Input teks di atas tetap ada sebagai pengisi data di balik layar
       col1, col2 = st.columns(2)
       with col1:
         tanggal_absensi = st.date_input("📅 Tanggal Absensi")
         nama_sekolah = st.text_input("🏫 Nama Sekolah", value="SMK A")
       with col2:
         nama_guru = st.text_input("👨‍🏫 Nama Guru", value="Yustinus Budi Setyanta")
-        mata_pelajaran = st.text_input("📖 Mata Pelajaran", value="Bahasa Indonesia")
+        mata_pelajaran = st.text_input("📖 Mata Pelajaran", value="Pendidikan Pancasila")
 
       daftar_kelas = df_siswa["Kelas"].dropna().unique()
       kelas_pilih = st.selectbox("📚 Pilih Kelas:", daftar_kelas)
@@ -1021,34 +1020,41 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
       df_filtered = df_filtered.dropna(subset=["ID_Siswa"])
       for col in ["S", "I", "A"]: df_filtered[col] = False
 
-      # Sembunyikan kolom Sekolah, Nama_Guru, Mata_Pelajaran dari tabel editor input
+      # Tabel Editor Input: Hanya menampilkan ID_Siswa, Nama Siswa, S, I, A
       edited_filtered = st.data_editor(
           df_filtered,
           column_config={
               "ID_Siswa": st.column_config.NumberColumn("ID_Siswa", disabled=True),
-              "Kelas": st.column_config.TextColumn("Kelas", disabled=True),
               "Nama Siswa": st.column_config.TextColumn("Nama Siswa", disabled=True),
               "S": st.column_config.CheckboxColumn("S", default=False),
               "I": st.column_config.CheckboxColumn("I", default=False),
               "A": st.column_config.CheckboxColumn("A", default=False),
+              # Sembunyikan kolom yang tidak perlu dilihat di tabel input
+              "Kelas": None,
               "Sekolah": None,
               "Nama_Guru": None,
               "Mata_Pelajaran": None,
+              "Tanggal": None,
+              "Status_Kehadiran": None,
           },
           hide_index=True, use_container_width=True
       )
 
-      if st.button("💾 Simpan Absensi Harian"):
+      if st.button("💾 Simpan Absensi Harian", type="primary"):
         data_baru_list = []
         for idx, row in edited_filtered.iterrows():
-          id_val = row.get("ID_Siswa", row.get("ID_siswa", row.get("Id_Siswa", None)))
+          # Ambil ID_Siswa asli dari df_filtered berdasarkan indeks baris yang sama
+          id_val = df_filtered.iloc[idx].get("ID_Siswa", None)
           if pd.isna(id_val) or str(id_val).strip() == "":
             continue
           
-          nama_siswa_val = row.get("Nama Siswa", row.get("Nama_Siswa", row.get("nama_siswa", "Siswa")))
-          kelas_val = row.get("Kelas", kelas_pilih)
+          nama_siswa_val = df_filtered.iloc[idx].get("Nama Siswa", "Siswa")
+          kelas_val = df_filtered.iloc[idx].get("Kelas", kelas_pilih)
 
-          s, i, a = bool(row.get("S", False)), bool(row.get("I", False)), bool(row.get("A", False))
+          s = bool(row.get("S", False))
+          i = bool(row.get("I", False))
+          a = bool(row.get("A", False))
+
           if s: status = "Sakit"
           elif i: status = "Izin"
           elif a: status = "Alpha"
@@ -1068,17 +1074,16 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
 
         if data_baru_list:
           df_hari_ini = pd.DataFrame(data_baru_list)
+          # SIMPAN KE SHEET KHUSUS ABSENSI HARIAN (Bukan ke sheet Siswa)
           df_existing = load_sheet_data("Absensi_Harian")
           if not df_existing.empty:
             df_existing.columns = df_existing.columns.str.strip()
-            if "ID_Siswa" in df_existing.columns:
-              df_existing = df_existing.dropna(subset=["ID_Siswa"])
             df_gabungan = pd.concat([df_existing, df_hari_ini], ignore_index=True)
           else:
             df_gabungan = df_hari_ini
 
           if save_sheet_data("Absensi_Harian", df_gabungan):
-            st.success("✅ Absensi berhasil disimpan dan direkap!")
+            st.success("✅ Absensi berhasil disimpan ke rekap harian!")
             st.balloons()
           else:
             st.error("❌ Gagal menyimpan ke Database.")
@@ -1110,14 +1115,13 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
       elif jenis_rekap == "Semester Genap":
         df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month.isin([1, 2, 3, 4, 5, 6])]
 
-      # Sembunyikan Nama_Guru, Mata_Pelajaran, dan Sekolah dari tabel rekap tampilan
+      # Sembunyikan kolom pendukung di tabel rekap tampilan agar bersih
       kolom_disembunyikan = ["Nama_Guru", "Mata_Pelajaran", "Sekolah"]
       df_tampil = df_filtered_rekap.drop(columns=[col for col in kolom_disembunyikan if col in df_filtered_rekap.columns])
 
       st.write(f"Menampilkan data rekap **{jenis_rekap}**:")
       st.dataframe(df_tampil, use_container_width=True, hide_index=True)
       
-      # Fitur Download CSV (tetap menyimpan data lengkap di file CSV yang didownload)
       if not df_filtered_rekap.empty:
         csv = df_filtered_rekap.to_csv(index=False).encode('utf-8')
         st.download_button(
@@ -1128,7 +1132,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
         )
     else:
       st.warning("Belum ada data absensi untuk direkap.")
-# APLIKASI 3 & 4: DIGMA & SAKTI
 # =========================================================================
 elif pilih_app.startswith("3."):
   st.markdown("### 📊 DIGMA (Digital Management)")
