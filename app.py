@@ -1100,8 +1100,8 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                 df_hari_ini = pd.DataFrame(data_baru_list)
                 df_existing = load_sheet_data("Absensi_Harian")
                 if not df_existing.empty:
-                df_existing.columns = df_existing.columns.str.strip()
-                df_gabungan = pd.concat([df_existing, df_hari_ini], ignore_index=True)
+                    df_existing.columns = df_existing.columns.str.strip()
+                    df_gabungan = pd.concat([df_existing, df_hari_ini], ignore_index=True)
                 else:
                 df_gabungan = df_hari_ini
 
