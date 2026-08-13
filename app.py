@@ -1004,6 +1004,18 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
   df_siswa = load_sheet_data("Siswa")
 
   if not df_siswa.empty:
+    # Konversi kolom S, I, A agar aman dari TypeError tipe data string/boolean
+    for col in ["S", "I", "A"]:
+      if col in df_siswa.columns:
+        df_siswa[col] = (
+            df_siswa[col]
+            .astype(str)
+            .str.lower()
+            .isin(["true", "1", "t", "yes"])
+        )
+      else:
+        df_siswa[col] = False
+
     st.markdown("---")
     st.subheader("📌 Identitas Pembelajaran & Absensi")
 
@@ -1027,15 +1039,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
     # Saring data khusus untuk kelas tersebut
     df_filtered = df_siswa[df_siswa["Kelas"] == kelas_pilih].copy()
 
-    # Pastikan kolom S, I, A ada dan bernilai False (tidak tercentang) secara default
-    for col in ["S", "I", "A"]:
-      if col not in df_filtered.columns:
-        df_filtered[col] = False
-      else:
-        df_filtered[col] = (
-            df_filtered[col].fillna(False).astype(bool)
-        )
-
     st.markdown("---")
     st.info(
         f"Menampilkan daftar siswa Kelas **{kelas_pilih}** untuk tanggal"
@@ -1043,7 +1046,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
         " hadir (kosong = Hadir)."
     )
 
-    # Tabel interaktif dengan checkbox default False (tidak tercentang)
+    # Tabel interaktif dengan checkbox
     edited_filtered = st.data_editor(
         df_filtered,
         column_config={
@@ -1060,12 +1063,13 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
             "Sekolah": None,
             "Nama_Guru": None,
             "Mata_Pelajaran": None,
+            "Tanggal": None,
             "Status_Kehadiran": None,
         },
         disabled=["ID_Siswa", "Kelas", "Nama Siswa"],
         hide_index=True,
         use_container_width=True,
-        key="editor_absensi_sia_baru",
+        key="editor_absensi_sia_v2",
     )
 
     # Tombol Simpan Perubahan Absensi ke Database Pusat
@@ -1073,9 +1077,9 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
       with st.spinner("Menyimpan data absensi..."):
         for idx, row in edited_filtered.iterrows():
           id_val = row["ID_Siswa"]
-          s_val = row["S"]
-          i_val = row["I"]
-          a_val = row["A"]
+          s_val = bool(row["S"])
+          i_val = bool(row["I"])
+          a_val = bool(row["A"])
 
           # Logika Status Kehadiran Otomatis
           if s_val:
@@ -1087,21 +1091,16 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
           else:
             status_final = "Hadir"
 
-          # Update nilai ke dataframe utama
-          df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "Tanggal"] = str(
-              tanggal_absensi
-          )
-          df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "Sekolah"] = nama_sekolah
-          df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "Nama_Guru"] = nama_guru
-          df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "Mata_Pelajaran"] = (
-              mata_pelajaran
-          )
-          df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "S"] = s_val
-          df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "I"] = i_val
-          df_siswa.loc[df_siswa["ID_Sishwa"] == id_val, "A"] = a_val
-          df_siswa.loc[df_siswa["ID_Siswa"] == id_val, "Status_Kehadiran"] = (
-              status_final
-          )
+          # Update nilai ke dataframe utama menggunakan masking baris yang aman
+          mask = df_siswa["ID_Siswa"] == id_val
+          df_siswa.loc[mask, "Tanggal"] = str(tanggal_absensi)
+          df_siswa.loc[mask, "Sekolah"] = nama_sekolah
+          df_siswa.loc[mask, "Nama_Guru"] = nama_guru
+          df_siswa.loc[mask, "Mata_Pelajaran"] = mata_pelajaran
+          df_siswa.loc[mask, "S"] = s_val
+          df_siswa.loc[mask, "I"] = i_val
+          df_siswa.loc[mask, "A"] = a_val
+          df_siswa.loc[mask, "Status_Kehadiran"] = status_final
 
         success = save_sheet_data("Siswa", df_siswa)
         if success:
