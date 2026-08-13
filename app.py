@@ -1103,7 +1103,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                     df_existing.columns = df_existing.columns.str.strip()
                     df_gabungan = pd.concat([df_existing, df_hari_ini], ignore_index=True)
                 else:
-                df_gabungan = df_hari_ini
+                    df_gabungan = df_hari_ini
 
                 if save_sheet_data("Absensi_Harian", df_gabungan):
             # --- OTOMATISASI CHECKBOX & BORDER (TANPA NOTIFIKASI ERROR) ---
