@@ -1005,6 +1005,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
     if not df_siswa.empty:
       df_siswa.columns = df_siswa.columns.str.strip()
       
+      # Input teks di atas tetap ada sebagai pengisi data di balik layar
       col1, col2 = st.columns(2)
       with col1:
         tanggal_absensi = st.date_input("📅 Tanggal Absensi")
@@ -1020,6 +1021,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
       df_filtered = df_filtered.dropna(subset=["ID_Siswa"])
       for col in ["S", "I", "A"]: df_filtered[col] = False
 
+      # Sembunyikan kolom Sekolah, Nama_Guru, Mata_Pelajaran dari tabel editor input
       edited_filtered = st.data_editor(
           df_filtered,
           column_config={
@@ -1030,6 +1032,8 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
               "I": st.column_config.CheckboxColumn("I", default=False),
               "A": st.column_config.CheckboxColumn("A", default=False),
               "Sekolah": None,
+              "Nama_Guru": None,
+              "Mata_Pelajaran": None,
           },
           hide_index=True, use_container_width=True
       )
@@ -1106,14 +1110,14 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
       elif jenis_rekap == "Semester Genap":
         df_filtered_rekap = df_rekap[df_rekap['Tanggal'].dt.month.isin([1, 2, 3, 4, 5, 6])]
 
-      # Sembunyikan kolom Nama_Guru dan Mata_Pelajaran dari tampilan tabel rekap agar lebih simpel
-      kolom_disembunyikan = ["Nama_Guru", "Mata_Pelajaran"]
+      # Sembunyikan Nama_Guru, Mata_Pelajaran, dan Sekolah dari tabel rekap tampilan
+      kolom_disembunyikan = ["Nama_Guru", "Mata_Pelajaran", "Sekolah"]
       df_tampil = df_filtered_rekap.drop(columns=[col for col in kolom_disembunyikan if col in df_filtered_rekap.columns])
 
       st.write(f"Menampilkan data rekap **{jenis_rekap}**:")
       st.dataframe(df_tampil, use_container_width=True, hide_index=True)
       
-      # Fitur Download CSV (tetap mendownload data lengkap utuh)
+      # Fitur Download CSV (tetap menyimpan data lengkap di file CSV yang didownload)
       if not df_filtered_rekap.empty:
         csv = df_filtered_rekap.to_csv(index=False).encode('utf-8')
         st.download_button(
