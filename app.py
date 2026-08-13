@@ -1106,10 +1106,10 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                     df_gabungan = df_hari_ini
 
                 if save_sheet_data("Absensi_Harian", df_gabungan):
-            # --- OTOMATISASI CHECKBOX & BORDER (TANPA NOTIFIKASI ERROR) ---
-            try:
-                import gspread
-                from gspread_formatting import CellFormat, Border, Borders, Color, format_cell_range
+                # --- OTOMATISASI CHECKBOX & BORDER (TANPA NOTIFIKASI ERROR) ---
+                try:
+                    import gspread
+                    from gspread_formatting import CellFormat, Border, Borders, Color, format_cell_range
                 
                 gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
                 sh = gc.open("Database_PASTI_Pusat")
