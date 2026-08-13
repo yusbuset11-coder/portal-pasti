@@ -1004,6 +1004,9 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
   df_siswa = load_sheet_data("Siswa")
 
   if not df_siswa.empty:
+    # Membersihkan spasi tersembunyi pada nama kolom dari Google Sheets
+    df_siswa.columns = df_siswa.columns.str.strip()
+
     st.markdown("---")
     st.subheader("📌 Identitas Pembelajaran & Absensi")
 
@@ -1052,12 +1055,12 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
             "S": st.column_config.CheckboxColumn("S", default=False),
             "I": st.column_config.CheckboxColumn("I", default=False),
             "A": st.column_config.CheckboxColumn("A", default=False),
-            "Sekolah": None,  # Disembunyikan agar tabel bersih
+            "Sekolah": None,
         },
         disabled=["ID_Siswa", "Kelas", "Nama Siswa"],
         hide_index=True,
         use_container_width=True,
-        key="editor_absensi_harian",
+        key="editor_absensi_harian_v2",
     )
 
     # Tombol Simpan Absensi Harian
@@ -1080,15 +1083,24 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
           else:
             status_final = "Hadir"
 
+          # Ambil nilai kolom dengan aman (mendukung variasi spasi/underscore)
+          id_siswa_val = row.get(
+              "ID_Siswa", row.get("ID_siswa", row.get("Id_Siswa", ""))
+          )
+          kelas_val = row.get("Kelas", kelas_pilih)
+          nama_siswa_val = row.get(
+              "Nama Siswa", row.get("Nama_Siswa", "Siswa")
+          )
+
           # Susun baris data absensi harian
           data_baru_list.append({
               "Tanggal": str(tanggal_absensi),
               "Sekolah": nama_sekolah,
               "Nama_Guru": nama_guru,
               "Mata_Pelajaran": mata_pelajaran,
-              "Kelas": row["Kelas"],
-              "ID_Siswa": row["ID_Siswa"],
-              "Nama Siswa": row["Nama Siswa"],
+              "Kelas": kelas_val,
+              "ID_Siswa": id_siswa_val,
+              "Nama Siswa": nama_siswa_val,
               "Status_Kehadiran": status_final,
               "S": s_val,
               "I": i_val,
@@ -1103,6 +1115,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
         if df_existing_rekap.empty:
           df_gabungan = df_hari_ini
         else:
+          df_existing_rekap.columns = df_existing_rekap.columns.str.strip()
           # Gabungkan data lama dengan data absensi hari ini (Append ke bawah)
           df_gabungan = pd.concat(
               [df_existing_rekap, df_hari_ini], ignore_index=True
