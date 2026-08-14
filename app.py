@@ -25,6 +25,22 @@ st.set_page_config(
     layout="wide",
 )
 
+st.markdown("""
+    <style>
+    /* Styling Header Tabel agar Elegan, Bold, dan Center */
+    .stDataFrame th {
+        background-color: #1E3A8A !important;
+        color: #FFFFFF !important;
+        font-weight: bold !important;
+        text-align: center !important;
+    }
+    /* Mengatur posisi teks/angka dalam sel tabel agar Center */
+    .stDataFrame td {
+        text-align: center !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # ID Google Spreadsheet Database_PASTI_Pusat
 SHEET_ID = "1terQDxNZX1aESF0GO02uSn9R7eKLKDGbkiT11GpX1pA"
 
@@ -220,9 +236,9 @@ with st.sidebar:
       "Pilih Aplikasi Terintegrasi",
       [
           "1. GEMA (Generator Modul Ajar)",
-          "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)",
-          "3. DIGMA (Digital Management - Segera)",
-          "4. SAKTI (Sistem Administrasi Kinerja - Segera)",
+          "2. SIPENSIS (Sistem Informasi Presensi Siswa)",
+          "3. DIGMA (Digitalisasi Jurnal Mengajar - Segera)",
+          "4. SAKTI (Sistem Asesmen dan Kompetensi - Segera)",
       ],
   )
   st.markdown("---")
@@ -986,10 +1002,10 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
         )
 
 # =========================================================================
-# APLIKASI 2: SIPENSIS (Sistem Pengelolaan Administrasi Siswa)
+# APLIKASI 2: SIPENSIS (Sistem Informasi Presensi Siswa)
 # =========================================================================
-elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
-    st.markdown("### 📋 Sistem Pengelolaan Administrasi Siswa & Absensi (SIPENSIS)")
+elif pilih_app == "2. SIPENSIS (Sistem Sistem Informasi Presensi Siswa)":
+    st.markdown("### 📋 Sistem Sistem Informasi Presensi Siswa (SIPENSIS)")
 
     # Tab Navigasi diperbarui dengan Rekap Semester Ganjil & Genap
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -1177,10 +1193,25 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                 'A': 'ALPHA'
             })
 
+            # Konversi kolom boolean agar tampil sebagai Checkbox rapi
+            for col in ['SAKIT', 'IZIN', 'ALPHA']:
+                if col in df_display.columns:
+                    df_display[col] = df_display[col].apply(lambda x: True if str(x).strip().lower() in ['true', '1', 't', 'y', 'yes'] else False)
+
             st.dataframe(
                 df_display, 
                 hide_index=True, 
-                use_container_width=True
+                use_container_width=True,
+                column_config={
+                    "TANGGAL": st.column_config.TextColumn("TANGGAL", width="medium"),
+                    "KELAS": st.column_config.TextColumn("KELAS", width="small"),
+                    "ID": st.column_config.NumberColumn("ID", format="%d", width="small"),
+                    "NAMA SISWA": st.column_config.TextColumn("NAMA SISWA", width="large"),
+                    "STATUS": st.column_config.TextColumn("STATUS", width="medium"),
+                    "SAKIT": st.column_config.CheckboxColumn("SAKIT", width="small"),
+                    "IZIN": st.column_config.CheckboxColumn("IZIN", width="small"),
+                    "ALPHA": st.column_config.CheckboxColumn("ALPHA", width="small"),
+                }
             )
             
             import io
@@ -1231,14 +1262,22 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                     'Tanggal': 'count'
                 }).reset_index().rename(columns={'Tanggal': 'TOTAL PERT.', 'S': 'SAKIT', 'I': 'IZIN', 'A': 'ALPHA', 'ID_Siswa': 'ID', 'Nama_Siswa': 'NAMA SISWA'})
                 
-                # Menggunakan teks header yang lebih ringkas agar tidak terpotong
                 rekap_g['JML TIDAK HADIR'] = rekap_g['SAKIT'] + rekap_g['IZIN'] + rekap_g['ALPHA']
                 rekap_g = rekap_g[['ID', 'NAMA SISWA', 'SAKIT', 'IZIN', 'ALPHA', 'JML TIDAK HADIR', 'TOTAL PERT.']]
 
                 st.dataframe(
                     rekap_g, 
                     hide_index=True, 
-                    use_container_width=True
+                    use_container_width=True,
+                    column_config={
+                        "ID": st.column_config.NumberColumn("ID", format="%d", width="small"),
+                        "NAMA SISWA": st.column_config.TextColumn("NAMA SISWA", width="large"),
+                        "SAKIT": st.column_config.NumberColumn("SAKIT", format="%d", width="small"),
+                        "IZIN": st.column_config.NumberColumn("IZIN", format="%d", width="small"),
+                        "ALPHA": st.column_config.NumberColumn("ALPHA", format="%d", width="small"),
+                        "JML TIDAK HADIR": st.column_config.NumberColumn("JML TIDAK HADIR", format="%d", width="medium"),
+                        "TOTAL PERT.": st.column_config.NumberColumn("TOTAL PERT.", format="%d", width="medium"),
+                    }
                 )
 
                 import io
@@ -1297,7 +1336,16 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                 st.dataframe(
                     rekap_e, 
                     hide_index=True, 
-                    use_container_width=True
+                    use_container_width=True,
+                    column_config={
+                        "ID": st.column_config.NumberColumn("ID", format="%d", width="small"),
+                        "NAMA SISWA": st.column_config.TextColumn("NAMA SISWA", width="large"),
+                        "SAKIT": st.column_config.NumberColumn("SAKIT", format="%d", width="small"),
+                        "IZIN": st.column_config.NumberColumn("IZIN", format="%d", width="small"),
+                        "ALPHA": st.column_config.NumberColumn("ALPHA", format="%d", width="small"),
+                        "JML TIDAK HADIR": st.column_config.NumberColumn("JML TIDAK HADIR", format="%d", width="medium"),
+                        "TOTAL PERT.": st.column_config.NumberColumn("TOTAL PERT.", format="%d", width="medium"),
+                    }
                 )
 
                 import io
