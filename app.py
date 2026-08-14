@@ -1,4 +1,5 @@
 from io import BytesIO
+import io
 import json
 import base64
 import tempfile
@@ -50,19 +51,14 @@ scope = [
 ]
 
 def get_gspread_client():
-  # Ambil string base64 dari secrets
   b64_string = st.secrets["gcp_base64"]
-
-  # Decode kembali menjadi dictionary JSON yang bersih
   json_bytes = base64.b64decode(b64_string)
   creds_dict = json.loads(json_bytes.decode("utf-8"))
 
-  # Buat file JSON sementara di server secara aman
   with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
     json.dump(creds_dict, f)
     temp_filename = f.name
 
-  # Autentikasi gspread
   creds = Credentials.from_service_account_file(temp_filename, scopes=scope)
   client = gspread.authorize(creds)
   return client
@@ -70,7 +66,7 @@ def get_gspread_client():
 @st.cache_data(ttl=60, show_spinner=False)
 def load_sheet_data(sheet_name):
     try:
-        client = get_gspread_client()  # Sesuaikan dengan nama fungsi asli Anda
+        client = get_gspread_client()
         spreadsheet = client.open("Database_PASTI_Pusat")
         worksheet = spreadsheet.worksheet(sheet_name)
         data = worksheet.get_all_records()
@@ -79,12 +75,13 @@ def load_sheet_data(sheet_name):
     except Exception as e:
         st.error(f"Gagal memuat data dari Google Sheets: {e}")
         return pd.DataFrame()
+
 def save_sheet_data(sheet_name, df):
     try:
         client = get_gspread_client()
         spreadsheet = client.open("Database_PASTI_Pusat")
         worksheet = spreadsheet.worksheet(sheet_name)
-        df = df.fillna("") # Membersihkan data kosong
+        df = df.fillna("")
         worksheet.clear()
         data_to_update = [df.columns.values.tolist()] + df.values.tolist()
         worksheet.update(data_to_update)
@@ -94,7 +91,6 @@ def save_sheet_data(sheet_name, df):
         return False
 
 def check_auth():
-  """Sistem autentikasi menggunakan Email dan Token dari Google Sheet 'Tokens'."""
   if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
@@ -147,8 +143,6 @@ def check_auth():
 if not check_auth():
   st.stop()
 
-# ===================================
-# Custom CSS UI Modern
 st.markdown(
     """
     <style>
@@ -211,7 +205,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Header Portal PASTI
 st.markdown(
     f"""
     <div class="header-card">
@@ -227,9 +220,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ===================================
-# SIDEBAR: NAVIGASI UTAMA APLIKASI PASTI
-# ===================================
 with st.sidebar:
   st.header("📌 Menu Navigasi PASTI")
   pilih_app = st.selectbox(
@@ -243,9 +233,6 @@ with st.sidebar:
   )
   st.markdown("---")
 
-# =========================================================================
-# APLIKASI 1: GEMA (Generator Modul Ajar Pembelajaran Mendalam)
-# =========================================================================
 if pilih_app == "1. GEMA (Generator Modul Ajar)":
   with st.sidebar:
     st.header("⚙️ Parameter Pembelajaran (GEMA)")
@@ -792,7 +779,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     run_title.font.bold = True
     run_title.font.color.rgb = RGBColor(74, 46, 33)
 
-    # 1. IDENTIFIKASI DAN INFORMASI UMUM
     tabel_identifikasi = [
         ("Penulis Modul", nama_penulis),
         ("Satuan Pendidikan", nama_sekolah),
@@ -805,7 +791,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     ]
     add_section_table_custom(doc, "IDENTIFIKASI DAN INFORMASI UMUM", tabel_identifikasi)
     
-    # 2. DIMENSI PROFIL LULUSAN
     dimensi_data = data_ai.get("dimensi_profil_lulusan", "Penalaran Kritis & Kolaborasi")
     if isinstance(dimensi_data, list):
       dimensi_str = "\n".join([f"☑ {d}" for d in dimensi_data])
@@ -815,18 +800,15 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
       dimensi_str = str(dimensi_data)
     add_section_table_custom(doc, "DIMENSI PROFIL LULUSAN", [("Dimensi Profil Lulusan", dimensi_str)])
 
-    # 3. TUJUAN PEMBELAJARAN, PEMAHAMAN BERMAKNA, PERTANYAAN PEMANTIK
     add_section_table_custom(doc, "TUJUAN PEMBELAJARAN", [("Tujuan Pembelajaran", data_ai.get("tujuan_pembelajaran", "Peserta didik menguasai kompetensi materi."))])
     add_section_table_custom(doc, "PEMAHAMAN BERMAKNA & PERTANYAAN PEMANTIK", [
         ("Pemahaman Bermakna", data_ai.get("pemahaman_bermakna", "-")), 
         ("Pertanyaan Pemantik", data_ai.get("pertanyaan_pemantik", "-"))
     ])
     
-    # 4. KERANGKA PEMBELAJARAN
     kerangka = data_ai.get("kerangka_pembelajaran", {})
     add_kerangka_pembelajaran_table(doc, kerangka)
 
-    # 5. PENGALAMAN BELAJAR (LANGKAH-LANGKAH)
     pengalaman = data_ai.get("pengalaman_belajar", {})
     tabel_pengalaman = [
         ("Kegiatan Pendahuluan", pengalaman.get("kegiatan_pendahuluan", "Orientasi, apersepsi, dan motivasi berkesan")),
@@ -837,7 +819,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     ]
     add_section_table_custom(doc, "PENGALAMAN BELAJAR (LANGKAH-LANGKAH)", tabel_pengalaman)
 
-    # 6. ASESMEN PEMBELAJARAN
     asesmen = data_ai.get("asesmen_pembelajaran", {})
     tabel_asesmen = [
         ("Asesmen Awal", asesmen.get("asesmen_awal", "Cek kesiapan sebelum masuk topik")),
@@ -855,9 +836,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     run_name.font.bold = True
     p_sign.add_run(f"\nNIP. {nip_penulis}")
 
-    # ==========================================
-    # HALAMAN TERPISAH 1: RUBRIK PENILAIAN
-    # ==========================================
     doc.add_page_break()
     p_rubrik_title = doc.add_paragraph()
     p_rubrik_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -876,9 +854,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     add_rubric_table(doc, data_ai.get("rubrik_penilaian", ""))
     add_scoring_tables(doc)
 
-    # ==========================================
-    # HALAMAN TERPISAH 2: INSTRUMEN FORMATIF
-    # ==========================================
     doc.add_page_break()
     p_inst_title = doc.add_paragraph()
     p_inst_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -907,9 +882,6 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     
     add_formative_matrix_table(doc)
 
-    # ==========================================
-    # HALAMAN TERPISAH 3: LEMBAR KERJA MURID (LKM)
-    # ==========================================
     doc.add_page_break()
     p_lkm_title = doc.add_paragraph()
     p_lkm_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -1001,13 +973,9 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
 
-# =========================================================================
-# APLIKASI 2: SIPENSIS (Sistem Informasi Presensi Siswa)
-# =========================================================================
 elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
     st.markdown("### 📋 SIPENSIS: Sistem Informasi Presensi Siswa")
 
-    # Tab Navigasi diperbarui dengan Rekap Semester Ganjil & Genap
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "✍️ Input Manual", 
         "📁 Download & Upload Excel", 
@@ -1016,7 +984,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
         "📈 Rekap Semester Genap"
     ])
 
-    # --- TAB 1: INPUT MANUAL ---
     with tab1:
         df_siswa = load_sheet_data("Siswa")
         
@@ -1087,7 +1054,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
         else:
             st.warning("Data siswa belum tersedia di database.")
 
-    # --- TAB 2: DOWNLOAD & UPLOAD EXCEL ---
     with tab2:
         st.subheader("📁 Download Template & Upload Absensi Excel")
         st.write("1. Pilih kelas untuk mendownload daftar siswa.\n2. Isi status absensi.\n3. Upload kembali file tersebut untuk disimpan otomatis.")
@@ -1153,7 +1119,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                 except Exception as e:
                     st.error(f"Terjadi kesalahan saat membaca file Excel: {e}")
 
-    # --- TAB 3: LAPORAN HARIAN ---
     with tab3:
         st.subheader("📊 Laporan & Rekapitulasi Harian")
         df_rekap = load_sheet_data("Absensi_Harian")
@@ -1226,7 +1191,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
         else:
             st.warning("Data absensi belum tersedia.")
 
-    # --- TAB 4: REKAP SEMESTER GANJIL ---
     with tab4:
         st.subheader("📈 Rekapitulasi Kehadiran Semester Ganjil (Juli - Desember)")
         df_all = load_sheet_data("Absensi_Harian")
@@ -1293,7 +1257,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
         else:
             st.warning("Data absensi belum tersedia.")
 
-    # --- TAB 5: REKAP SEMESTER GENAP ---
     with tab5:
         st.subheader("📈 Rekapitulasi Kehadiran Semester Genap (Januari - Juni)")
         df_all_e = load_sheet_data("Absensi_Harian")
@@ -1359,7 +1322,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                 st.warning("Belum ada data absensi untuk Semester Genap.")
         else:
             st.warning("Data absensi belum tersedia.")
-# =========================================================================
+
 elif pilih_app.startswith("3."):
   st.markdown("### 📊 DIGMA (Digital Management)")
   st.info("Modul aplikasi DIGMA sedang dalam tahap pengembangan berikutnya di Portal PASTI.")
