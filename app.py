@@ -1013,10 +1013,10 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                 df_input,
                 column_config={
                     "ID_Siswa": st.column_config.NumberColumn("ID", disabled=True, width="small"),
-                    "Nama_Siswa": st.column_config.TextColumn("Nama Siswa", disabled=True, width="large"),
-                    "S": st.column_config.CheckboxColumn("Sakit", width="small"),
-                    "I": st.column_config.CheckboxColumn("Izin", width="small"),
-                    "A": st.column_config.CheckboxColumn("Alpha", width="small"),
+                    "Nama_Siswa": st.column_config.TextColumn("Nama Siswa", disabled=True, width="medium"),
+                    "S": st.column_config.CheckboxColumn("S", width="small"),
+                    "I": st.column_config.CheckboxColumn("I", width="small"),
+                    "A": st.column_config.CheckboxColumn("A", width="small"),
                 },
                 hide_index=True, use_container_width=True
             )
@@ -1165,14 +1165,14 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                 hide_index=True, 
                 use_container_width=True,
                 column_config={
-                    "TANGGAL": st.column_config.TextColumn("TANGGAL", width="medium"),
+                    "TANGGAL": st.column_config.TextColumn("TANGGAL", width="small"),
                     "KELAS": st.column_config.TextColumn("KELAS", width="small"),
                     "ID": st.column_config.NumberColumn("ID", format="%d", width="small"),
-                    "NAMA SISWA": st.column_config.TextColumn("NAMA SISWA", width="large"),
-                    "STATUS": st.column_config.TextColumn("STATUS", width="medium"),
-                    "SAKIT": st.column_config.CheckboxColumn("SAKIT", width="small"),
-                    "IZIN": st.column_config.CheckboxColumn("IZIN", width="small"),
-                    "ALPHA": st.column_config.CheckboxColumn("ALPHA", width="small"),
+                    "NAMA SISWA": st.column_config.TextColumn("NAMA SISWA", width="medium"),
+                    "STATUS": st.column_config.TextColumn("STATUS", width="small"),
+                    "SAKIT": st.column_config.CheckboxColumn("S", width="small"),
+                    "IZIN": st.column_config.CheckboxColumn("I", width="small"),
+                    "ALPHA": st.column_config.CheckboxColumn("A", width="small"),
                 }
             )
             
@@ -1231,12 +1231,12 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                     use_container_width=True,
                     column_config={
                         "ID": st.column_config.NumberColumn("ID", format="%d", width="small"),
-                        "NAMA SISWA": st.column_config.TextColumn("NAMA SISWA", width="large"),
-                        "SAKIT": st.column_config.NumberColumn("SAKIT", format="%d", width="small"),
-                        "IZIN": st.column_config.NumberColumn("IZIN", format="%d", width="small"),
-                        "ALPHA": st.column_config.NumberColumn("ALPHA", format="%d", width="small"),
-                        "JML TIDAK HADIR": st.column_config.NumberColumn("JML TIDAK HADIR", format="%d", width="medium"),
-                        "TOTAL PERT.": st.column_config.NumberColumn("TOTAL PERT.", format="%d", width="medium"),
+                        "NAMA SISWA": st.column_config.TextColumn("NAMA SISWA", width="medium"),
+                        "SAKIT": st.column_config.NumberColumn("S", format="%d", width="small"),
+                        "IZIN": st.column_config.NumberColumn("I", format="%d", width="small"),
+                        "ALPHA": st.column_config.NumberColumn("A", format="%d", width="small"),
+                        "JML TIDAK HADIR": st.column_config.NumberColumn("JML", format="%d", width="small"),
+                        "TOTAL PERT.": st.column_config.NumberColumn("TOTAL", format="%d", width="small"),
                     }
                 )
 
@@ -1297,12 +1297,12 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                     use_container_width=True,
                     column_config={
                         "ID": st.column_config.NumberColumn("ID", format="%d", width="small"),
-                        "NAMA SISWA": st.column_config.TextColumn("NAMA SISWA", width="large"),
-                        "SAKIT": st.column_config.NumberColumn("SAKIT", format="%d", width="small"),
-                        "IZIN": st.column_config.NumberColumn("IZIN", format="%d", width="small"),
-                        "ALPHA": st.column_config.NumberColumn("ALPHA", format="%d", width="small"),
-                        "JML TIDAK HADIR": st.column_config.NumberColumn("JML TIDAK HADIR", format="%d", width="medium"),
-                        "TOTAL PERT.": st.column_config.NumberColumn("TOTAL PERT.", format="%d", width="medium"),
+                        "NAMA SISWA": st.column_config.TextColumn("NAMA SISWA", width="medium"),
+                        "SAKIT": st.column_config.NumberColumn("S", format="%d", width="small"),
+                        "IZIN": st.column_config.NumberColumn("I", format="%d", width="small"),
+                        "ALPHA": st.column_config.NumberColumn("A", format="%d", width="small"),
+                        "JML TIDAK HADIR": st.column_config.NumberColumn("JML", format="%d", width="small"),
+                        "TOTAL PERT.": st.column_config.NumberColumn("TOTAL", format="%d", width="small"),
                     }
                 )
 
