@@ -1145,25 +1145,55 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
         df_rekap = load_sheet_data("Absensi_Harian")
         
         if not df_rekap.empty:
-            df_rekap['Tanggal'] = pd.to_datetime(df_rekap['Tanggal'], errors='coerce')
+            df_rekap['Tanggal_Parsed'] = pd.to_datetime(df_rekap['Tanggal'], errors='coerce')
             
-            kelas_filter = st.selectbox("Pilih Kelas untuk Laporan:", ["Semua"] + sorted(df_rekap["Kelas"].dropna().unique().tolist()))
+            # Format Tanggal ke Bahasa Indonesia (Hari, Tanggal Bulan Tahun)
+            days_indo = {'Monday': 'Senin', 'Tuesday': 'Selasa', 'Wednesday': 'Rabu', 'Thursday': 'Kamis', 'Friday': 'Jumat', 'Saturday': 'Sabtu', 'Sunday': 'Minggu'}
+            months_indo = {1: 'Januari', 2: 'Februari', 3: 'Maret', 4: 'April', 5: 'Mei', 6: 'Juni', 7: 'Juli', 8: 'Agustus', 9: 'September', 10: 'Oktober', 11: 'November', 12: 'Desember'}
+
+            def format_indo(dt):
+                if pd.isna(dt): return "-"
+                h = days_indo.get(dt.strftime('%A'), dt.strftime('%A'))
+                t = dt.day
+                b = months_indo.get(dt.month, dt.strftime('%B'))
+                y = dt.year
+                return f"{h}, {t} {b} {y}"
+
+            df_rekap['Tanggal_Format'] = df_rekap['Tanggal_Parsed'].apply(format_indo)
+            
+            kelas_filter = st.selectbox("Pilih Kelas untuk Laporan:", ["Semua"] + sorted(df_rekap["Kelas"].dropna().unique().tolist()), key="kls_lap")
             if kelas_filter != "Semua":
                 df_rekap = df_rekap[df_rekap["Kelas"] == kelas_filter]
                 
-            st.dataframe(df_rekap, use_container_width=True)
+            # Pilih kolom yang ditampilkan (menyembunyikan Sekolah, Nama_Guru, Mata_Pelajaran) dan urutkan
+            display_columns = ['Tanggal_Format', 'Kelas', 'ID_Siswa', 'Nama_Siswa', 'Status_Kehadiran', 'S', 'I', 'A']
+            df_display = df_rekap[[col for col in display_columns if col in df_rekap.columns]].copy()
+            df_display = df_display.rename(columns={'Tanggal_Format': 'Tanggal Absensi'})
+
+            st.dataframe(
+                df_display, 
+                hide_index=True, 
+                use_container_width=True,
+                column_config={
+                    "ID_Siswa": st.column_config.NumberColumn("ID", format="%d"),
+                    "S": st.column_config.CheckboxColumn("Sakit"),
+                    "I": st.column_config.CheckboxColumn("Izin"),
+                    "A": st.column_config.CheckboxColumn("Alpha"),
+                }
+            )
             
             import io
             output_rekap = io.BytesIO()
             with pd.ExcelWriter(output_rekap, engine='openpyxl') as writer:
-                df_rekap.to_excel(writer, index=False, sheet_name='Laporan_Harian')
+                df_rekap.drop(columns=['Tanggal_Parsed', 'Tanggal_Format'], errors='ignore').to_excel(writer, index=False, sheet_name='Laporan_Harian')
             excel_harian_data = output_rekap.getvalue()
 
             st.download_button(
                 label="📥 Download Laporan Harian (Excel)",
                 data=excel_harian_data,
                 file_name="Laporan_Harian_Absensi.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                key="dl_lap_harian"
             )
         else:
             st.warning("Data absensi belum tersedia.")
@@ -1181,7 +1211,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                 kelas_ganjil = st.selectbox("Pilih Kelas (Ganjil):", sorted(df_ganjil["Kelas"].dropna().unique().tolist()), key="kls_g")
                 df_ganjil = df_ganjil[df_ganjil["Kelas"] == kelas_ganjil]
                 
-                # Fungsi aman untuk mengubah teks "True"/"False" atau boolean asli menjadi 0 dan 1
                 def parse_bool(val):
                     if isinstance(val, bool): return int(val)
                     if isinstance(val, str):
@@ -1194,7 +1223,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                     else:
                         df_ganjil[col] = 0
                 
-                # Agregasi per siswa
                 rekap_g = df_ganjil.groupby(['ID_Siswa', 'Nama_Siswa']).agg({
                     'S': 'sum',
                     'I': 'sum',
@@ -1202,7 +1230,18 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                     'Tanggal': 'count'
                 }).reset_index().rename(columns={'Tanggal': 'Total_Pertemuan', 'S': 'Sakit', 'I': 'Izin', 'A': 'Alpha'})
                 
-                st.dataframe(rekap_g, use_container_width=True)
+                st.dataframe(
+                    rekap_g, 
+                    hide_index=True, 
+                    use_container_width=True,
+                    column_config={
+                        "ID_Siswa": st.column_config.NumberColumn("ID", format="%d"),
+                        "Sakit": st.column_config.NumberColumn("Sakit", format="%d"),
+                        "Izin": st.column_config.NumberColumn("Izin", format="%d"),
+                        "Alpha": st.column_config.NumberColumn("Alpha", format="%d"),
+                        "Total_Pertemuan": st.column_config.NumberColumn("Total Pertemuan", format="%d"),
+                    }
+                )
 
                 import io
                 out_g = io.BytesIO()
@@ -1222,6 +1261,69 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
         else:
             st.warning("Data absensi belum tersedia.")
 
+    # --- TAB 5: REKAP SEMESTER GENAP ---
+    with tab5:
+        st.subheader("📈 Rekapitulasi Kehadiran Semester Genap (Januari - Juni)")
+        df_all_e = load_sheet_data("Absensi_Harian")
+        
+        if not df_all_e.empty:
+            df_all_e['Tanggal'] = pd.to_datetime(df_all_e['Tanggal'], errors='coerce')
+            df_genap = df_all_e[df_all_e['Tanggal'].dt.month.isin([1, 2, 3, 4, 5, 6])].copy()
+            
+            if not df_genap.empty:
+                kelas_genap = st.selectbox("Pilih Kelas (Genap):", sorted(df_genap["Kelas"].dropna().unique().tolist()), key="kls_e")
+                df_genap = df_genap[df_genap["Kelas"] == kelas_genap]
+                
+                def parse_bool(val):
+                    if isinstance(val, bool): return int(val)
+                    if isinstance(val, str):
+                        return 1 if val.strip().lower() in ['true', '1', 't', 'y', 'yes'] else 0
+                    return 0
+
+                for col in ['S', 'I', 'A']:
+                    if col in df_genap.columns:
+                        df_genap[col] = df_genap[col].apply(parse_bool)
+                    else:
+                        df_genap[col] = 0
+                
+                rekap_e = df_genap.groupby(['ID_Siswa', 'Nama_Siswa']).agg({
+                    'S': 'sum',
+                    'I': 'sum',
+                    'A': 'sum',
+                    'Tanggal': 'count'
+                }).reset_index().rename(columns={'Tanggal': 'Total_Pertemuan', 'S': 'Sakit', 'I': 'Izin', 'A': 'Alpha'})
+                
+                st.dataframe(
+                    rekap_e, 
+                    hide_index=True, 
+                    use_container_width=True,
+                    column_config={
+                        "ID_Siswa": st.column_config.NumberColumn("ID", format="%d"),
+                        "Sakit": st.column_config.NumberColumn("Sakit", format="%d"),
+                        "Izin": st.column_config.NumberColumn("Izin", format="%d"),
+                        "Alpha": st.column_config.NumberColumn("Alpha", format="%d"),
+                        "Total_Pertemuan": st.column_config.NumberColumn("Total Pertemuan", format="%d"),
+                    }
+                )
+
+                import io
+                out_e = io.BytesIO()
+                with pd.ExcelWriter(out_e, engine='openpyxl') as w:
+                    rekap_e.to_excel(w, index=False, sheet_name='Rekap_Genap')
+                data_e = out_e.getvalue()
+
+                st.download_button(
+                    label="📥 Download Rekap Semester Genap (Excel)",
+                    data=data_e,
+                    file_name=f"Rekap_Semester_Genap_Kelas_{kelas_genap}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key="dl_genap"
+                )
+            else:
+                st.warning("Belum ada data absensi untuk Semester Genap.")
+        else:
+            st.warning("Data absensi belum tersedia.")
+            
     # --- TAB 5: REKAP SEMESTER GENAP ---
     with tab5:
         st.subheader("📈 Rekapitulasi Kehadiran Semester Genap (Januari - Juni)")
