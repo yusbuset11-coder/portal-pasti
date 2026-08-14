@@ -1034,7 +1034,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                 hide_index=True, use_container_width=True
             )
 
-if st.button("💾 Simpan Absensi Harian", type="primary"):
+            if st.button("💾 Simpan Absensi Harian", type="primary"):
                 with st.spinner("Menyimpan data..."):
                     # Proses data ke list
                     data_baru_list = []
@@ -1083,27 +1083,27 @@ if st.button("💾 Simpan Absensi Harian", type="primary"):
                     else:
                         st.error("❌ Gagal menyimpan ke Database.")
 
-# --- TAB 2: LAPORAN & REKAP ---
-with tab2:
-    st.subheader("📊 Laporan Rekapitulasi")
-    df_rekap = load_sheet_data("Absensi_Harian")
-    
-    if not df_rekap.empty:
-        df_rekap['Tanggal'] = pd.to_datetime(df_rekap['Tanggal'])
+    # --- TAB 2: LAPORAN & REKAP ---
+    with tab2:
+        st.subheader("📊 Laporan Rekapitulasi")
+        df_rekap = load_sheet_data("Absensi_Harian")
         
-        # Filter Sederhana
-        kelas_filter = st.selectbox("Pilih Kelas untuk Laporan:", ["Semua"] + sorted(df_rekap["Kelas"].unique().tolist()))
-        
-        if kelas_filter != "Semua":
-            df_rekap = df_rekap[df_rekap["Kelas"] == kelas_filter]
+        if not df_rekap.empty:
+            df_rekap['Tanggal'] = pd.to_datetime(df_rekap['Tanggal'])
             
-        st.dataframe(df_rekap, use_container_width=True)
-        
-        # Download CSV
-        csv = df_rekap.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 Download Data Absensi (CSV)", csv, "Rekap_Absensi.csv", "text/csv")
-    else:
-        st.warning("Data absensi belum tersedia.")
+            # Filter Sederhana
+            kelas_filter = st.selectbox("Pilih Kelas untuk Laporan:", ["Semua"] + sorted(df_rekap["Kelas"].unique().tolist()))
+            
+            if kelas_filter != "Semua":
+                df_rekap = df_rekap[df_rekap["Kelas"] == kelas_filter]
+                
+            st.dataframe(df_rekap, use_container_width=True)
+            
+            # Download CSV
+            csv = df_rekap.to_csv(index=False).encode('utf-8')
+            st.download_button("📥 Download Data Absensi (CSV)", csv, "Rekap_Absensi.csv", "text/csv")
+        else:
+            st.warning("Data absensi belum tersedia.")
 # =========================================================================
 elif pilih_app.startswith("3."):
   st.markdown("### 📊 DIGMA (Digital Management)")
