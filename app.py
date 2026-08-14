@@ -1004,8 +1004,8 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
 # =========================================================================
 # APLIKASI 2: SIPENSIS (Sistem Informasi Presensi Siswa)
 # =========================================================================
-elif pilih_app == "2. SIPENSIS (Sistem Sistem Informasi Presensi Siswa)":
-    st.markdown("### 📋 SIPENSIS: Sistem Sistem Informasi Presensi Siswa")
+elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
+    st.markdown("### 📋 SIPENSIS: Sistem Informasi Presensi Siswa")
 
     # Tab Navigasi diperbarui dengan Rekap Semester Ganjil & Genap
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -1090,7 +1090,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Sistem Informasi Presensi Siswa)":
     # --- TAB 2: DOWNLOAD & UPLOAD EXCEL ---
     with tab2:
         st.subheader("📁 Download Template & Upload Absensi Excel")
-        st.write("1. Pilih kelas untuk mendownload daftar siswa.\n2. Isi status absensi (kolom S, I, A diisi TRUE/FALSE atau ketik statusnya).\n3. Upload kembali file tersebut untuk disimpan otomatis.")
+        st.write("1. Pilih kelas untuk mendownload daftar siswa.\n2. Isi status absensi.\n3. Upload kembali file tersebut untuk disimpan otomatis.")
 
         df_siswa_ul = load_sheet_data("Siswa")
         if not df_siswa_ul.empty:
@@ -1105,7 +1105,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Sistem Informasi Presensi Siswa)":
                 guru_excel = st.text_input("👨‍🏫 Nama Guru", value=st.session_state.get("user_nama", ""), key="guru_ex")
                 mapel_excel = st.text_input("📖 Mata Pelajaran", value="Pendidikan Pancasila", key="mapel_ex")
 
-            # Buat Template berdasarkan data Siswa
             df_template = df_siswa_ul[df_siswa_ul["Kelas"] == kelas_excel][["ID_Siswa", "Nama_Siswa"]].copy()
             df_template["Tanggal"] = str(tgl_excel)
             df_template["Sekolah"] = df_siswa_ul["Sekolah"].iloc[0] if "Sekolah" in df_siswa_ul.columns else "Tidak Diketahui"
@@ -1119,7 +1118,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Sistem Informasi Presensi Siswa)":
 
             df_template = df_template[["Tanggal", "Sekolah", "Nama_Guru", "Mata_Pelajaran", "Kelas", "ID_Siswa", "Nama_Siswa", "Status_Kehadiran", "S", "I", "A"]]
 
-            import io
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
                 df_template.to_excel(writer, index=False, sheet_name='Template_Absensi')
@@ -1193,7 +1191,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Sistem Informasi Presensi Siswa)":
                 'A': 'ALPHA'
             })
 
-            # Konversi kolom boolean agar tampil sebagai Checkbox rapi
             for col in ['SAKIT', 'IZIN', 'ALPHA']:
                 if col in df_display.columns:
                     df_display[col] = df_display[col].apply(lambda x: True if str(x).strip().lower() in ['true', '1', 't', 'y', 'yes'] else False)
@@ -1214,7 +1211,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Sistem Informasi Presensi Siswa)":
                 }
             )
             
-            import io
             output_rekap = io.BytesIO()
             with pd.ExcelWriter(output_rekap, engine='openpyxl') as writer:
                 df_rekap.drop(columns=['Tanggal_Parsed', 'Tanggal_Format'], errors='ignore').to_excel(writer, index=False, sheet_name='Laporan_Harian')
@@ -1280,7 +1276,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Sistem Informasi Presensi Siswa)":
                     }
                 )
 
-                import io
                 out_g = io.BytesIO()
                 with pd.ExcelWriter(out_g, engine='openpyxl') as w:
                     rekap_g.to_excel(w, index=False, sheet_name='Rekap_Ganjil')
@@ -1348,7 +1343,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Sistem Informasi Presensi Siswa)":
                     }
                 )
 
-                import io
                 out_e = io.BytesIO()
                 with pd.ExcelWriter(out_e, engine='openpyxl') as w:
                     rekap_e.to_excel(w, index=False, sheet_name='Rekap_Genap')
