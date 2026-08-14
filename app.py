@@ -54,7 +54,7 @@ def get_gspread_client():
 @st.cache_data(ttl=60, show_spinner=False)
 def load_sheet_data(sheet_name):
     try:
-        client = _get_gspread_client()
+        client = get_gspread_client()  # Sesuaikan dengan nama fungsi asli Anda
         spreadsheet = client.open("Database_PASTI_Pusat")
         worksheet = spreadsheet.worksheet(sheet_name)
         data = worksheet.get_all_records()
