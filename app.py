@@ -51,9 +51,10 @@ def get_gspread_client():
   client = gspread.authorize(creds)
   return client
 
+@st.cache_data(ttl=60, show_spinner=False)
 def load_sheet_data(sheet_name):
     try:
-        client = get_gspread_client()
+        client = _get_gspread_client()
         spreadsheet = client.open("Database_PASTI_Pusat")
         worksheet = spreadsheet.worksheet(sheet_name)
         data = worksheet.get_all_records()
@@ -62,7 +63,6 @@ def load_sheet_data(sheet_name):
     except Exception as e:
         st.error(f"Gagal memuat data dari Google Sheets: {e}")
         return pd.DataFrame()
-
 def save_sheet_data(sheet_name, df):
     try:
         client = get_gspread_client()
