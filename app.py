@@ -3,6 +3,7 @@ import io
 import json
 import base64
 import tempfile
+import html
 import docx
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -1156,6 +1157,9 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                 'A': 'ALPHA'
             })
 
+            # Membersihkan entitas HTML pada nama siswa
+            df_display['NAMA SISWA'] = df_display['NAMA SISWA'].apply(lambda x: html.unescape(str(x)))
+
             for col in ['SAKIT', 'IZIN', 'ALPHA']:
                 if col in df_display.columns:
                     df_display[col] = df_display[col].apply(lambda x: True if str(x).strip().lower() in ['true', '1', 't', 'y', 'yes'] else False)
@@ -1165,7 +1169,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                 hide_index=True, 
                 use_container_width=True,
                 column_config={
-                    "TANGGAL": st.column_config.TextColumn("TANGGAL", width="small"),
+                    "TANGGAL": st.column_config.TextColumn("TANGGAL", width="medium"),
                     "KELAS": st.column_config.TextColumn("KELAS", width="small"),
                     "ID": st.column_config.NumberColumn("ID", format="%d", width="small"),
                     "NAMA SISWA": st.column_config.TextColumn("NAMA SISWA", width="medium"),
@@ -1223,7 +1227,15 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                 }).reset_index().rename(columns={'Tanggal': 'TOTAL PERT.', 'S': 'SAKIT', 'I': 'IZIN', 'A': 'ALPHA', 'ID_Siswa': 'ID', 'Nama_Siswa': 'NAMA SISWA'})
                 
                 rekap_g['JML TIDAK HADIR'] = rekap_g['SAKIT'] + rekap_g['IZIN'] + rekap_g['ALPHA']
-                rekap_g = rekap_g[['ID', 'NAMA SISWA', 'SAKIT', 'IZIN', 'ALPHA', 'JML TIDAK HADIR', 'TOTAL PERT.']]
+                
+                # Mengubah nama kolom sesuai permintaan
+                rekap_g = rekap_g.rename(columns={'JML TIDAK HADIR': '∑ TH', 'TOTAL PERT.': '∑ PERTEMUAN'})
+                rekap_g = rekap_g[['ID', 'NAMA SISWA', 'SAKIT', 'IZIN', 'ALPHA', '∑ TH', '∑ PERTEMUAN']]
+                
+                # Memastikan penomoran ID teratur mulai dari 1 dan membersihkan HTML entitas pada nama
+                rekap_g = rekap_g.reset_index(drop=True)
+                rekap_g['ID'] = range(1, len(rekap_g) + 1)
+                rekap_g['NAMA SISWA'] = rekap_g['NAMA SISWA'].apply(lambda x: html.unescape(str(x)))
 
                 st.dataframe(
                     rekap_g, 
@@ -1235,8 +1247,8 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                         "SAKIT": st.column_config.NumberColumn("S", format="%d", width="small"),
                         "IZIN": st.column_config.NumberColumn("I", format="%d", width="small"),
                         "ALPHA": st.column_config.NumberColumn("A", format="%d", width="small"),
-                        "JML TIDAK HADIR": st.column_config.NumberColumn("JML", format="%d", width="small"),
-                        "TOTAL PERT.": st.column_config.NumberColumn("TOTAL", format="%d", width="small"),
+                        "∑ TH": st.column_config.NumberColumn("∑ TH", format="%d", width="small"),
+                        "∑ PERTEMUAN": st.column_config.NumberColumn("∑ PERTEMUAN", format="%d", width="medium"),
                     }
                 )
 
@@ -1289,7 +1301,15 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                 }).reset_index().rename(columns={'Tanggal': 'TOTAL PERT.', 'S': 'SAKIT', 'I': 'IZIN', 'A': 'ALPHA', 'ID_Siswa': 'ID', 'Nama_Siswa': 'NAMA SISWA'})
                 
                 rekap_e['JML TIDAK HADIR'] = rekap_e['SAKIT'] + rekap_e['IZIN'] + rekap_e['ALPHA']
-                rekap_e = rekap_e[['ID', 'NAMA SISWA', 'SAKIT', 'IZIN', 'ALPHA', 'JML TIDAK HADIR', 'TOTAL PERT.']]
+                
+                # Mengubah nama kolom sesuai permintaan
+                rekap_e = rekap_e.rename(columns={'JML TIDAK HADIR': '∑ TH', 'TOTAL PERT.': '∑ PERTEMUAN'})
+                rekap_e = rekap_e[['ID', 'NAMA SISWA', 'SAKIT', 'IZIN', 'ALPHA', '∑ TH', '∑ PERTEMUAN']]
+                
+                # Memastikan penomoran ID teratur mulai dari 1 dan membersihkan HTML entitas pada nama
+                rekap_e = rekap_e.reset_index(drop=True)
+                rekap_e['ID'] = range(1, len(rekap_e) + 1)
+                rekap_e['NAMA SISWA'] = rekap_e['NAMA SISWA'].apply(lambda x: html.unescape(str(x)))
 
                 st.dataframe(
                     rekap_e, 
@@ -1301,8 +1321,8 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                         "SAKIT": st.column_config.NumberColumn("S", format="%d", width="small"),
                         "IZIN": st.column_config.NumberColumn("I", format="%d", width="small"),
                         "ALPHA": st.column_config.NumberColumn("A", format="%d", width="small"),
-                        "JML TIDAK HADIR": st.column_config.NumberColumn("JML", format="%d", width="small"),
-                        "TOTAL PERT.": st.column_config.NumberColumn("TOTAL", format="%d", width="small"),
+                        "∑ TH": st.column_config.NumberColumn("∑ TH", format="%d", width="small"),
+                        "∑ PERTEMUAN": st.column_config.NumberColumn("∑ PERTEMUAN", format="%d", width="medium"),
                     }
                 )
 
