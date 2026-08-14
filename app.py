@@ -29,16 +29,21 @@ st.set_page_config(
 
 st.markdown("""
     <style>
-    /* Styling Header Tabel agar Elegan, Bold, dan Center */
-    .stDataFrame th {
+    /* Styling Header Tabel agar Center, Bold, dan Huruf Kapital */
+    .stDataFrame th, [data-testid="stDataEditor"] th {
         background-color: #1E3A8A !important;
         color: #FFFFFF !important;
         font-weight: bold !important;
         text-align: center !important;
+        text-transform: uppercase !important;
     }
-    /* Mengatur posisi teks/angka dalam sel tabel agar Center */
-    .stDataFrame td {
+    /* Mengatur posisi teks/angka dalam sel tabel agar Center, kecuali Nama Siswa */
+    .stDataFrame td, [data-testid="stDataEditor"] td {
         text-align: center !important;
+    }
+    .stDataFrame td:nth-child(2), .stDataFrame td:nth-child(4),
+    [data-testid="stDataEditor"] td:nth-child(2) {
+        text-align: left !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -1015,9 +1020,9 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                 column_config={
                     "ID_Siswa": st.column_config.NumberColumn("ID", disabled=True, width="small"),
                     "Nama_Siswa": st.column_config.TextColumn("Nama Siswa", disabled=True, width="medium"),
-                    "S": st.column_config.CheckboxColumn("S", width="small"),
-                    "I": st.column_config.CheckboxColumn("I", width="small"),
-                    "A": st.column_config.CheckboxColumn("A", width="small"),
+                    "S": st.column_config.CheckboxColumn("Sakit", width="small"),
+                    "I": st.column_config.CheckboxColumn("Izin", width="small"),
+                    "A": st.column_config.CheckboxColumn("Alpha", width="small"),
                 },
                 hide_index=True, use_container_width=True
             )
@@ -1174,9 +1179,9 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                     "ID": st.column_config.NumberColumn("ID", format="%d", width="small"),
                     "NAMA SISWA": st.column_config.TextColumn("NAMA SISWA", width="medium"),
                     "STATUS": st.column_config.TextColumn("STATUS", width="small"),
-                    "SAKIT": st.column_config.CheckboxColumn("S", width="small"),
-                    "IZIN": st.column_config.CheckboxColumn("I", width="small"),
-                    "ALPHA": st.column_config.CheckboxColumn("A", width="small"),
+                    "SAKIT": st.column_config.CheckboxColumn("Sakit", width="small"),
+                    "IZIN": st.column_config.CheckboxColumn("Izin", width="small"),
+                    "ALPHA": st.column_config.CheckboxColumn("Alpha", width="small"),
                 }
             )
             
@@ -1244,9 +1249,9 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                     column_config={
                         "ID": st.column_config.NumberColumn("ID", format="%d", width="small"),
                         "NAMA SISWA": st.column_config.TextColumn("NAMA SISWA", width="medium"),
-                        "SAKIT": st.column_config.NumberColumn("S", format="%d", width="small"),
-                        "IZIN": st.column_config.NumberColumn("I", format="%d", width="small"),
-                        "ALPHA": st.column_config.NumberColumn("A", format="%d", width="small"),
+                        "SAKIT": st.column_config.NumberColumn("Sakit", format="%d", width="small"),
+                        "IZIN": st.column_config.NumberColumn("Izin", format="%d", width="small"),
+                        "ALPHA": st.column_config.NumberColumn("Alpha", format="%d", width="small"),
                         "∑ TH": st.column_config.NumberColumn("∑ TH", format="%d", width="small"),
                         "∑ PERTEMUAN": st.column_config.NumberColumn("∑ PERTEMUAN", format="%d", width="medium"),
                     }
@@ -1318,9 +1323,9 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                     column_config={
                         "ID": st.column_config.NumberColumn("ID", format="%d", width="small"),
                         "NAMA SISWA": st.column_config.TextColumn("NAMA SISWA", width="medium"),
-                        "SAKIT": st.column_config.NumberColumn("S", format="%d", width="small"),
-                        "IZIN": st.column_config.NumberColumn("I", format="%d", width="small"),
-                        "ALPHA": st.column_config.NumberColumn("A", format="%d", width="small"),
+                        "SAKIT": st.column_config.NumberColumn("Sakit", format="%d", width="small"),
+                        "IZIN": st.column_config.NumberColumn("Izin", format="%d", width="small"),
+                        "ALPHA": st.column_config.NumberColumn("Alpha", format="%d", width="small"),
                         "∑ TH": st.column_config.NumberColumn("∑ TH", format="%d", width="small"),
                         "∑ PERTEMUAN": st.column_config.NumberColumn("∑ PERTEMUAN", format="%d", width="medium"),
                     }
