@@ -16,7 +16,7 @@ from google.oauth2.service_account import Credentials
 import pandas as pd
 import streamlit as st
 
-# DIPINDAHKAN KE ATAS: Import modul formatting gspread untuk mencegah ImportError
+# Import modul formatting gspread
 from gspread_formatting import (
     CellFormat, Border, Borders, Color, format_cell_range
 )
@@ -233,7 +233,7 @@ with st.sidebar:
       [
           "1. GEMA (Generator Modul Ajar)",
           "2. SIPENSIS (Sistem Informasi Presensi Siswa)",
-          "3. DIGMA (Digitalisasi Jurnal Mengajar - Segera)",
+          "3. DIGMA (Digitalisasi Jurnal Mengajar)",
           "4. SAKTI (Sistem Asesmen dan Kompetensi - Segera)",
       ],
   )
@@ -1162,7 +1162,6 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                 'A': 'ALPHA'
             })
 
-            # Membersihkan entitas HTML pada nama siswa
             df_display['NAMA SISWA'] = df_display['NAMA SISWA'].apply(lambda x: html.unescape(str(x)))
 
             for col in ['SAKIT', 'IZIN', 'ALPHA']:
@@ -1232,12 +1231,9 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                 }).reset_index().rename(columns={'Tanggal': 'TOTAL PERT.', 'S': 'SAKIT', 'I': 'IZIN', 'A': 'ALPHA', 'ID_Siswa': 'ID', 'Nama_Siswa': 'NAMA SISWA'})
                 
                 rekap_g['JML TIDAK HADIR'] = rekap_g['SAKIT'] + rekap_g['IZIN'] + rekap_g['ALPHA']
-                
-                # Mengubah nama kolom sesuai permintaan
                 rekap_g = rekap_g.rename(columns={'JML TIDAK HADIR': '∑ TH', 'TOTAL PERT.': '∑ PERTEMUAN'})
                 rekap_g = rekap_g[['ID', 'NAMA SISWA', 'SAKIT', 'IZIN', 'ALPHA', '∑ TH', '∑ PERTEMUAN']]
                 
-                # Memastikan penomoran ID teratur mulai dari 1 dan membersihkan HTML entitas pada nama
                 rekap_g = rekap_g.reset_index(drop=True)
                 rekap_g['ID'] = range(1, len(rekap_g) + 1)
                 rekap_g['NAMA SISWA'] = rekap_g['NAMA SISWA'].apply(lambda x: html.unescape(str(x)))
@@ -1306,12 +1302,9 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                 }).reset_index().rename(columns={'Tanggal': 'TOTAL PERT.', 'S': 'SAKIT', 'I': 'IZIN', 'A': 'ALPHA', 'ID_Siswa': 'ID', 'Nama_Siswa': 'NAMA SISWA'})
                 
                 rekap_e['JML TIDAK HADIR'] = rekap_e['SAKIT'] + rekap_e['IZIN'] + rekap_e['ALPHA']
-                
-                # Mengubah nama kolom sesuai permintaan
                 rekap_e = rekap_e.rename(columns={'JML TIDAK HADIR': '∑ TH', 'TOTAL PERT.': '∑ PERTEMUAN'})
                 rekap_e = rekap_e[['ID', 'NAMA SISWA', 'SAKIT', 'IZIN', 'ALPHA', '∑ TH', '∑ PERTEMUAN']]
                 
-                # Memastikan penomoran ID teratur mulai dari 1 dan membersihkan HTML entitas pada nama
                 rekap_e = rekap_e.reset_index(drop=True)
                 rekap_e['ID'] = range(1, len(rekap_e) + 1)
                 rekap_e['NAMA SISWA'] = rekap_e['NAMA SISWA'].apply(lambda x: html.unescape(str(x)))
@@ -1348,9 +1341,85 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
         else:
             st.warning("Data absensi belum tersedia.")
 
-elif pilih_app.startswith("3."):
-  st.markdown("### 📊 DIGMA (Digital Management)")
-  st.info("Modul aplikasi DIGMA sedang dalam tahap pengembangan berikutnya di Portal PASTI.")
+elif pilih_app == "3. DIGMA (Digitalisasi Jurnal Mengajar)":
+    st.markdown("### 📊 DIGMA: Digitalisasi Jurnal Mengajar")
+
+    tab_d1, tab_d2, tab_d3 = st.tabs([
+        "✍️ Input Jurnal Mengajar", 
+        "📋 Daftar & Rekap Jurnal", 
+        "📥 Cetak & Export Laporan"
+    ])
+
+    with tab_d1:
+        st.subheader("Pencatatan Jurnal Kegiatan Mengajar Harian")
+        
+        col_d1, col_d2 = st.columns(2)
+        with col_d1:
+            tgl_jurnal = st.date_input("📅 Tanggal Mengajar", key="tgl_jurnal_input")
+            jam_ke = st.text_input("⏰ Jam Pelajaran Ke-", value="1 - 3 (07.00 - 09.15)", key="jam_jurnal_input")
+            kelas_jurnal = st.selectbox("📚 Kelas", ["X PPLG 1", "X PPLG 2", "XI TKR 1", "XI TKR 2", "XII TO 1"], key="kelas_jurnal_input")
+        with col_d2:
+            nama_guru_jurnal = st.text_input("👨‍🏫 Nama Guru", value=st.session_state.get("user_nama", ""), key="guru_jurnal_input")
+            mapel_jurnal = st.text_input("📖 Mata Pelajaran / Elemen", value="Pendidikan Pancasila / Kejuruan", key="mapel_jurnal_input")
+            
+        materi_pokok = st.text_input("📝 Materi Pokok / Tujuan Pembelajaran", "Contoh: Penerapan Nilai-nilai Pancasila dalam Kehidupan Berbangsa")
+        catatan_kejadian = st.text_area("📌 Catatan Kejadian / Refleksi Pembelajaran", "Proses pembelajaran berjalan interaktif, siswa antusias dalam sesi tanya jawab.")
+        
+        if st.button("💾 Simpan Jurnal Mengajar", type="primary"):
+            with st.spinner("Menyimpan jurnal ke Database Pusat..."):
+                data_jurnal_baru = pd.DataFrame([{
+                    "Tanggal": str(tgl_jurnal),
+                    "Sekolah": st.session_state.get("user_sekolah", "Satuan Pendidikan"),
+                    "Nama_Guru": nama_guru_jurnal,
+                    "Mata_Pelajaran": mapel_jurnal,
+                    "Kelas": kelas_jurnal,
+                    "Jam_Pelajaran": jam_ke,
+                    "Materi_Pokok": materi_pokok,
+                    "Catatan_Kejadian": catatan_kejadian
+                }])
+                
+                df_existing_jurnal = load_sheet_data("Jurnal_Mengajar")
+                df_final_jurnal = pd.concat([df_existing_jurnal, data_jurnal_baru], ignore_index=True) if not df_existing_jurnal.empty else data_jurnal_baru
+                
+                if save_sheet_data("Jurnal_Mengajar", df_final_jurnal):
+                    st.success("✅ Jurnal Mengajar Berhasil Disimpan ke Database Pusat!")
+                    st.balloons()
+                else:
+                    st.error("❌ Gagal menyimpan jurnal ke Database.")
+
+    with tab_d2:
+        st.subheader("Daftar & Rekapitulasi Jurnal Mengajar")
+        df_jurnal_list = load_sheet_data("Jurnal_Mengajar")
+        
+        if not df_jurnal_list.empty:
+            df_jurnal_list.columns = df_jurnal_list.columns.str.strip()
+            
+            filter_guru = st.selectbox("Filter berdasarkan Guru:", ["Semua Guru"] + sorted(df_jurnal_list["Nama_Guru"].dropna().unique().tolist()))
+            if filter_guru != "Semua Guru":
+                df_jurnal_list = df_jurnal_list[df_jurnal_list["Nama_Guru"] == filter_guru]
+                
+            st.dataframe(df_jurnal_list, hide_index=True, use_container_width=True)
+        else:
+            st.warning("Belum ada data Jurnal Mengajar yang tersimpan di database.")
+
+    with tab_d3:
+        st.subheader("Export dan Cetak Laporan Jurnal Mengajar")
+        df_jurnal_exp = load_sheet_data("Jurnal_Mengajar")
+        
+        if not df_jurnal_exp.empty:
+            output_jurnal = io.BytesIO()
+            with pd.ExcelWriter(output_jurnal, engine='openpyxl') as writer:
+                df_jurnal_exp.to_excel(writer, index=False, sheet_name='Rekap_Jurnal_Mengajar')
+            excel_jurnal_data = output_jurnal.getvalue()
+            
+            st.download_button(
+                label="📥 Download Rekap Jurnal Mengajar (Excel)",
+                data=excel_jurnal_data,
+                file_name="Rekap_Jurnal_Mengajar.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        else:
+            st.warning("Data jurnal tidak tersedia untuk di-export.")
 
 elif pilih_app.startswith("4."):
   st.markdown("### ⚙️ SAKTI (Sistem Administrasi Kinerja)")
