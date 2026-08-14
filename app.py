@@ -1005,7 +1005,7 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
 # APLIKASI 2: SIPENSIS (Sistem Informasi Presensi Siswa)
 # =========================================================================
 elif pilih_app == "2. SIPENSIS (Sistem Sistem Informasi Presensi Siswa)":
-    st.markdown("### 📋 Sistem Sistem Informasi Presensi Siswa (SIPENSIS)")
+    st.markdown("### 📋 SIPENSIS: Sistem Sistem Informasi Presensi Siswa")
 
     # Tab Navigasi diperbarui dengan Rekap Semester Ganjil & Genap
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
