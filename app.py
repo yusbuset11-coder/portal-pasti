@@ -1180,17 +1180,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
             st.dataframe(
                 df_display, 
                 hide_index=True, 
-                use_container_width=True,
-                column_config={
-                    "TANGGAL": st.column_config.TextColumn("TANGGAL", width="medium"),
-                    "KELAS": st.column_config.TextColumn("KELAS", width="small"),
-                    "ID": st.column_config.NumberColumn("ID", format="%d", width="small"),
-                    "NAMA SISWA": st.column_config.TextColumn("NAMA SISWA", width="large"),
-                    "STATUS": st.column_config.TextColumn("STATUS", width="medium"),
-                    "SAKIT": st.column_config.CheckboxColumn("SAKIT", width="small"),
-                    "IZIN": st.column_config.CheckboxColumn("IZIN", width="small"),
-                    "ALPHA": st.column_config.CheckboxColumn("ALPHA", width="small"),
-                }
+                use_container_width=True
             )
             
             import io
@@ -1239,25 +1229,16 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                     'I': 'sum',
                     'A': 'sum',
                     'Tanggal': 'count'
-                }).reset_index().rename(columns={'Tanggal': 'TOTAL_PERTEMUAN', 'S': 'SAKIT', 'I': 'IZIN', 'A': 'ALPHA', 'ID_Siswa': 'ID', 'Nama_Siswa': 'NAMA SISWA'})
+                }).reset_index().rename(columns={'Tanggal': 'TOTAL PERT.', 'S': 'SAKIT', 'I': 'IZIN', 'A': 'ALPHA', 'ID_Siswa': 'ID', 'Nama_Siswa': 'NAMA SISWA'})
                 
-                # Tambahkan kolom Total Ketidakhadiran sebelum Total Pertemuan
-                rekap_g['TOTAL KETIDAKHADIRAN'] = rekap_g['SAKIT'] + rekap_g['IZIN'] + rekap_g['ALPHA']
-                rekap_g = rekap_g[['ID', 'NAMA SISWA', 'SAKIT', 'IZIN', 'ALPHA', 'TOTAL KETIDAKHADIRAN', 'TOTAL_PERTEMUAN']]
+                # Menggunakan teks header yang lebih ringkas agar tidak terpotong
+                rekap_g['JML TIDAK HADIR'] = rekap_g['SAKIT'] + rekap_g['IZIN'] + rekap_g['ALPHA']
+                rekap_g = rekap_g[['ID', 'NAMA SISWA', 'SAKIT', 'IZIN', 'ALPHA', 'JML TIDAK HADIR', 'TOTAL PERT.']]
 
                 st.dataframe(
                     rekap_g, 
                     hide_index=True, 
-                    use_container_width=True,
-                    column_config={
-                        "ID": st.column_config.NumberColumn("ID", format="%d", width="small"),
-                        "NAMA SISWA": st.column_config.TextColumn("NAMA SISWA", width="large"),
-                        "SAKIT": st.column_config.NumberColumn("SAKIT", format="%d", width="small"),
-                        "IZIN": st.column_config.NumberColumn("IZIN", format="%d", width="small"),
-                        "ALPHA": st.column_config.NumberColumn("ALPHA", format="%d", width="small"),
-                        "TOTAL KETIDAKHADIRAN": st.column_config.NumberColumn("TOTAL KETIDAKHADIRAN", format="%d", width="medium"),
-                        "TOTAL_PERTEMUAN": st.column_config.NumberColumn("TOTAL PERTEMUAN", format="%d", width="medium"),
-                    }
+                    use_container_width=True
                 )
 
                 import io
@@ -1308,25 +1289,15 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                     'I': 'sum',
                     'A': 'sum',
                     'Tanggal': 'count'
-                }).reset_index().rename(columns={'Tanggal': 'TOTAL_PERTEMUAN', 'S': 'SAKIT', 'I': 'IZIN', 'A': 'ALPHA', 'ID_Siswa': 'ID', 'Nama_Siswa': 'NAMA SISWA'})
+                }).reset_index().rename(columns={'Tanggal': 'TOTAL PERT.', 'S': 'SAKIT', 'I': 'IZIN', 'A': 'ALPHA', 'ID_Siswa': 'ID', 'Nama_Siswa': 'NAMA SISWA'})
                 
-                # Tambahkan kolom Total Ketidakhadiran sebelum Total Pertemuan
-                rekap_e['TOTAL KETIDAKHADIRAN'] = rekap_e['SAKIT'] + rekap_e['IZIN'] + rekap_e['ALPHA']
-                rekap_e = rekap_e[['ID', 'NAMA SISWA', 'SAKIT', 'IZIN', 'ALPHA', 'TOTAL KETIDAKHADIRAN', 'TOTAL_PERTEMUAN']]
+                rekap_e['JML TIDAK HADIR'] = rekap_e['SAKIT'] + rekap_e['IZIN'] + rekap_e['ALPHA']
+                rekap_e = rekap_e[['ID', 'NAMA SISWA', 'SAKIT', 'IZIN', 'ALPHA', 'JML TIDAK HADIR', 'TOTAL PERT.']]
 
                 st.dataframe(
                     rekap_e, 
                     hide_index=True, 
-                    use_container_width=True,
-                    column_config={
-                        "ID": st.column_config.NumberColumn("ID", format="%d", width="small"),
-                        "NAMA SISWA": st.column_config.TextColumn("NAMA SISWA", width="large"),
-                        "SAKIT": st.column_config.NumberColumn("SAKIT", format="%d", width="small"),
-                        "IZIN": st.column_config.NumberColumn("IZIN", format="%d", width="small"),
-                        "ALPHA": st.column_config.NumberColumn("ALPHA", format="%d", width="small"),
-                        "TOTAL KETIDAKHADIRAN": st.column_config.NumberColumn("TOTAL KETIDAKHADIRAN", format="%d", width="medium"),
-                        "TOTAL_PERTEMUAN": st.column_config.NumberColumn("TOTAL PERTEMUAN", format="%d", width="medium"),
-                    }
+                    use_container_width=True
                 )
 
                 import io
