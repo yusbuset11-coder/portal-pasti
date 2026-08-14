@@ -1012,11 +1012,11 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
             edited_df = st.data_editor(
                 df_input,
                 column_config={
-                    "ID_Siswa": st.column_config.NumberColumn("ID", disabled=True),
-                    "Nama_Siswa": st.column_config.TextColumn("Nama Siswa", disabled=True),
-                    "S": st.column_config.CheckboxColumn("Sakit"),
-                    "I": st.column_config.CheckboxColumn("Izin"),
-                    "A": st.column_config.CheckboxColumn("Alpha"),
+                    "ID_Siswa": st.column_config.NumberColumn("ID", disabled=True, width="small"),
+                    "Nama_Siswa": st.column_config.TextColumn("Nama Siswa", disabled=True, width="large"),
+                    "S": st.column_config.CheckboxColumn("Sakit", width="small"),
+                    "I": st.column_config.CheckboxColumn("Izin", width="small"),
+                    "A": st.column_config.CheckboxColumn("Alpha", width="small"),
                 },
                 hide_index=True, use_container_width=True
             )
