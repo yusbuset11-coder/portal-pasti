@@ -991,10 +991,10 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
 elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
     st.markdown("### 📋 Sistem Pengelolaan Administrasi Siswa & Absensi (SIPENSIS)")
 
-    # Tab Navigasi
-    tab1, tab2 = st.tabs(["✍️ Input Absensi", "📊 Laporan & Rekap"])
+    # Tab Navigasi diperluas mencakup Upload/Download Excel
+    tab1, tab2, tab3 = st.tabs(["✍️ Input Manual", "📁 Download & Upload Excel", "📊 Laporan & Rekap"])
 
-    # --- TAB 1: INPUT ABSENSI ---
+    # --- TAB 1: INPUT MANUAL ---
     with tab1:
         df_siswa = load_sheet_data("Siswa")
         
@@ -1004,19 +1004,17 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
             
             col1, col2 = st.columns(2)
             with col1:
-                tanggal_absensi = st.date_input("📅 Tanggal Absensi")
-                kelas_pilih = st.selectbox("📚 Pilih Kelas:", daftar_kelas)
+                tanggal_absensi = st.date_input("📅 Tanggal Absensi", key="tgl_manual")
+                kelas_pilih = st.selectbox("📚 Pilih Kelas:", daftar_kelas, key="kelas_manual")
             with col2:
-                nama_guru = st.text_input("👨‍🏫 Nama Guru", value=st.session_state.get("user_nama", ""))
-                mata_pelajaran = st.text_input("📖 Mata Pelajaran", value="Pendidikan Pancasila")
+                nama_guru = st.text_input("👨‍🏫 Nama Guru", value=st.session_state.get("user_nama", ""), key="guru_manual")
+                mata_pelajaran = st.text_input("📖 Mata Pelajaran", value="Pendidikan Pancasila", key="mapel_manual")
 
-            # Filter data siswa berdasarkan kelas
             df_filtered = df_siswa[df_siswa["Kelas"] == kelas_pilih].copy()
             nama_sekolah_otomatis = df_filtered["Sekolah"].iloc[0] if "Sekolah" in df_filtered.columns else "Tidak Diketahui"
 
             st.info(f"🏫 **Sekolah:** {nama_sekolah_otomatis}")
 
-            # Persiapan tabel input
             df_input = df_filtered[["ID_Siswa", "Nama_Siswa"]].copy()
             df_input["S"] = False
             df_input["I"] = False
@@ -1034,9 +1032,8 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                 hide_index=True, use_container_width=True
             )
 
-            if st.button("💾 Simpan Absensi Harian", type="primary"):
+            if st.button("💾 Simpan Absensi Harian (Manual)", type="primary"):
                 with st.spinner("Menyimpan data..."):
-                    # Proses data ke list
                     data_baru_list = []
                     for _, row in edited_df.iterrows():
                         status = "Hadir"
@@ -1056,43 +1053,111 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                             "S": row["S"], "I": row["I"], "A": row["A"]
                         })
 
-                    # Gabungkan dengan data lama
                     df_hari_ini = pd.DataFrame(data_baru_list)
                     df_existing = load_sheet_data("Absensi_Harian")
                     df_final = pd.concat([df_existing, df_hari_ini], ignore_index=True) if not df_existing.empty else df_hari_ini
 
-                    # Simpan ke Sheets
                     if save_sheet_data("Absensi_Harian", df_final):
-                        # Terapkan Border otomatis secara aman
                         try:
                             client = get_gspread_client()
                             spreadsheet = client.open("Database_PASTI_Pusat")
                             worksheet = spreadsheet.worksheet("Absensi_Harian")
-                            
                             last_row = len(df_final) + 1
                             fmt = CellFormat(borders=Borders(
                                 top=Border('SOLID', Color(0,0,0)), bottom=Border('SOLID', Color(0,0,0)),
                                 left=Border('SOLID', Color(0,0,0)), right=Border('SOLID', Color(0,0,0))
                             ))
                             format_cell_range(worksheet, f'A1:K{last_row}', fmt)
-                        except Exception as fmt_err:
+                        except Exception:
                             pass
                         
                         st.success("✅ Absensi Berhasil Disimpan ke Database Pusat!")
                         st.balloons()
                     else:
                         st.error("❌ Gagal menyimpan ke Database.")
+        else:
+            st.warning("Data siswa belum tersedia di database.")
 
-    # --- TAB 2: LAPORAN & REKAP ---
+    # --- TAB 2: DOWNLOAD & UPLOAD EXCEL ---
     with tab2:
+        st.subheader("📁 Unduh Template & Unggah Data Excel")
+        st.write("Guru dapat mendownload template Excel absensi, mengisi atau mengeditnya secara offline, lalu mengunggahnya kembali ke sini.")
+
+        df_siswa_ul = load_sheet_data("Siswa")
+        if not df_siswa_ul.empty:
+            df_siswa_ul.columns = df_siswa_ul.columns.str.strip()
+            daftar_kelas_ul = df_siswa_ul["Kelas"].dropna().unique()
+
+            col_dl1, col_dl2 = st.columns(2)
+            with col_dl1:
+                tgl_excel = st.date_input("📅 Tanggal untuk Template", key="tgl_ex")
+                kelas_excel = st.selectbox("📚 Pilih Kelas untuk Template:", daftar_kelas_ul, key="kelas_ex")
+            with col_dl2:
+                guru_excel = st.text_input("👨‍🏫 Nama Guru (Template)", value=st.session_state.get("user_nama", ""), key="guru_ex")
+                mapel_excel = st.text_input("📖 Mata Pelajaran (Template)", value="Pendidikan Pancasila", key="mapel_ex")
+
+            # Tombol Generate & Download Template Excel
+            df_template = df_siswa_ul[df_siswa_ul["Kelas"] == kelas_excel][["ID_Siswa", "Nama_Siswa"]].copy()
+            df_template["Tanggal"] = str(tgl_excel)
+            df_template["Sekolah"] = df_siswa_ul["Sekolah"].iloc[0] if "Sekolah" in df_siswa_ul.columns else "Tidak Diketahui"
+            df_template["Nama_Guru"] = guru_excel
+            df_template["Mata_Pelajaran"] = mapel_excel
+            df_template["Kelas"] = kelas_excel
+            df_template["Status_Kehadiran"] = "Hadir"  # Default Hadir, S, I, A diisi (TRUE/FALSE atau Hadir/Sakit/Izin/Alpha)
+            df_template["S"] = False
+            df_template["I"] = False
+            df_template["A"] = False
+
+            # Susun urutan kolom rapi
+            df_template = df_template[["Tanggal", "Sekolah", "Nama_Guru", "Mata_Pelajaran", "Kelas", "ID_Siswa", "Nama_Siswa", "Status_Kehadiran", "S", "I", "A"]]
+
+            # Export ke BytesIO untuk di-download
+            import io
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df_template.to_excel(writer, index=False, sheet_name='Template_Absensi')
+            excel_data = output.getvalue()
+
+            st.download_button(
+                label="📥 Download Template Excel Absensi",
+                data=excel_data,
+                file_name=f"Template_Absensi_Kelas_{kelas_excel}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+
+            st.markdown("---")
+            st.markdown("#### 📤 Upload File Excel yang Telah Diisi")
+            uploaded_excel = st.file_uploader("Pilih file Excel (.xlsx / .xls) hasil pengisian", type=["xlsx", "xls"])
+
+            if uploaded_excel is not None:
+                try:
+                    df_upload = pd.read_excel(uploaded_excel)
+                    st.write("Preview Data yang di-upload:")
+                    st.dataframe(df_upload.head(), use_container_width=True)
+
+                    if st.button("💾 Proses & Simpan Data Excel ke Database", type="primary"):
+                        with st.spinner("Mengunggah data ke database pusat..."):
+                            df_existing = load_sheet_data("Absensi_Harian")
+                            df_final_ul = pd.concat([df_existing, df_upload], ignore_index=True) if not df_existing.empty else df_upload
+
+                            if save_sheet_data("Absensi_Harian", df_final_ul):
+                                st.success("✅ Data Absensi dari Excel Berhasil Disimpan!")
+                                st.balloons()
+                            else:
+                                st.error("❌ Gagal menyimpan data Excel ke Database.")
+                except Exception as e:
+                    st.error(f"Terjadi kesalahan saat membaca file Excel: {e}")
+
+    # --- TAB 3: LAPORAN & REKAP ---
+    with tab3:
         st.subheader("📊 Laporan Rekapitulasi")
         df_rekap = load_sheet_data("Absensi_Harian")
         
         if not df_rekap.empty:
-            df_rekap['Tanggal'] = pd.to_datetime(df_rekap['Tanggal'])
+            df_rekap['Tanggal'] = pd.to_datetime(df_rekap['Tanggal'], errors='coerce')
             
             # Filter Sederhana
-            kelas_filter = st.selectbox("Pilih Kelas untuk Laporan:", ["Semua"] + sorted(df_rekap["Kelas"].unique().tolist()))
+            kelas_filter = st.selectbox("Pilih Kelas untuk Laporan:", ["Semua"] + sorted(df_rekap["Kelas"].dropna().unique().tolist()))
             
             if kelas_filter != "Semua":
                 df_rekap = df_rekap[df_rekap["Kelas"] == kelas_filter]
@@ -1101,7 +1166,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
             
             # Download CSV
             csv = df_rekap.to_csv(index=False).encode('utf-8')
-            st.download_button("📥 Download Data Absensi (CSV)", csv, "Rekap_Absensi.csv", "text/csv")
+            st.download_button("📥 Download Data Absensi (CSV)", csv, "Rekap_Absensi.csv", "text/css")
         else:
             st.warning("Data absensi belum tersedia.")
 # =========================================================================
