@@ -1164,9 +1164,19 @@ elif pilih_app == "2. SIPENSIS (Sistem Pengelolaan Administrasi Siswa)":
                 
             st.dataframe(df_rekap, use_container_width=True)
             
-            # Download CSV
-            csv = df_rekap.to_csv(index=False).encode('utf-8')
-            st.download_button("📥 Download Data Absensi (CSV)", csv, "Rekap_Absensi.csv", "text/css")
+            # Download dalam format Excel (.xlsx) agar rapi dan terpisah kolomnya
+            import io
+            output_rekap = io.BytesIO()
+            with pd.ExcelWriter(output_rekap, engine='openpyxl') as writer:
+                df_rekap.to_excel(writer, index=False, sheet_name='Rekap_Absensi')
+            excel_rekap_data = output_rekap.getvalue()
+
+            st.download_button(
+                label="📥 Download Data Absensi (Excel)",
+                data=excel_rekap_data,
+                file_name="Rekap_Absensi.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
         else:
             st.warning("Data absensi belum tersedia.")
 # =========================================================================
