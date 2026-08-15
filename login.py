@@ -43,7 +43,7 @@ def render_login():
             <div class="login-header">
                 <div class="pasti-title">PASTI</div>
                 <div class="pasti-subtitle">Portal Administrasi Siswa Terintegrasi</div>
-                <div class="pasti-badge">PRESENSI SISWA • JURNAL MENGAJAR • ASESMEN PM • MODUL AJAR PM</div>
+                <div class="pasti-badge">E-PRESENSI SISWA • E-JURNAL MENGAJAR • E-ASESMEN PM • E-MODUL AJAR PM</div>
             </div>
         """, unsafe_allow_html=True)
         
