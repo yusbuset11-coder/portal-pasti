@@ -176,7 +176,7 @@ def render_digma_module():
     except Exception as e:
       st.error(f"Gagal memuat data dari Google Sheets: {e}")
 
-  # --- TAB 3: EXPORT LAPORAN SIAP CETAK & FORMAT TANGGAL INDONESIA ---
+  # --- TAB 3: EXPORT LAPORAN DENGAN JUDUL IDENTITAS & BORDER OTOMATIS ---
   with tab3:
     st.markdown("#### 📥 Cetak & Export Laporan ke Excel (.xlsx)")
     try:
@@ -237,26 +237,44 @@ def render_digma_module():
         def format_tanggal_indo(val):
           try:
             dt_obj = pd.to_datetime(val)
-            nama_hari = days_indo.get(dt_obj.strftime("%A"), dt_obj.strftime("%A"))
+            nama_hari = days_indo.get(
+                dt_obj.strftime("%A"), dt_obj.strftime("%A")
+            )
             return f"{nama_hari}, {dt_obj.strftime('%d-%m-%Y')}"
           except:
             return str(val)
 
         if "Tanggal" in df_export.columns:
-          df_export["Tanggal"] = df_export["Tanggal"].apply(format_tanggal_indo)
+          df_export["Tanggal"] = df_export["Tanggal"].apply(
+              format_tanggal_indo
+          )
 
         st.dataframe(df_export, use_container_width=True, hide_index=True)
 
-        # Proses styling profesional otomatis menggunakan openpyxl
+        # Proses styling profesional otomatis menggunakan openpyxl (Tabel dimulai baris ke-6)
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
-          df_export.to_excel(writer, index=False, sheet_name="Jurnal Mengajar")
+          df_export.to_excel(
+              writer, index=False, sheet_name="Jurnal Mengajar", startrow=5
+          )
 
         output.seek(0)
         import openpyxl
 
         wb = openpyxl.load_workbook(output)
         ws = wb.active
+
+        # Menambahkan Judul Identitas di Bagian Atas
+        ws["A1"] = "JURNAL MENGAJAR GURU"
+        ws["A1"].font = Font(
+            name="Calibri", size=14, bold=True, color="1F4E78"
+        )
+        ws["A2"] = f"Nama Guru : {NAMA_GURU}"
+        ws["A2"].font = Font(name="Calibri", size=11, bold=True)
+        ws["A3"] = f"Sekolah   : {pilih_sekolah_ex}"
+        ws["A3"].font = Font(name="Calibri", size=11, bold=True)
+        ws["A4"] = f"Kelas     : {pilih_kelas_ex}"
+        ws["A4"].font = Font(name="Calibri", size=11, bold=True)
 
         # Pengaturan Halaman Siap Cetak (Landscape & Fit to 1 Page Wide)
         ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
@@ -265,20 +283,20 @@ def render_digma_module():
         ws.page_setup.fitToWidth = 1
         ws.page_setup.fitToHeight = 0
 
-        # Styling Header Tabel
+        # Styling Header Tabel (Baris ke-6)
         header_fill = PatternFill(
             start_color="1F4E78", end_color="1F4E78", fill_type="solid"
         )
         header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
         thin_border = Border(
-            left=Side(style="thin", color="D3D3D3"),
-            right=Side(style="thin", color="D3D3D3"),
-            top=Side(style="thin", color="D3D3D3"),
-            bottom=Side(style="thin", color="D3D3D3"),
+            left=Side(style="thin", color="000000"),
+            right=Side(style="thin", color="000000"),
+            top=Side(style="thin", color="000000"),
+            bottom=Side(style="thin", color="000000"),
         )
 
         for col_num in range(1, ws.max_column + 1):
-          cell = ws.cell(row=1, column=col_num)
+          cell = ws.cell(row=6, column=col_num)
           cell.fill = header_fill
           cell.font = header_font
           cell.alignment = Alignment(
@@ -286,9 +304,9 @@ def render_digma_module():
           )
           cell.border = thin_border
 
-        # Styling Data Isi Tabel
+        # Styling Data Isi Tabel & Pemberian Border Otomatis (Mulai baris ke-7)
         for row in ws.iter_rows(
-            min_row=2, max_row=ws.max_row, min_col=1, max_col=ws.max_column
+            min_row=7, max_row=ws.max_row, min_col=1, max_col=ws.max_column
         ):
           for cell in row:
             cell.font = Font(name="Calibri", size=11)
@@ -308,15 +326,15 @@ def render_digma_module():
             "Catatan": 25,
         }
 
-        for col in ws.columns:
-          col_name = col[0].value
-          col_letter = get_column_letter(col[0].column)
+        for col_num in range(1, ws.max_column + 1):
+          col_letter = get_column_letter(col_num)
+          col_name = ws.cell(row=6, column=col_num).value
           max_len = 0
-          for cell in col:
-            if cell.value is not None:
-              max_len = max(max_len, len(str(cell.value)))
-          
-          # Gunakan standar lebar khusus jika ada, default ke 15 jika tidak ada
+          for row_num in range(6, ws.max_row + 1):
+            cell_val = ws.cell(row=row_num, column=col_num).value
+            if cell_val is not None:
+              max_len = max(max_len, len(str(cell_val)))
+
           min_w = default_min_widths.get(col_name, 15)
           ws.column_dimensions[col_letter].width = max(max_len + 3, min_w)
 
