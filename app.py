@@ -1,4 +1,5 @@
-from digma import render_digma_module
+import sakti
+digma import render_digma_module
 
 from io import BytesIO
 import io
@@ -1367,6 +1368,5 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
 
 elif pilih_app == "3. DIGMA (Digitalisasi Jurnal Mengajar)":
     render_digma_module()
-elif pilih_app.startswith("4."):
-  st.markdown("### ⚙️ SAKTI (Sistem Administrasi Kinerja)")
-  st.info("Modul aplikasi SAKTI sedang dalam tahap pengembangan berikutnya di Portal PASTI.")
+elif pilih_app == "4. SAKTI (Sistem Asesmen dan Kompetensi)":
+    sakti.render_sakti()
