@@ -395,7 +395,7 @@ def add_section_table_custom(doc, title_text, rows_data):
 
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
-  def add_kerangka_pembelajaran_table(doc, kerangka_data):
+def add_kerangka_pembelajaran_table(doc, kerangka_data):
     if not isinstance(kerangka_data, dict):
       kerangka_data = {}
 
