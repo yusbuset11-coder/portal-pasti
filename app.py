@@ -17,6 +17,7 @@ import pandas as pd
 import streamlit as st
 from sakti import render_sakti
 from digma import render_digma_module
+from login import render_login_pasti
 # Import modul formatting gspread
 from gspread_formatting import (
     CellFormat, Border, Borders, Color, format_cell_range
@@ -27,6 +28,12 @@ st.set_page_config(
     page_icon="🏫",
     layout="wide",
 )
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
+
+if not st.session_state["logged_in"]:
+    render_login_pasti()
+    st.stop()  # Menghentikan eksekusi kode di bawahnya agar dashboard tidak tampil sebelum login
 # --- CSS Kustom untuk Tampilan Modern & Posisi Naik ---
 st.markdown(
     """
