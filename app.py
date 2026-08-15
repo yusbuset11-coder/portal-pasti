@@ -124,8 +124,8 @@ def check_auth():
   if not st.session_state["authenticated"]:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-          st.markdown(
-              """
+            st.markdown(
+                """
                 <div class="auth-card">
                     <h2 style="color: #38bdf8; margin: 0; font-size: 1.7rem; font-family: sans-serif; letter-spacing: 1px;">PASTI</h2>
                     <h4 style="color: #cbd5e1; margin: 2px 0 8px 0; font-size: 0.95rem; font-weight: 300; font-family: sans-serif;">Portal Administrasi Siswa Terintegrasi</h4>
@@ -134,13 +134,11 @@ def check_auth():
                     </p>
                 </div>
                 """,
-              unsafe_allow_html=True,
-          )
+                unsafe_allow_html=True,
+            )
 
-          email_input = st.text_input("📧 Email Terdaftar:")
-          token_input = st.text_input("🔑 Token Akses:", type="password")
-
-      if st.button("Masuk ke Portal PASTI"):
+            email_input = st.text_input("📧 Email Terdaftar:")
+            token_input = st.text_input("🔑 Token Akses:", type="password")      if st.button("Masuk ke Portal PASTI"):
         if email_input.strip() and token_input.strip():
           df_tokens = load_sheet_data("Tokens")
           if not df_tokens.empty and "Email" in df_tokens.columns and "Token" in df_tokens.columns:
