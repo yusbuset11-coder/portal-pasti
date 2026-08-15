@@ -32,21 +32,24 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-        /* --- 1. KUSTOMISASI POSISI & LOGIN CARD --- */
+        /* --- 1. KUSTOMISASI POSISI & LATAR BELAKANG MODERN --- */
         .block-container {
-            padding-top: 2rem !important;
+            padding-top: 1.5rem !important;
+            background: radial-gradient(circle at 50% 25%, #1e293b 0%, #090d16 100%);
         }
+        
+        /* --- 2. KARTU LOGIN LEBIH RINGKAS & BERCAHAYA --- */
         .auth-card {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            padding: 2.5rem;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+            padding: 1.25rem 1.5rem; /* Diperkecil agar lebih ramping ke atas */
             border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            border: 1px solid rgba(56, 189, 248, 0.2);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 25px rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.3);
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
         }
 
-        /* --- 2. STYLING TABEL --- */
+        /* --- 3. STYLING TABEL --- */
         .stDataFrame th, [data-testid="stDataEditor"] th {
             background-color: #1E3A8A !important;
             color: #FFFFFF !important;
@@ -121,19 +124,18 @@ def check_auth():
   if not st.session_state["authenticated"]:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-      with col2:
-            st.markdown(
-                """
+          st.markdown(
+              """
                 <div class="auth-card">
-                    <h2 style="color: #38bdf8; margin: 0; font-family: sans-serif;">PASTI</h2>
-                    <h4 style="color: #cbd5e1; margin-top: 5px; font-weight: 300; font-family: sans-serif;">Portal Administrasi Siswa Terintegrasi</h4>
-                    <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 15px;">
+                    <h2 style="color: #38bdf8; margin: 0; font-size: 1.7rem; font-family: sans-serif; letter-spacing: 1px;">PASTI</h2>
+                    <h4 style="color: #cbd5e1; margin: 2px 0 8px 0; font-size: 0.95rem; font-weight: 300; font-family: sans-serif;">Portal Administrasi Siswa Terintegrasi</h4>
+                    <p style="color: #94a3b8; font-size: 0.8rem; margin: 0;">
                         Masukkan Email dan Token Akses terdaftar di Database Pusat.
                     </p>
                 </div>
                 """,
-                unsafe_allow_html=True,
-            )
+              unsafe_allow_html=True,
+          )
 
       email_input = st.text_input("📧 Email Terdaftar:")
       token_input = st.text_input("🔑 Token Akses:", type="password")
