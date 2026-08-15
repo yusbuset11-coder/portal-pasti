@@ -18,18 +18,42 @@ def render_sakti():
             st.session_state["sakti_csv_url"] = csv_url
             st.success("Link database siswa berhasil diperbarui!")
 
-    # Fungsi untuk memuat data siswa langsung dari Google Sheet (Sheet 'Siswa')
+    # Fungsi untuk memuat data siswa langsung dari Google Sheet dengan Fallback Data Lengkap
     @st.cache_data(ttl=60)
     def load_data_siswa_from_sheet():
         url = st.session_state.get("sakti_csv_url", "https://docs.google.com/spreadsheets/d/1terQdXNZX1aESF0G02uSn9R7eKLKDgbkit11GpX1pA/export?format=csv&sheet=Siswa")
         try:
             df_siswa = pd.read_csv(url)
-            # Membersihkan nama kolom dari spasi ekstra jika ada
             df_siswa.columns = df_siswa.columns.str.strip()
-            return df_siswa
-        except Exception as e:
-            # Fallback jika gagal memuat
-            return pd.DataFrame(columns=["ID_Siswa", "Sekolah", "Kelas", "Nama_Siswa"])
+            if not df_siswa.empty and "ID_Siswa" in df_siswa.columns:
+                return df_siswa
+        except Exception:
+            pass
+        
+        # Fallback Data Sesuai Sampel Database PASTI Pusat
+        fallback_data = [
+            {"ID_Siswa": 1, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-1", "Nama_Siswa": "AISYAH KHOIRUMNISA"},
+            {"ID_Siswa": 2, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-1", "Nama_Siswa": "ALDO PUJI FEBRIANSYAH"},
+            {"ID_Siswa": 3, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-1", "Nama_Siswa": "ASSYA RAHMADHANA"},
+            {"ID_Siswa": 4, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-1", "Nama_Siswa": "AUFAR NURIEL ADLI RIFA'I"},
+            {"ID_Siswa": 5, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-1", "Nama_Siswa": "AULYA ZIVANA LETISYA"},
+            {"ID_Siswa": 6, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-1", "Nama_Siswa": "AVRILLIA ZIBA AQILLA NUR AULIYAH"},
+            {"ID_Siswa": 7, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-1", "Nama_Siswa": "AZKA RANENDRA"},
+            {"ID_Siswa": 8, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-1", "Nama_Siswa": "BEBY JOSEPHIRA FLORIDIA"},
+            {"ID_Siswa": 9, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-1", "Nama_Siswa": "FABIAN NAROTAMA ATILA SETIA"},
+            {"ID_Siswa": 10, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-1", "Nama_Siswa": "FAUZIA NUR ASKIYAH"},
+            {"ID_Siswa": 1, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-2", "Nama_Siswa": "HAVIDZAH SITI AZZAHRA"},
+            {"ID_Siswa": 2, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-2", "Nama_Siswa": "HEBRY ADITYA JOVAN ELNANDO"},
+            {"ID_Siswa": 3, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-2", "Nama_Siswa": "IBRAZIEL WIZARD ERDHANA"},
+            {"ID_Siswa": 4, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-2", "Nama_Siswa": "KAYLA MARCHILIA AZZAHRA"},
+            {"ID_Siswa": 5, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-2", "Nama_Siswa": "KENNITIIJA DIVANA PARAWANZA"},
+            {"ID_Siswa": 6, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-2", "Nama_Siswa": "KHAYLA AZHARA NURSUCAHYO"},
+            {"ID_Siswa": 7, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-2", "Nama_Siswa": "MOCH. FADHIL APRILLIANSYAH"},
+            {"ID_Siswa": 8, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-2", "Nama_Siswa": "MUHAMMAD ALIF"},
+            {"ID_Siswa": 9, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-2", "Nama_Siswa": "NADHİFA SHAFA SALSABİLLA"},
+            {"ID_Siswa": 10, "Sekolah": "SMK Negeri 2 Bangkalan", "Kelas": "X-2", "Nama_Siswa": "NOVITA PUTRI ZALSABİLLA"}
+        ]
+        return pd.DataFrame(fallback_data)
 
     df_master_siswa = load_data_siswa_from_sheet()
 
@@ -56,7 +80,7 @@ def render_sakti():
             if jenis_asesmen_ai == "Asesmen Formatif":
                 sub_asesmen_ai = st.selectbox("Sub Jenis Asesmen (AI)", ["Tertulis", "Tak Tertulis"])
             else:
-                sub_asesmen_ai = st.selectbox("Sub Jenis Asesmen (AI)", ["Lisan", "Tulis", "Tugas", "Praktik", "Proyek", "Produk"])
+                sub_asesmen_ai = st.selectbox("Sub Jenis Asesmen (AI)", ["Tulis", "Lisan", "Tugas", "Praktik", "Proyek", "Produk"])
 
         col8, col9 = st.columns(2)
         with col8:
@@ -96,7 +120,6 @@ def render_sakti():
     st.markdown("### 📄 Lembar Input Hasil Asesmen Siswa")
     st.write("Catat dan rekap nilai hasil asesmen formatif atau sumatif peserta didik.")
 
-    # Ambil pilihan Sekolah unik dari data sheet Siswa
     list_opsi_sekolah = df_master_siswa["Sekolah"].dropna().unique().tolist() if not df_master_siswa.empty else ["SMK Negeri 2 Bangkalan"]
 
     with st.form("form_input_asesmen_sakti"):
@@ -105,14 +128,10 @@ def render_sakti():
             tanggal_input = st.date_input("Tanggal", value=datetime.date.today())
             nama_guru = st.text_input("Nama Guru", placeholder="Masukkan nama guru pengampu")
             mata_pelajaran = st.text_input("Mata Pelajaran", placeholder="Masukkan mata pelajaran")
-            
-            # Pilih Sekolah berdasarkan isi sheet Siswa
             nama_sekolah = st.selectbox("Pilih Asal Sekolah", list_opsi_sekolah)
-            
             jenjang_kelas = st.selectbox("Pilih Jenjang", ["SD", "SMP", "SMA", "SMK"], index=3)
             
         with col_b:
-            # Filter Kelas berdasarkan Sekolah yang dipilih
             if not df_master_siswa.empty:
                 list_opsi_kelas = df_master_siswa[df_master_siswa["Sekolah"] == nama_sekolah]["Kelas"].dropna().unique().tolist()
             else:
@@ -125,36 +144,45 @@ def render_sakti():
             if jenis_asesmen == "Formatif":
                 sub_jenis_asesmen = st.selectbox("Subjenis Asesmen", ["Tertulis", "Tak Tertulis"])
             else:
-                sub_jenis_asesmen = st.selectbox("Subjenis Asesmen", ["Lisan", "Tulis", "Tugas", "Praktik", "Proyek", "Produk"])
+                sub_jenis_asesmen = st.selectbox("Subjenis Asesmen", ["Tulis", "Lisan", "Tugas", "Praktik", "Proyek", "Produk"])
                 
             materi_topik = st.text_input("Ketik Materi", placeholder="Masukkan materi pembelajaran")
 
-            # Filter Nomor Absen (ID_Siswa) & Nama Siswa berdasarkan Sekolah dan Kelas yang dipilih
+            # Filter ID_Siswa / Nomor Absen berdasarkan Sekolah & Kelas
             if not df_master_siswa.empty:
                 df_filtered_siswa = df_master_siswa[(df_master_siswa["Sekolah"] == nama_sekolah) & (df_master_siswa["Kelas"] == pilih_kelas)]
-                list_id_siswa = df_filtered_siswa["ID_Siswa"].dropna().unique().tolist()
+                list_id_siswa = sorted(df_filtered_siswa["ID_Siswa"].dropna().unique().tolist())
             else:
                 df_filtered_siswa = pd.DataFrame()
                 list_id_siswa = [1, 2, 3]
 
-            no_absen = st.selectbox("Ketik / Pilih Nomor Absen (ID_Siswa)", list_id_siswa if list_id_siswa else [1])
+            no_absen = st.selectbox("Pilih Nomor Absen (ID_Siswa)", list_id_siswa if list_id_siswa else [1])
             
-            # Otomatis ambil Nama Siswa berdasarkan Sekolah, Kelas, dan ID_Siswa
+            # Otomatis ambil Nama Siswa
             nama_siswa_otomatis = ""
             if not df_filtered_siswa.empty:
                 match_row = df_filtered_siswa[df_filtered_siswa["ID_Siswa"] == no_absen]
                 if not match_row.empty:
                     nama_siswa_otomatis = str(match_row.iloc[0]["Nama_Siswa"])
 
-            nama_siswa = st.text_input("Nama Siswa (Muncul Otomatis dari Sheet Siswa)", value=nama_siswa_otomatis)
+            nama_siswa = st.text_input("Nama Siswa (Otomatis dari Sheet Siswa)", value=nama_siswa_otomatis)
 
-        col_c, col_d = st.columns(2)
-        with col_c:
-            nis_siswa = st.text_input("NIS / NISN (Opsional)", placeholder="Nomor Induk Siswa")
-        with col_d:
-            nilai_siswa = st.number_input("Ketik Nilai Asesmen (Skala 0 - 100)", min_value=0.0, max_value=100.0, value=75.0, step=0.25)
+        # Input Nilai
+        nilai_siswa = st.number_input("Ketik Nilai Asesmen (Skala 0 - 100)", min_value=0.0, max_value=100.0, value=75.0, step=0.25)
         
-        catatan_guru = st.text_area("Catatan Perkembangan / Umpan Balik (Feedback)", placeholder="Tuliskan catatan kualitatif atau umpan balik...")
+        # Logika Catatan Otomatis Berdasarkan Nilai
+        if nilai_siswa < 60:
+            default_catatan = "Perlu Bimbingan!"
+        elif 60 <= nilai_siswa <= 70:
+            default_catatan = "Belajarlah lebih giat!"
+        elif 71 <= nilai_siswa <= 80:
+            default_catatan = "Tingkatkan prestasi belajar Anda!"
+        elif 81 <= nilai_siswa <= 90:
+            default_catatan = "Pertahankan prestasi belajar Anda!"
+        else:
+            default_catatan = "Luar biasa! Pertahankan prestasi belajar Anda!"
+
+        catatan_guru = st.text_area("Catatan Perkembangan / Umpan Balik (Feedback)", value=default_catatan)
 
         submitted = st.form_submit_button("💾 Simpan Nilai Asesmen")
 
@@ -177,7 +205,6 @@ def render_sakti():
                     "Materi": materi_topik,
                     "No Absen": no_absen,
                     "Nama Siswa": nama_siswa,
-                    "NIS": nis_siswa if nis_siswa else "-",
                     "Nilai": nilai_siswa,
                     "Catatan": catatan_guru if catatan_guru else "-"
                 })
@@ -219,14 +246,13 @@ def render_sakti():
         output.seek(0)
         return output.getvalue()
 
-    # Menampilkan Tabel Rekap Nilai & Filter Berdasarkan Sekolah, Kelas, dan Mata Pelajaran
+    # Menampilkan Tabel Rekap Nilai & Filter
     if "sakti_data_nilai" in st.session_state and st.session_state["sakti_data_nilai"]:
         st.markdown("---")
         st.subheader("📊 Tabel Rekapitulasi Hasil Asesmen Kelas")
         
         df_all = pd.DataFrame(st.session_state["sakti_data_nilai"])
 
-        # Filter Section: Sekolah, Kelas, Mata Pelajaran
         st.markdown("#### 🔍 Filter Rekapitulasi Data")
         f_col1, f_col2, f_col3 = st.columns(3)
         
@@ -241,7 +267,6 @@ def render_sakti():
         with f_col3:
             pilih_filter_mapel = st.selectbox("Filter Mata Pelajaran", list_mapel_filter)
 
-        # Terapkan Filter ke DataFrame
         df_filtered = df_all.copy()
         if pilih_filter_sekolah != "Semua Sekolah":
             df_filtered = df_filtered[df_filtered["Sekolah"] == pilih_filter_sekolah]
@@ -252,7 +277,6 @@ def render_sakti():
 
         st.dataframe(df_filtered, use_container_width=True)
 
-        # Tombol Download Rekap Nilai Excel (.xlsx) berdasarkan data yang difilter
         if not df_filtered.empty:
             excel_data = generate_styled_excel(df_filtered)
             st.download_button(
