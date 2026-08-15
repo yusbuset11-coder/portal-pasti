@@ -6,11 +6,7 @@ import gspread
 import pandas as pd
 import streamlit as st
 
-# Daftar sekolah tempat guru mengajar (bisa disesuaikan atau ditambah)
-DAFTAR_SEKOLAH_PILIHAN = [
-    "SMK Negeri 2 Bangkalan",
-    "Sekolah B (Contoh Lain)",
-]
+# Default nama guru
 NAMA_GURU = "Yustinus Budi Setyanta"
 
 
@@ -51,7 +47,7 @@ def render_digma_module():
       ["✍️ Input Jurnal", "📋 Daftar Jurnal", "📥 Export Laporan"]
   )
 
-  # --- TAB 1: INPUT JURNAL (Dinamis untuk Lintas Sekolah & Mapel) ---
+  # --- TAB 1: INPUT JURNAL ---
   with tab1:
     st.markdown("#### 📝 Form Input Jurnal Mengajar Harian")
 
@@ -59,9 +55,11 @@ def render_digma_module():
       st.markdown("##### 🏫 Lokasi & Jadwal Mengajar")
       col_s1, col_s2 = st.columns(2)
       with col_s1:
-        # Guru bisa memilih sekolah tempat ia mengajar saat itu
-        sekolah_pilihan = st.selectbox(
-            "Pilih Sekolah Tempat Mengajar", options=DAFTAR_SEKOLAH_PILIHAN
+        # Diubah menjadi text_input agar bisa bebas mengetik nama sekolah apa saja
+        sekolah_pilihan = st.text_input(
+            "Nama Sekolah Tempat Mengajar",
+            value="SMK Negeri 2 Bangkalan",
+            placeholder="Contoh: SMK Negeri 1 Kwanyar",
         )
       with col_s2:
         tanggal = st.date_input("📅 Tanggal Mengajar", value=date.today())
@@ -105,15 +103,16 @@ def render_digma_module():
       )
 
       if submitted:
-        if not mata_pelajaran or not topik_materi:
+        if not sekolah_pilihan or not mata_pelajaran or not topik_materi:
           st.warning(
-              "⚠️ Mohon lengkapi Mata Pelajaran dan Topik/Materi terlebih dahulu!"
+              "⚠️ Mohon lengkapi Nama Sekolah, Mata Pelajaran, dan"
+              " Topik/Materi!"
           )
         else:
           try:
             row_data = [
                 str(tanggal),
-                sekolah_pilihan,  # Mengikuti pilihan sekolah di form
+                sekolah_pilihan,  # Menyimpan teks sekolah yang diinput bebas
                 NAMA_GURU,
                 mata_pelajaran,
                 kelas,
@@ -129,7 +128,7 @@ def render_digma_module():
           except Exception as e:
             st.error(f"❌ Gagal menyimpan jurnal ke Database: {e}")
 
-  # --- TAB 2: DAFTAR & REKAPITULASI (Ditampilkan Lengkap) ---
+  # --- TAB 2: DAFTAR & REKAPITULASI ---
   with tab2:
     st.markdown("#### 📋 Daftar & Rekapitulasi Jurnal Mengajar")
     try:
@@ -138,7 +137,7 @@ def render_digma_module():
         df = pd.DataFrame(data)
         df.columns = df.columns.str.strip()
 
-        # Filter Berdasarkan Sekolah (karena bisa mengajar di banyak sekolah)
+        # Filter Berdasarkan Sekolah
         if "Sekolah" in df.columns:
           list_sekolah_db = ["-- Semua Sekolah --"] + df[
               "Sekolah"
