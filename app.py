@@ -1,6 +1,3 @@
-import sakti
-from digma import render_digma_module
-
 from io import BytesIO
 import io
 import json
@@ -18,7 +15,8 @@ import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
 import streamlit as st
-
+from sakti import render_sakti
+from digma import render_digma_module
 # Import modul formatting gspread
 from gspread_formatting import (
     CellFormat, Border, Borders, Color, format_cell_range
@@ -259,7 +257,7 @@ with st.sidebar:
           "1. GEMA (Generator Modul Ajar)",
           "2. SIPENSIS (Sistem Informasi Presensi Siswa)",
           "3. DIGMA (Digitalisasi Jurnal Mengajar)",
-          "4. SAKTI (Sistem Asesmen dan Kompetensi - Segera)",
+          "4. SAKTI (Sistem Asesmen & Kompetensi Terintegrasi)"
       ],
   )
   st.markdown("---")
@@ -1368,5 +1366,5 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
 
 elif pilih_app == "3. DIGMA (Digitalisasi Jurnal Mengajar)":
     render_digma_module()
-elif pilih_app == "4. SAKTI (Sistem Asesmen dan Kompetensi)":
-    sakti.render_sakti()
+elif pilih_app == "4. SAKTI (Sistem Asesmen & Kompetensi Terintegrasi)":
+    render_sakti()
