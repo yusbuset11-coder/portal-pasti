@@ -1,5 +1,6 @@
 import base64
 from datetime import date
+import io
 import json
 from google.oauth2.service_account import Credentials
 import gspread
@@ -176,9 +177,9 @@ def render_digma_module():
     except Exception as e:
       st.error(f"Gagal memuat data dari Google Sheets: {e}")
 
-  # --- TAB 3: EXPORT LAPORAN ---
+  # --- TAB 3: EXPORT LAPORAN (Disesuaikan Filter Sekolah & Kelas + Format Excel) ---
   with tab3:
-    st.markdown("#### 📥 Cetak & Export Laporan Pembelajaran")
+    st.markdown("#### 📥 Cetak & Export Laporan ke Excel (.xlsx)")
     try:
       data = jurnal_ws.get_all_records()
       if data:
@@ -200,14 +201,49 @@ def render_digma_module():
         existing_cols = [col for col in allowed_cols if col in df_export.columns]
         df_export = df_export[existing_cols]
 
+        # Filter Berdasarkan Sekolah dan Kelas untuk Export spesifik
+        col_ex1, col_ex2 = st.columns(2)
+        with col_ex1:
+          if "Sekolah" in df_export.columns:
+            list_sekolah_export = ["-- Semua Sekolah --"] + df_export[
+                "Sekolah"
+            ].dropna().unique().tolist()
+            pilih_sekolah_ex = st.selectbox(
+                "🏫 Filter Sekolah untuk Export",
+                options=list_sekolah_export,
+                key="ex_sekolah",
+            )
+            if pilih_sekolah_ex != "-- Semua Sekolah --":
+              df_export = df_export[df_export["Sekolah"] == pilih_sekolah_ex]
+
+        with col_ex2:
+          opsi_filter_kelas_ex = ["-- Semua Kelas --"] + daftar_kelas
+          pilih_kelas_ex = st.selectbox(
+              "🏫 Filter Kelas untuk Export",
+              options=opsi_filter_kelas_ex,
+              key="ex_kelas",
+          )
+          if pilih_kelas_ex != "-- Semua Kelas --":
+            df_export = df_export[df_export["Kelas"] == pilih_kelas_ex]
+
         st.dataframe(df_export, use_container_width=True, hide_index=True)
 
-        csv_data = df_export.to_csv(index=False).encode("utf-8")
+        # Proses konversi DataFrame ke file Excel (.xlsx) di memory
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine="openpyxl") as writer:
+          df_export.to_excel(writer, index=False, sheet_name="Jurnal Mengajar")
+        excel_data = output.getvalue()
+
+        # Penamaan file dinamis berdasarkan pilihan filter
+        nama_file_excel = f"Rekap_Jurnal_{pilih_sekolah_ex.replace(' ', '_')}_{pilih_kelas_ex.replace(' ', '_')}_{date.today()}.xlsx"
+
         st.download_button(
-            label="📥 Download Seluruh Rekap Jurnal (.csv)",
-            data=csv_data,
-            file_name=f"Rekap_Jurnal_Mengajar_{date.today()}.csv",
-            mime="text/csv",
+            label="📥 Download Laporan Excel (.xlsx)",
+            data=excel_data,
+            file_name=nama_file_excel,
+            mime=(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            ),
         )
       else:
         st.info("Tidak ada data untuk diexport.")
