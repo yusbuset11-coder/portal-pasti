@@ -44,7 +44,7 @@ st.markdown(
     <style>
         /* --- 1. KUSTOMISASI POSISI & LATAR BELAKANG MODERN --- */
         .block-container {
-            padding-top: 1.5rem !important;
+            padding-top: 0rem !important;
             background: radial-gradient(circle at 50% 25%, #1e293b 0%, #090d16 100%);
             min-height: 100vh;
         }
