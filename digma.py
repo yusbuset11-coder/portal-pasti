@@ -6,7 +6,7 @@ import gspread
 import pandas as pd
 import streamlit as st
 
-# Default nama guru
+# Default nama guru (tetap disimpan di database untuk rekam jejak)
 NAMA_GURU = "Yustinus Budi Setyanta"
 
 
@@ -55,7 +55,6 @@ def render_digma_module():
       st.markdown("##### 🏫 Lokasi & Jadwal Mengajar")
       col_s1, col_s2 = st.columns(2)
       with col_s1:
-        # Diubah menjadi text_input agar bisa bebas mengetik nama sekolah apa saja
         sekolah_pilihan = st.text_input(
             "Nama Sekolah Tempat Mengajar",
             value="SMK Negeri 2 Bangkalan",
@@ -112,7 +111,7 @@ def render_digma_module():
           try:
             row_data = [
                 str(tanggal),
-                sekolah_pilihan,  # Menyimpan teks sekolah yang diinput bebas
+                sekolah_pilihan,
                 NAMA_GURU,
                 mata_pelajaran,
                 kelas,
@@ -136,6 +135,21 @@ def render_digma_module():
       if data:
         df = pd.DataFrame(data)
         df.columns = df.columns.str.strip()
+
+        # Sembunyikan kolom Nama_Guru dari tampilan tabel
+        allowed_cols = [
+            "Tanggal",
+            "Sekolah",
+            "Mata_Pelajaran",
+            "Kelas",
+            "JP_Ke",
+            "Topik_Materi",
+            "Hadir",
+            "Tidak_Hadir",
+            "Catatan",
+        ]
+        existing_cols = [col for col in allowed_cols if col in df.columns]
+        df = df[existing_cols]
 
         # Filter Berdasarkan Sekolah
         if "Sekolah" in df.columns:
@@ -170,6 +184,21 @@ def render_digma_module():
       if data:
         df_export = pd.DataFrame(data)
         df_export.columns = df_export.columns.str.strip()
+
+        # Sembunyikan kolom Nama_Guru pada export laporan
+        allowed_cols = [
+            "Tanggal",
+            "Sekolah",
+            "Mata_Pelajaran",
+            "Kelas",
+            "JP_Ke",
+            "Topik_Materi",
+            "Hadir",
+            "Tidak_Hadir",
+            "Catatan",
+        ]
+        existing_cols = [col for col in allowed_cols if col in df_export.columns]
+        df_export = df_export[existing_cols]
 
         st.dataframe(df_export, use_container_width=True, hide_index=True)
 
