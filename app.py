@@ -24,7 +24,7 @@ from gspread_formatting import (
 )
 
 st.set_page_config(
-    page_title="PORTAL PASTI - Portal Administrasi Siswa Terintegrasi",
+    page_title="PORTAL - Portal Administrasi Siswa Terintegrasi",
     page_icon="🏫",
     layout="wide",
 )
@@ -121,15 +121,19 @@ def check_auth():
   if not st.session_state["authenticated"]:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-      st.markdown(
-          """
-                <div style="background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin-top: 50px;">
-                    <h3 style="color: #38bdf8; text-align: center; margin-bottom: 20px;">🔐 Autentikasi Portal PASTI</h3>
-                    <p style="color: #94a3b8; text-align: center; font-size: 13px;">Masukkan Email dan Token Akses terdaftar di Database Pusat.</p>
+      with col2:
+            st.markdown(
+                """
+                <div class="auth-card">
+                    <h2 style="color: #38bdf8; margin: 0; font-family: sans-serif;">PASTI</h2>
+                    <h4 style="color: #cbd5e1; margin-top: 5px; font-weight: 300; font-family: sans-serif;">Portal Administrasi Siswa Terintegrasi</h4>
+                    <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 15px;">
+                        Masukkan Email dan Token Akses terdaftar di Database Pusat.
+                    </p>
                 </div>
                 """,
-          unsafe_allow_html=True,
-      )
+                unsafe_allow_html=True,
+            )
 
       email_input = st.text_input("📧 Email Terdaftar:")
       token_input = st.text_input("🔑 Token Akses:", type="password")
