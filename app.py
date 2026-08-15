@@ -529,7 +529,7 @@ def add_kerangka_pembelajaran_table(doc, kerangka_data):
 
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
-  def add_identity_table(doc, rows_data):
+def add_identity_table(doc, rows_data):
     table = doc.add_table(rows=len(rows_data), cols=2)
     table.style = "Table Grid"
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -559,7 +559,7 @@ def add_kerangka_pembelajaran_table(doc, kerangka_data):
 
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
-  def add_rubric_table(doc, rubrik_data):
+def add_rubric_table(doc, rubrik_data):
     p_sec_a = doc.add_paragraph()
     r_sec_a = p_sec_a.add_run("A. Rubrik Penilaian Kinerja / Kompetensi")
     r_sec_a.font.bold = True
@@ -641,7 +641,7 @@ def add_kerangka_pembelajaran_table(doc, kerangka_data):
 
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
-  def add_scoring_tables(doc):
+def add_scoring_tables(doc):
     p_sec_b = doc.add_paragraph()
     p_sec_b.paragraph_format.space_before = Pt(8)
     p_sec_b.add_run("B. Pedoman Penskoran & Perhitungan Nilai").font.bold = True
@@ -732,7 +732,7 @@ def add_kerangka_pembelajaran_table(doc, kerangka_data):
 
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
-  def add_formative_matrix_table(doc):
+def add_formative_matrix_table(doc):
     p_sub = doc.add_paragraph()
     r_sub = p_sub.add_run("Tabel Matriks Penilaian Formatif (Praktis untuk Guru)")
     r_sub.font.bold = True
@@ -788,7 +788,7 @@ def add_kerangka_pembelajaran_table(doc, kerangka_data):
 
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
-  def generate_docx(
+def generate_docx(
       data_ai, nama_sekolah, semester, tahun_pelajaran, mata_pelajaran,
       fase_kelas, topik, alokasi_waktu, pertemuan_ke, nama_penulis,
       nama_kota, tanggal_pembuatan, nip_penulis
