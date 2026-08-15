@@ -954,14 +954,17 @@ st.markdown("### 🚀 Generator Modul Ajar (GEMA)")
 st.write("Gunakan parameter di sidebar untuk menyusun Modul Ajar Pembelajaran Mendalam.")
 
 if st.button("🚀 Buat Modul Ajar GEMA"):
+    # Tambahkan baris ini agar API key terbaca
+    api_key = st.session_state.get("gemini_api_key", "")
+    
     if not api_key:
-      st.error("🔑 Mohon masukkan Google Gemini API Key.")
+        st.error("Mohon masukkan Google Gemini API Key.")
     elif not topik:
-      st.warning("⚠️ Mohon isi topik pembelajaran.")
+        st.warning("⚠️ Mohon isi topik pembelajaran.")
     else:
-      with st.spinner("Sistem GEMA PASTI sedang menyusun Modul Ajar lengkap dengan kerangka pembelajaran yang terisi penuh..."):
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-3.5-flash")
+        with st.spinner("Sistem GEMA PASTI sedang menyusun Modul Ajar lengkap..."):
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel("gemini-3.5-flash")
         
         prompt = f"""
         Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Pembelajaran Mendalam (Deep Learning) yang SANGAT LENGKAP, detail, dan terperinci untuk:
