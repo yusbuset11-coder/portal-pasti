@@ -337,11 +337,11 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     nama_penulis = st.text_input("Nama Penulis Modul", st.session_state.get("user_nama", "Yustinus Budi Setyanta"))
     nip_penulis = st.text_input("NIP Penulis", "196908302005011003")
 
-  def set_cell_background(cell, fill_color):
+def set_cell_background(cell, fill_color):
     shading_elm = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{fill_color}"/>')
     cell._tc.get_or_add_tcPr().append(shading_elm)
 
-  def add_section_table_custom(doc, title_text, rows_data):
+def add_section_table_custom(doc, title_text, rows_data):
     table = doc.add_table(rows=len(rows_data) + 1, cols=2)
     table.style = "Table Grid"
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
