@@ -263,9 +263,9 @@ with st.sidebar:
   st.markdown("---")
 
 # Input API Key secara global di sidebar
-    api_key_input = st.text_input("Masukkan Google Gemini API Key", type="password")
-    if api_key_input:
-        st.session_state["gemini_api_key"] = api_key_input
+  api_key_input = st.text_input("Masukkan Google Gemini API Key", type="password")
+  if api_key_input:
+      st.session_state["gemini_api_key"] = api_key_input
 
 st.markdown("---")
 
