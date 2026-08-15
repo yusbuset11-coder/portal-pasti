@@ -142,13 +142,13 @@ def check_auth():
 
             if st.button("Masuk ke Portal PASTI"):
                 if email_input.strip() and token_input.strip():
-          df_tokens = load_sheet_data("Tokens")
-          if not df_tokens.empty and "Email" in df_tokens.columns and "Token" in df_tokens.columns:
-            match = df_tokens[
-                (df_tokens["Email"].str.strip().str.lower() == email_input.strip().lower())
-                & (df_tokens["Token"].astype(str).str.strip() == token_input.strip())
-            ]
-            if not match.empty:
+                    df_tokens = load_sheet_data("Tokens")
+                    if not df_tokens.empty and "Email" in df_tokens.columns and "Token" in df_tokens.columns:
+                        match = df_tokens[
+                            (df_tokens["Email"].str.strip().str.lower() == email_input.strip().lower())
+                            & (df_tokens["Token"].astype(str).str.strip() == token_input.strip())
+                        ]
+                        if not match.empty:
               st.session_state["authenticated"] = True
               st.session_state["user_email"] = email_input
               st.session_state["user_nama"] = match.iloc[0].get("Nama", "Pengguna")
