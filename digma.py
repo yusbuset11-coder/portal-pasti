@@ -47,136 +47,117 @@ def render_digma_module():
       ["✍️ Input Jurnal", "📋 Daftar Jurnal", "📥 Export Laporan"]
   )
 
-  # --- TAB 1: INPUT JURNAL ---
+  # --- TAB 1: INPUT JURNAL (Tampilan Lebih Rapi & Simetris) ---
   with tab1:
-    st.subheader("Form Input Jurnal Mengajar")
+    st.subheader("Form Input Jurnal Mengajar Harian")
 
     with st.form("form_jurnal_mengajar", clear_on_submit=True):
       col1, col2 = st.columns(2)
       with col1:
         tanggal = st.date_input("Tanggal Mengajar", value=date.today())
-        mata_pelajaran = st.text_input("Mata Pelajaran")
-      with col2:
         kelas = st.selectbox("Kelas", options=daftar_kelas)
-        jp_ke = st.text_input("JP Ke-")
-
-      col_a, col_b = st.columns(2)
-      with col_a:
-        jumlah_hadir = st.number_input("Hadir", min_value=0, value=30, step=1)
-      with col_b:
-        jumlah_tidak_hadir = st.number_input(
-            "Tidak Hadir", min_value=0, value=0, step=1
+        hadir = st.number_input("Jumlah Siswa Hadir", min_value=0, value=30, step=1)
+      with col2:
+        mata_pelajaran = st.text_input(
+            "Mata Pelajaran", placeholder="Contoh: Pendidikan Pancasila"
+        )
+        jp_ke = st.text_input("JP Ke-", placeholder="Contoh: 1-2")
+        tidak_hadir = st.number_input(
+            "Jumlah Siswa Tidak Hadir", min_value=0, value=0, step=1
         )
 
-      topik_materi = st.text_area("Topik / Materi Pokok")
-      catatan_refleksi = st.text_area("Catatan / Refleksi")
+      st.markdown("---")
+      topik_materi = st.text_area(
+          "Topik / Materi Pokok",
+          placeholder="Tuliskan topik atau tujuan pembelajaran...",
+      )
+      catatan = st.text_area(
+          "Catatan / Refleksi Pembelajaran",
+          placeholder="Catatan penting atau refleksi kelas...",
+      )
 
-      submitted = st.form_submit_button("💾 Simpan Jurnal")
+      submitted = st.form_submit_button("💾 Simpan Jurnal Mengajar")
 
       if submitted:
-        try:
-          row_data = [
-              str(tanggal),
-              NAMA_SEKOLAH,
-              NAMA_GURU,
-              mata_pelajaran,
-              kelas,
-              jp_ke,
-              topik_materi,
-              int(jumlah_hadir),
-              int(jumlah_tidak_hadir),
-              catatan_refleksi,
-          ]
-          jurnal_ws.append_row(row_data)
-          st.success("✅ Jurnal tersimpan ke database!")
-        except Exception as e:
-          st.error(f"❌ Gagal: {e}")
+        if not mata_pelajaran or not topik_materi:
+          st.warning(
+              "Mohon lengkapi Mata Pelajaran dan Topik/Materi terlebih dahulu!"
+          )
+        else:
+          try:
+            # Urutan sesuai Header Google Sheets: Tanggal, Sekolah, Nama_Guru, Mata_Pelajaran, Kelas, JP_Ke, Topik_Materi, Hadir, Tidak_Hadir, Catatan
+            row_data = [
+                str(tanggal),
+                NAMA_SEKOLAH,
+                NAMA_GURU,
+                mata_pelajaran,
+                kelas,
+                jp_ke,
+                topik_materi,
+                int(hadir),
+                int(tidak_hadir),
+                catatan,
+            ]
+            jurnal_ws.append_row(row_data)
+            st.success("✅ Jurnal mengajar berhasil disimpan ke Database Pusat!")
+            st.balloons()  # Efek balon seperti di SIPENSIS
+          except Exception as e:
+            st.error(f"❌ Gagal menyimpan jurnal ke Database: {e}")
 
   # --- TAB 2: DAFTAR & REKAPITULASI ---
   with tab2:
+    st.subheader("Daftar & Rekapitulasi Jurnal Mengajar")
     try:
       data = jurnal_ws.get_all_records()
       if data:
         df = pd.DataFrame(data)
         df.columns = df.columns.str.strip()
 
-        # Ubah nama kolom untuk tampilan
-        df = df.rename(
-            columns={
-                "Jumlah_Hadir": "Hadir",
-                "Jumlah_Tidak_Hadir": "Tidak_Hadir",
-            }
+        # Sembunyikan kolom Sekolah dan Nama_Guru dari tampilan tabel
+        df = df.drop(
+            columns=["Sekolah", "Nama_Guru", "sekolah", "nama_guru"],
+            errors="ignore",
         )
 
-        kolom_tampil = [
-            "Tanggal",
-            "Mata_Pelajaran",
-            "Kelas",
-            "JP_Ke",
-            "Topik_Materi",
-            "Hadir",
-            "Tidak_Hadir",
-            "Catatan_Refleksi",
-        ]
-        kolom_tersedia = [col for col in kolom_tampil if col in df.columns]
-        df_display = df[kolom_tersedia]
-
-        search_query = st.text_input("🔍 Cari Mapel / Kelas")
+        search_query = st.text_input("🔍 Cari berdasarkan Mapel / Kelas", value="")
         if search_query:
-          df_display = df_display[
-              df_display["Mata_Pelajaran"].str.contains(
+          df = df[
+              df["Mata_Pelajaran"].str.contains(
                   search_query, case=False, na=False
               )
-              | df_display["Kelas"].str.contains(
-                  search_query, case=False, na=False
-              )
+              | df["Kelas"].str.contains(search_query, case=False, na=False)
           ]
 
-        st.dataframe(df_display, use_container_width=True)
+        st.dataframe(df, use_container_width=True)
       else:
-        st.info("Belum ada data jurnal tersimpan.")
+        st.info("Belum ada data Jurnal Mengajar yang tersimpan di database.")
     except Exception as e:
-      st.error(f"Gagal memuat data: {e}")
+      st.error(f"Gagal memuat data dari Google Sheets: {e}")
 
   # --- TAB 3: EXPORT LAPORAN ---
   with tab3:
+    st.subheader("Cetak & Export Laporan Pembelajaran")
     try:
       data = jurnal_ws.get_all_records()
       if data:
         df_export = pd.DataFrame(data)
         df_export.columns = df_export.columns.str.strip()
 
-        df_export = df_export.rename(
-            columns={
-                "Jumlah_Hadir": "Hadir",
-                "Jumlah_Tidak_Hadir": "Tidak_Hadir",
-            }
+        # Sembunyikan kolom Sekolah & Nama_Guru pada preview export
+        df_export_display = df_export.drop(
+            columns=["Sekolah", "Nama_Guru", "sekolah", "nama_guru"],
+            errors="ignore",
         )
+        st.dataframe(df_export_display, use_container_width=True)
 
-        kolom_tampil = [
-            "Tanggal",
-            "Mata_Pelajaran",
-            "Kelas",
-            "JP_Ke",
-            "Topik_Materi",
-            "Hadir",
-            "Tidak_Hadir",
-            "Catatan_Refleksi",
-        ]
-        kolom_tersedia = [
-            col for col in kolom_tampil if col in df_export.columns
-        ]
-
-        st.dataframe(df_export[kolom_tersedia], use_container_width=True)
-
-        csv_data = df_export[kolom_tersedia].to_csv(index=False).encode("utf-8")
+        csv_data = df_export.to_csv(index=False).encode("utf-8")
         st.download_button(
-            label="📥 Download Rekap (.csv)",
+            label="📥 Download Rekap Jurnal (.csv)",
             data=csv_data,
-            file_name=f"Rekap_Jurnal_{date.today()}.csv",
+            file_name=f"Rekap_Jurnal_Mengajar_{date.today()}.csv",
             mime="text/csv",
         )
       else:
         st.info("Tidak ada data untuk diexport.")
     except Exception as e:
-      st.error(f"Gagal export: {e}")
+      st.error(f"Gagal menyiapkan data untuk export: {e}")
