@@ -176,7 +176,7 @@ def render_digma_module():
     except Exception as e:
       st.error(f"Gagal memuat data dari Google Sheets: {e}")
 
-  # --- TAB 3: EXPORT LAPORAN SIAP CETAK & LEBAR KOLOM OTOMATIS AMAN ---
+  # --- TAB 3: EXPORT LAPORAN SIAP CETAK & FORMAT TANGGAL INDONESIA ---
   with tab3:
     st.markdown("#### 📥 Cetak & Export Laporan ke Excel (.xlsx)")
     try:
@@ -222,6 +222,28 @@ def render_digma_module():
           )
           if pilih_kelas_ex != "-- Semua Kelas --":
             df_export = df_export[df_export["Kelas"] == pilih_kelas_ex]
+
+        # Konversi Format Tanggal ke Format Indonesia: Hari, Tanggal-Bulan-Tahun
+        days_indo = {
+            "Monday": "Senin",
+            "Tuesday": "Selasa",
+            "Wednesday": "Rabu",
+            "Thursday": "Kamis",
+            "Friday": "Jumat",
+            "Saturday": "Sabtu",
+            "Sunday": "Minggu",
+        }
+
+        def format_tanggal_indo(val):
+          try:
+            dt_obj = pd.to_datetime(val)
+            nama_hari = days_indo.get(dt_obj.strftime("%A"), dt_obj.strftime("%A"))
+            return f"{nama_hari}, {dt_obj.strftime('%d-%m-%Y')}"
+          except:
+            return str(val)
+
+        if "Tanggal" in df_export.columns:
+          df_export["Tanggal"] = df_export["Tanggal"].apply(format_tanggal_indo)
 
         st.dataframe(df_export, use_container_width=True, hide_index=True)
 
@@ -273,15 +295,30 @@ def render_digma_module():
             cell.border = thin_border
             cell.alignment = Alignment(vertical="center", wrap_text=True)
 
-        # Auto-fit lebar kolom dengan minimum width yang lebih aman (minimal 22 karakter)
+        # Standar lebar minimum spesifik per kolom agar proporsional dan pas
+        default_min_widths = {
+            "Tanggal": 22,
+            "Sekolah": 25,
+            "Mata_Pelajaran": 20,
+            "Kelas": 12,
+            "JP_Ke": 12,
+            "Topik_Materi": 30,
+            "Hadir": 10,
+            "Tidak_Hadir": 14,
+            "Catatan": 25,
+        }
+
         for col in ws.columns:
-          max_len = 0
+          col_name = col[0].value
           col_letter = get_column_letter(col[0].column)
+          max_len = 0
           for cell in col:
             if cell.value is not None:
               max_len = max(max_len, len(str(cell.value)))
-          # Menggunakan batas minimal 22 agar judul kolom panjang seperti 'Mata_Pelajaran' tidak terpotong
-          ws.column_dimensions[col_letter].width = max(max_len + 6, 22)
+          
+          # Gunakan standar lebar khusus jika ada, default ke 15 jika tidak ada
+          min_w = default_min_widths.get(col_name, 15)
+          ws.column_dimensions[col_letter].width = max(max_len + 3, min_w)
 
         final_output = io.BytesIO()
         wb.save(final_output)
