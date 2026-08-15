@@ -137,8 +137,8 @@ def check_auth():
               unsafe_allow_html=True,
           )
 
-      email_input = st.text_input("📧 Email Terdaftar:")
-      token_input = st.text_input("🔑 Token Akses:", type="password")
+          email_input = st.text_input("📧 Email Terdaftar:")
+          token_input = st.text_input("🔑 Token Akses:", type="password")
 
       if st.button("Masuk ke Portal PASTI"):
         if email_input.strip() and token_input.strip():
