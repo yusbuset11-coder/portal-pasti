@@ -6,7 +6,11 @@ import gspread
 import pandas as pd
 import streamlit as st
 
-NAMA_SEKOLAH = "SMK Negeri 2 Bangkalan"
+# Daftar sekolah tempat guru mengajar (bisa disesuaikan atau ditambah)
+DAFTAR_SEKOLAH_PILIHAN = [
+    "SMK Negeri 2 Bangkalan",
+    "Sekolah B (Contoh Lain)",
+]
 NAMA_GURU = "Yustinus Budi Setyanta"
 
 
@@ -47,37 +51,40 @@ def render_digma_module():
       ["✍️ Input Jurnal", "📋 Daftar Jurnal", "📥 Export Laporan"]
   )
 
-  # --- TAB 1: INPUT JURNAL (Tampilan Lebih Menarik & Rapi) ---
+  # --- TAB 1: INPUT JURNAL (Dinamis untuk Lintas Sekolah & Mapel) ---
   with tab1:
     st.markdown("#### 📝 Form Input Jurnal Mengajar Harian")
-    st.info(
-        f"🏫 **Sekolah:** {NAMA_SEKOLAH} | 👨‍🏫 **Guru:** {NAMA_GURU} *(Terisi"
-        " Otomatis)*"
-    )
 
     with st.form("form_jurnal_mengajar", clear_on_submit=True):
-      st.markdown("##### 📌 Informasi Jadwal & Kelas")
+      st.markdown("##### 🏫 Lokasi & Jadwal Mengajar")
+      col_s1, col_s2 = st.columns(2)
+      with col_s1:
+        # Guru bisa memilih sekolah tempat ia mengajar saat itu
+        sekolah_pilihan = st.selectbox(
+            "Pilih Sekolah Tempat Mengajar", options=DAFTAR_SEKOLAH_PILIHAN
+        )
+      with col_s2:
+        tanggal = st.date_input("📅 Tanggal Mengajar", value=date.today())
+
       col1, col2, col3 = st.columns(3)
       with col1:
-        tanggal = st.date_input("📅 Tanggal Mengajar", value=date.today())
-      with col2:
         kelas = st.selectbox("🏫 Kelas", options=daftar_kelas)
-      with col3:
+      with col2:
         jp_ke = st.text_input(
             "⏱️ Jam Pelajaran (JP Ke-)", placeholder="Contoh: 1-2"
         )
-
-      st.markdown("##### 📚 Mata Pelajaran & Kehadiran Siswa")
-      col_a, col_b, col_c = st.columns(3)
-      with col_a:
+      with col3:
         mata_pelajaran = st.text_input(
             "📖 Mata Pelajaran", placeholder="Contoh: Pendidikan Pancasila"
         )
-      with col_b:
+
+      st.markdown("##### 👥 Kehadiran Siswa")
+      col_a, col_b = st.columns(2)
+      with col_a:
         hadir = st.number_input(
             "✅ Siswa Hadir", min_value=0, value=30, step=1
         )
-      with col_c:
+      with col_b:
         tidak_hadir = st.number_input(
             "❌ Siswa Tidak Hadir", min_value=0, value=0, step=1
         )
@@ -104,10 +111,9 @@ def render_digma_module():
           )
         else:
           try:
-            # Urutan sesuai Header Google Sheets: Tanggal, Sekolah, Nama_Guru, Mata_Pelajaran, Kelas, JP_Ke, Topik_Materi, Hadir, Tidak_Hadir, Catatan
             row_data = [
                 str(tanggal),
-                NAMA_SEKOLAH,
+                sekolah_pilihan,  # Mengikuti pilihan sekolah di form
                 NAMA_GURU,
                 mata_pelajaran,
                 kelas,
@@ -123,7 +129,7 @@ def render_digma_module():
           except Exception as e:
             st.error(f"❌ Gagal menyimpan jurnal ke Database: {e}")
 
-  # --- TAB 2: DAFTAR & REKAPITULASI ---
+  # --- TAB 2: DAFTAR & REKAPITULASI (Ditampilkan Lengkap) ---
   with tab2:
     st.markdown("#### 📋 Daftar & Rekapitulasi Jurnal Mengajar")
     try:
@@ -132,32 +138,25 @@ def render_digma_module():
         df = pd.DataFrame(data)
         df.columns = df.columns.str.strip()
 
-        # WHITELIST: Hanya pilih kolom yang diizinkan (Sekolah & Nama_Guru otomatis dibuang)
-        allowed_cols = [
-            "Tanggal",
-            "Mata_Pelajaran",
-            "Kelas",
-            "JP_Ke",
-            "Topik_Materi",
-            "Hadir",
-            "Tidak_Hadir",
-            "Catatan",
-        ]
-        existing_cols = [col for col in allowed_cols if col in df.columns]
-        df = df[existing_cols]
+        # Filter Berdasarkan Sekolah (karena bisa mengajar di banyak sekolah)
+        if "Sekolah" in df.columns:
+          list_sekolah_db = ["-- Semua Sekolah --"] + df[
+              "Sekolah"
+          ].dropna().unique().tolist()
+          pilih_sekolah_filter = st.selectbox(
+              "🔍 Filter Berdasarkan Sekolah", options=list_sekolah_db
+          )
+          if pilih_sekolah_filter != "-- Semua Sekolah --":
+            df = df[df["Sekolah"] == pilih_sekolah_filter]
 
-        search_query = st.text_input(
-            "🔍 Cari berdasarkan Mapel / Kelas", value=""
+        # Filter Berdasarkan Kelas
+        opsi_filter_kelas = ["-- Semua Kelas --"] + daftar_kelas
+        pilih_kelas = st.selectbox(
+            "🔍 Filter Berdasarkan Kelas", options=opsi_filter_kelas
         )
-        if search_query:
-          df = df[
-              df["Mata_Pelajaran"].str.contains(
-                  search_query, case=False, na=False
-              )
-              | df["Kelas"].str.contains(search_query, case=False, na=False)
-          ]
+        if pilih_kelas != "-- Semua Kelas --":
+          df = df[df["Kelas"] == pilih_kelas]
 
-        # hide_index=True menyembunyikan kolom angka indeks (0, 1, dst.)
         st.dataframe(df, use_container_width=True, hide_index=True)
       else:
         st.info("Belum ada data Jurnal Mengajar yang tersimpan di database.")
@@ -173,27 +172,11 @@ def render_digma_module():
         df_export = pd.DataFrame(data)
         df_export.columns = df_export.columns.str.strip()
 
-        # Whitelist untuk preview export
-        allowed_cols = [
-            "Tanggal",
-            "Mata_Pelajaran",
-            "Kelas",
-            "JP_Ke",
-            "Topik_Materi",
-            "Hadir",
-            "Tidak_Hadir",
-            "Catatan",
-        ]
-        existing_cols = [col for col in allowed_cols if col in df_export.columns]
-        df_export_display = df_export[existing_cols]
+        st.dataframe(df_export, use_container_width=True, hide_index=True)
 
-        st.dataframe(
-            df_export_display, use_container_width=True, hide_index=True
-        )
-
-        csv_data = df_export_display.to_csv(index=False).encode("utf-8")
+        csv_data = df_export.to_csv(index=False).encode("utf-8")
         st.download_button(
-            label="📥 Download Rekap Jurnal (.csv)",
+            label="📥 Download Seluruh Rekap Jurnal (.csv)",
             data=csv_data,
             file_name=f"Rekap_Jurnal_Mengajar_{date.today()}.csv",
             mime="text/csv",
