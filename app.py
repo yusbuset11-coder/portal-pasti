@@ -27,7 +27,8 @@ st.set_page_config(
     page_icon="🏫",
     layout="wide",
 )
-# --- CSS Kustom untuk Tampilan Modern & Posisi Naik ---
+
+# --- CSS Kustom untuk Tampilan Modern, Kartu Login Terpadu, & Posisi ---
 st.markdown(
     """
     <style>
@@ -35,17 +36,18 @@ st.markdown(
         .block-container {
             padding-top: 1.5rem !important;
             background: radial-gradient(circle at 50% 25%, #1e293b 0%, #090d16 100%);
+            min-height: 100vh;
         }
         
-        /* --- 2. KARTU LOGIN LEBIH RINGKAS & BERCAHAYA --- */
-        .auth-card {
+        /* --- 2. KARTU LOGIN TERPADU & BERCAHAYA --- */
+        .login-card-wrapper {
             background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
-            padding: 1.25rem 1.5rem;
-            border-radius: 16px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 25px rgba(56, 189, 248, 0.15);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            text-align: center;
-            margin-bottom: 1rem;
+            padding: 2.5rem 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 35px rgba(56, 189, 248, 0.2);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            margin-top: 1rem;
+            margin-bottom: 2rem;
         }
 
         /* --- 3. STYLING TABEL --- */
@@ -121,50 +123,55 @@ def check_auth():
     st.session_state["authenticated"] = False
 
   if not st.session_state["authenticated"]:
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([1, 1.25, 1])
     with col2:
-            st.markdown(
-                """
-                <div class="auth-card">
-                    <h2 style="color: #38bdf8; margin: 0; font-size: 1.7rem; font-family: sans-serif; letter-spacing: 1px;">PASTI</h2>
-                    <h4 style="color: #cbd5e1; margin: 2px 0 8px 0; font-size: 0.95rem; font-weight: 300; font-family: sans-serif;">Portal Administrasi Siswa Terintegrasi</h4>
-                    <p style="color: #94a3b8; font-size: 0.8rem; margin: 0;">
-                        Masukkan Email dan Token Akses terdaftar di Database Pusat.
-                    </p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+        st.markdown('<div class="login-card-wrapper">', unsafe_allow_html=True)
+        st.markdown(
+            """
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <h2 style="color: #38bdf8; margin: 0; font-size: 2.2rem; font-family: sans-serif; letter-spacing: 2px; font-weight: 800;">PASTI</h2>
+                <h4 style="color: #cbd5e1; margin: 6px 0 10px 0; font-size: 1.05rem; font-weight: 400; font-family: sans-serif;">Portal Administrasi Siswa Terintegrasi</h4>
+                <p style="color: #94a3b8; font-size: 0.85rem; margin: 0;">
+                    Silakan masukkan Email dan Token Akses terdaftar di Database Pusat.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-            email_input = st.text_input("📧 Email Terdaftar:")
-            token_input = st.text_input("🔑 Token Akses:", type="password")
+        email_input = st.text_input("📧 Email Terdaftar", placeholder="Masukkan email terdaftar...")
+        token_input = st.text_input("🔑 Token Akses", type="password", placeholder="Masukkan token akses...")
 
-            if st.button("Masuk ke Portal PASTI"):
-                if email_input.strip() and token_input.strip():
-                    df_tokens = load_sheet_data("Tokens")
-                    if not df_tokens.empty and "Email" in df_tokens.columns and "Token" in df_tokens.columns:
-                        match = df_tokens[
-                            (df_tokens["Email"].str.strip().str.lower() == email_input.strip().lower())
-                            & (df_tokens["Token"].astype(str).str.strip() == token_input.strip())
-                        ]
-                        if not match.empty:
-                            st.session_state["authenticated"] = True
-                            st.session_state["user_email"] = email_input
-                            st.session_state["user_nama"] = match.iloc[0].get("Nama", "Pengguna")
-                            st.session_state["user_sekolah"] = match.iloc[0].get("Sekolah", "Satuan Pendidikan")
-                            st.rerun()
-                        else:
-                            st.error("❌ Email atau Token Akses tidak ditemukan di Database Pusat.")
+        st.markdown("<div style='margin-top: 1.2rem;'></div>", unsafe_allow_html=True)
+        
+        if st.button("Masuk ke Portal PASTI", use_container_width=True):
+            if email_input.strip() and token_input.strip():
+                df_tokens = load_sheet_data("Tokens")
+                if not df_tokens.empty and "Email" in df_tokens.columns and "Token" in df_tokens.columns:
+                    match = df_tokens[
+                        (df_tokens["Email"].str.strip().str.lower() == email_input.strip().lower())
+                        & (df_tokens["Token"].astype(str).str.strip() == token_input.strip())
+                    ]
+                    if not match.empty:
+                        st.session_state["authenticated"] = True
+                        st.session_state["user_email"] = email_input
+                        st.session_state["user_nama"] = match.iloc[0].get("Nama", "Pengguna")
+                        st.session_state["user_sekolah"] = match.iloc[0].get("Sekolah", "Satuan Pendidikan")
+                        st.rerun()
                     else:
-                        if token_input == "PASTI-2026":
-                            st.session_state["authenticated"] = True
-                            st.session_state["user_email"] = email_input
-                            st.session_state["user_nama"] = "Admin PASTI"
-                            st.rerun()
-                        else:
-                            st.error("❌ Gagal memvalidasi ke database atau token salah.")
+                        st.error("❌ Email atau Token Akses tidak ditemukan di Database Pusat.")
                 else:
-                    st.warning("⚠️ Mohon isi email dan token akses dengan lengkap.")
+                    if token_input == "PASTI-2026":
+                        st.session_state["authenticated"] = True
+                        st.session_state["user_email"] = email_input
+                        st.session_state["user_nama"] = "Admin PASTI"
+                        st.rerun()
+                    else:
+                        st.error("❌ Gagal memvalidasi ke database atau token salah.")
+            else:
+                st.warning("⚠️ Mohon isi email dan token akses dengan lengkap.")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
     return False
   return True
 
@@ -965,7 +972,7 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
         else:
             with st.spinner("Sistem GEMA PASTI sedang menyusun Modul Ajar lengkap..."):
                 genai.configure(api_key=api_key)
-                model = genai.GenerativeModel("gemini-3.5-flash") # Diperbarui ke model stabil
+                model = genai.GenerativeModel("gemini-3.5-flash")
             
             prompt = f"""
             Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Pembelajaran Mendalam (Deep Learning) yang SANGAT LENGKAP, detail, dan terperinci untuk:
