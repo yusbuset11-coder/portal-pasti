@@ -47,41 +47,60 @@ def render_digma_module():
       ["✍️ Input Jurnal", "📋 Daftar Jurnal", "📥 Export Laporan"]
   )
 
-  # --- TAB 1: INPUT JURNAL ---
+  # --- TAB 1: INPUT JURNAL (Tampilan Lebih Menarik & Rapi) ---
   with tab1:
-    st.subheader("Form Input Jurnal Mengajar Harian")
+    st.markdown("#### 📝 Form Input Jurnal Mengajar Harian")
+    st.info(
+        f"🏫 **Sekolah:** {NAMA_SEKOLAH} | 👨‍🏫 **Guru:** {NAMA_GURU} *(Terisi"
+        " Otomatis)*"
+    )
 
     with st.form("form_jurnal_mengajar", clear_on_submit=True):
-      col1, col2 = st.columns(2)
+      st.markdown("##### 📌 Informasi Jadwal & Kelas")
+      col1, col2, col3 = st.columns(3)
       with col1:
-        tanggal = st.date_input("Tanggal Mengajar", value=date.today())
-        kelas = st.selectbox("Kelas", options=daftar_kelas)
-        hadir = st.number_input("Jumlah Siswa Hadir", min_value=0, value=30, step=1)
+        tanggal = st.date_input("📅 Tanggal Mengajar", value=date.today())
       with col2:
-        mata_pelajaran = st.text_input(
-            "Mata Pelajaran", placeholder="Contoh: Pendidikan Pancasila"
-        )
-        jp_ke = st.text_input("JP Ke-", placeholder="Contoh: 1-2")
-        tidak_hadir = st.number_input(
-            "Jumlah Siswa Tidak Hadir", min_value=0, value=0, step=1
+        kelas = st.selectbox("🏫 Kelas", options=daftar_kelas)
+      with col3:
+        jp_ke = st.text_input(
+            "⏱️ Jam Pelajaran (JP Ke-)", placeholder="Contoh: 1-2"
         )
 
-      st.markdown("---")
+      st.markdown("##### 📚 Mata Pelajaran & Kehadiran Siswa")
+      col_a, col_b, col_c = st.columns(3)
+      with col_a:
+        mata_pelajaran = st.text_input(
+            "📖 Mata Pelajaran", placeholder="Contoh: Pendidikan Pancasila"
+        )
+      with col_b:
+        hadir = st.number_input(
+            "✅ Siswa Hadir", min_value=0, value=30, step=1
+        )
+      with col_c:
+        tidak_hadir = st.number_input(
+            "❌ Siswa Tidak Hadir", min_value=0, value=0, step=1
+        )
+
+      st.markdown("##### 📝 Materi & Refleksi Pembelajaran")
       topik_materi = st.text_area(
-          "Topik / Materi Pokok",
-          placeholder="Tuliskan topik atau tujuan pembelajaran...",
+          "💡 Topik / Materi Pokok",
+          placeholder="Tuliskan topik atau tujuan pembelajaran hari ini...",
       )
       catatan = st.text_area(
-          "Catatan / Refleksi Pembelajaran",
-          placeholder="Catatan penting atau refleksi kelas...",
+          "📌 Catatan / Refleksi",
+          placeholder="Catatan tambahan atau refleksi kegiatan kelas...",
       )
 
-      submitted = st.form_submit_button("💾 Simpan Jurnal Mengajar")
+      st.markdown("")
+      submitted = st.form_submit_button(
+          "💾 Simpan Jurnal Mengajar", use_container_width=True
+      )
 
       if submitted:
         if not mata_pelajaran or not topik_materi:
           st.warning(
-              "Mohon lengkapi Mata Pelajaran dan Topik/Materi terlebih dahulu!"
+              "⚠️ Mohon lengkapi Mata Pelajaran dan Topik/Materi terlebih dahulu!"
           )
         else:
           try:
@@ -106,15 +125,15 @@ def render_digma_module():
 
   # --- TAB 2: DAFTAR & REKAPITULASI ---
   with tab2:
-    st.subheader("Daftar & Rekapitulasi Jurnal Mengajar")
+    st.markdown("#### 📋 Daftar & Rekapitulasi Jurnal Mengajar")
     try:
       data = jurnal_ws.get_all_records()
       if data:
         df = pd.DataFrame(data)
         df.columns = df.columns.str.strip()
 
-        # WHITELIST: Hanya ambil kolom ini saja (Sekolah & Nama_Guru otomatis dibuang)
-        kolom_diizinkan = [
+        # WHITELIST: Hanya pilih kolom yang diizinkan (Sekolah & Nama_Guru otomatis dibuang)
+        allowed_cols = [
             "Tanggal",
             "Mata_Pelajaran",
             "Kelas",
@@ -124,8 +143,8 @@ def render_digma_module():
             "Tidak_Hadir",
             "Catatan",
         ]
-        kolom_tersedia = [col for col in kolom_diizinkan if col in df.columns]
-        df = df[kolom_tersedia]
+        existing_cols = [col for col in allowed_cols if col in df.columns]
+        df = df[existing_cols]
 
         search_query = st.text_input(
             "🔍 Cari berdasarkan Mapel / Kelas", value=""
@@ -138,7 +157,8 @@ def render_digma_module():
               | df["Kelas"].str.contains(search_query, case=False, na=False)
           ]
 
-        st.dataframe(df, use_container_width=True)
+        # hide_index=True menyembunyikan kolom angka indeks (0, 1, dst.)
+        st.dataframe(df, use_container_width=True, hide_index=True)
       else:
         st.info("Belum ada data Jurnal Mengajar yang tersimpan di database.")
     except Exception as e:
@@ -146,15 +166,15 @@ def render_digma_module():
 
   # --- TAB 3: EXPORT LAPORAN ---
   with tab3:
-    st.subheader("Cetak & Export Laporan Pembelajaran")
+    st.markdown("#### 📥 Cetak & Export Laporan Pembelajaran")
     try:
       data = jurnal_ws.get_all_records()
       if data:
         df_export = pd.DataFrame(data)
         df_export.columns = df_export.columns.str.strip()
 
-        # Whitelist untuk tampilan preview export
-        kolom_diizinkan = [
+        # Whitelist untuk preview export
+        allowed_cols = [
             "Tanggal",
             "Mata_Pelajaran",
             "Kelas",
@@ -164,12 +184,12 @@ def render_digma_module():
             "Tidak_Hadir",
             "Catatan",
         ]
-        kolom_tersedia = [
-            col for col in kolom_diizinkan if col in df_export.columns
-        ]
-        df_export_display = df_export[kolom_tersedia]
+        existing_cols = [col for col in allowed_cols if col in df_export.columns]
+        df_export_display = df_export[existing_cols]
 
-        st.dataframe(df_export_display, use_container_width=True)
+        st.dataframe(
+            df_export_display, use_container_width=True, hide_index=True
+        )
 
         csv_data = df_export_display.to_csv(index=False).encode("utf-8")
         st.download_button(
