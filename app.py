@@ -28,27 +28,43 @@ st.set_page_config(
     page_icon="🏫",
     layout="wide",
 )
-
-st.markdown("""
+# --- CSS Kustom untuk Tampilan Modern & Posisi Naik ---
+st.markdown(
+    """
     <style>
-    /* Styling Header Tabel agar Center, Bold, dan Huruf Kapital */
-    .stDataFrame th, [data-testid="stDataEditor"] th {
-        background-color: #1E3A8A !important;
-        color: #FFFFFF !important;
-        font-weight: bold !important;
-        text-align: center !important;
-        text-transform: uppercase !important;
-    }
-    /* Mengatur posisi teks/angka dalam sel tabel agar Center, kecuali Nama Siswa */
-    .stDataFrame td, [data-testid="stDataEditor"] td {
-        text-align: center !important;
-    }
-    .stDataFrame td:nth-child(2), .stDataFrame td:nth-child(4),
-    [data-testid="stDataEditor"] td:nth-child(2) {
-        text-align: left !important;
-    }
+        /* --- 1. KUSTOMISASI POSISI & LOGIN CARD --- */
+        .block-container {
+            padding-top: 2rem !important;
+        }
+        .auth-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        /* --- 2. STYLING TABEL --- */
+        .stDataFrame th, [data-testid="stDataEditor"] th {
+            background-color: #1E3A8A !important;
+            color: #FFFFFF !important;
+            font-weight: bold !important;
+            text-align: center !important;
+            text-transform: uppercase !important;
+        }
+        .stDataFrame td, [data-testid="stDataEditor"] td {
+            text-align: center !important;
+        }
+        .stDataFrame td:nth-child(2), .stDataFrame td:nth-child(4),
+        [data-testid="stDataEditor"] td:nth-child(2) {
+            text-align: left !important;
+        }
     </style>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True,
+)
 
 # ID Google Spreadsheet Database_PASTI_Pusat
 SHEET_ID = "1terQDxNZX1aESF0GO02uSn9R7eKLKDGbkiT11GpX1pA"
