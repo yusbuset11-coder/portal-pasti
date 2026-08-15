@@ -3,7 +3,6 @@ import google.generativeai as genai
 import pandas as pd
 import io
 import datetime
-import requests
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
@@ -11,35 +10,28 @@ def render_sakti():
     st.markdown("### 🎯 SAKTI (Sistem Asesmen & Kompetensi Terintegrasi)")
     st.write("Sistem Asesmen & Kompetensi Terintegrasi (Pembelajaran Mendalam)")
 
-    # Konfigurasi Koneksi ke Database Google Sheets / Apps Script (Database_PASTI_Pusat)
-    with st.expander("🔗 Konfigurasi Koneksi Database Siswa (Google Sheets)", expanded=False):
-        st.info("Masukkan URL Web App Google Apps Script dari database **Database_PASTI_Pusat** (Sheet: Siswa) untuk sinkronisasi otomatis.")
-        webapp_url_default = st.session_state.get("sakti_webapp_url", "")
-        webapp_url = st.text_input("Apps Script Web App URL", value=webapp_url_default, placeholder="https://script.google.com/macros/s/.../exec")
-        if st.button("Simpan Konfigurasi URL"):
-            st.session_state["sakti_webapp_url"] = webapp_url
-            st.success("URL Database berhasil disimpan!")
+    # Konfigurasi Link CSV Google Spreadsheet Database_PASTI_Pusat
+    with st.expander("🔗 Konfigurasi Sumber Data Siswa (Google Sheets)", expanded=False):
+        default_csv = st.session_state.get("sakti_csv_url", "https://docs.google.com/spreadsheets/d/1terQdXNZX1aESF0G02uSn9R7eKLKDgbkit11GpX1pA/export?format=csv&sheet=Siswa")
+        csv_url = st.text_input("Link CSV Google Sheet (Sheet: Siswa)", value=default_csv)
+        if st.button("Simpan Link Database"):
+            st.session_state["sakti_csv_url"] = csv_url
+            st.success("Link database siswa berhasil diperbarui!")
 
-    # Fungsi untuk mengambil data siswa dari Google Sheets (Sheet: Siswa)
-    def fetch_siswa_from_sheets(kelas_pilih):
-        url = st.session_state.get("sakti_webapp_url", "")
-        if url:
-            try:
-                # Mengirim request ke Apps Script untuk mengambil data siswa berdasarkan kelas
-                response = requests.get(f"{url}?action=getSiswa&kelas={kelas_pilih}", timeout=5)
-                if response.status_code == 200:
-                    data = response.json()
-                    # Format yang diharapkan dari Apps Script: [{"no_absen": 1, "nama": "Nama Siswa"}, ...]
-                    return {item["no_absen"]: item["nama"] for item in data}
-            except Exception as e:
-                st.warning(f"Gagal memuat dari Google Sheets: {e}. Menggunakan data lokal.")
-        
-        # Fallback Data Lokal jika URL belum diset atau offline
-        fallback_db = {
-            "Kelas 10": {1: "Ahmad Fauzi", 2: "Bunga Citra", 3: "Candra Wijaya", 4: "Dewi Lestari", 5: "Eko Prasetyo"},
-            "Kelas 11": {1: "Fajar Nugraha", 2: "Gita Savitri", 3: "Hadi Pratama"}
-        }
-        return fallback_db.get(kelas_pilih, {1: "Siswa 1", 2: "Siswa 2"})
+    # Fungsi untuk memuat data siswa langsung dari Google Sheet (Sheet 'Siswa')
+    @st.cache_data(ttl=60)
+    def load_data_siswa_from_sheet():
+        url = st.session_state.get("sakti_csv_url", "https://docs.google.com/spreadsheets/d/1terQdXNZX1aESF0G02uSn9R7eKLKDgbkit11GpX1pA/export?format=csv&sheet=Siswa")
+        try:
+            df_siswa = pd.read_csv(url)
+            # Membersihkan nama kolom dari spasi ekstra jika ada
+            df_siswa.columns = df_siswa.columns.str.strip()
+            return df_siswa
+        except Exception as e:
+            # Fallback jika gagal memuat
+            return pd.DataFrame(columns=["ID_Siswa", "Sekolah", "Kelas", "Nama_Siswa"])
+
+    df_master_siswa = load_data_siswa_from_sheet()
 
     # Form Pembuatan Soal & Asesmen (AI)
     with st.expander("✨ Parameter Pembuatan Soal & Asesmen (Pendekatan PM)", expanded=False):
@@ -104,18 +96,30 @@ def render_sakti():
     st.markdown("### 📄 Lembar Input Hasil Asesmen Siswa")
     st.write("Catat dan rekap nilai hasil asesmen formatif atau sumatif peserta didik.")
 
-    # Form Input Sesuai Alur Presisi
+    # Ambil pilihan Sekolah unik dari data sheet Siswa
+    list_opsi_sekolah = df_master_siswa["Sekolah"].dropna().unique().tolist() if not df_master_siswa.empty else ["SMK Negeri 2 Bangkalan"]
+
     with st.form("form_input_asesmen_sakti"):
         col_a, col_b = st.columns(2)
         with col_a:
-            nama_sekolah = st.text_input("Asal Sekolah", placeholder="Masukkan nama sekolah")
             tanggal_input = st.date_input("Tanggal", value=datetime.date.today())
             nama_guru = st.text_input("Nama Guru", placeholder="Masukkan nama guru pengampu")
             mata_pelajaran = st.text_input("Mata Pelajaran", placeholder="Masukkan mata pelajaran")
+            
+            # Pilih Sekolah berdasarkan isi sheet Siswa
+            nama_sekolah = st.selectbox("Pilih Asal Sekolah", list_opsi_sekolah)
+            
             jenjang_kelas = st.selectbox("Pilih Jenjang", ["SD", "SMP", "SMA", "SMK"], index=3)
-            pilih_kelas = st.selectbox("Pilih Kelas", [f"Kelas {i}" for i in range(1, 13)], index=9)
             
         with col_b:
+            # Filter Kelas berdasarkan Sekolah yang dipilih
+            if not df_master_siswa.empty:
+                list_opsi_kelas = df_master_siswa[df_master_siswa["Sekolah"] == nama_sekolah]["Kelas"].dropna().unique().tolist()
+            else:
+                list_opsi_kelas = ["X-1", "X-2"]
+            
+            pilih_kelas = st.selectbox("Pilih Kelas", list_opsi_kelas if list_opsi_kelas else ["X-1"])
+            
             jenis_asesmen = st.selectbox("Pilih Jenis Asesmen", ["Formatif", "Sumatif"])
             
             if jenis_asesmen == "Formatif":
@@ -124,15 +128,24 @@ def render_sakti():
                 sub_jenis_asesmen = st.selectbox("Subjenis Asesmen", ["Lisan", "Tulis", "Tugas", "Praktik", "Proyek", "Produk"])
                 
             materi_topik = st.text_input("Ketik Materi", placeholder="Masukkan materi pembelajaran")
+
+            # Filter Nomor Absen (ID_Siswa) & Nama Siswa berdasarkan Sekolah dan Kelas yang dipilih
+            if not df_master_siswa.empty:
+                df_filtered_siswa = df_master_siswa[(df_master_siswa["Sekolah"] == nama_sekolah) & (df_master_siswa["Kelas"] == pilih_kelas)]
+                list_id_siswa = df_filtered_siswa["ID_Siswa"].dropna().unique().tolist()
+            else:
+                df_filtered_siswa = pd.DataFrame()
+                list_id_siswa = [1, 2, 3]
+
+            no_absen = st.selectbox("Ketik / Pilih Nomor Absen (ID_Siswa)", list_id_siswa if list_id_siswa else [1])
             
-            # Ambil data siswa berdasarkan kelas yang dipilih dari sheet 'Siswa'
-            daftar_siswa_dict = fetch_siswa_from_sheets(pilih_kelas)
-            list_no_absen = sorted(list(daftar_siswa_dict.keys())) if daftar_siswa_dict else [1]
-            
-            no_absen = st.selectbox("Ketik / Pilih Nomor Absen", list_no_absen)
-            
-            # Nama siswa muncul otomatis dari sheet 'Siswa' berdasarkan nomor absen yang dipilih
-            nama_siswa_otomatis = daftar_siswa_dict.get(no_absen, "") if daftar_siswa_dict else ""
+            # Otomatis ambil Nama Siswa berdasarkan Sekolah, Kelas, dan ID_Siswa
+            nama_siswa_otomatis = ""
+            if not df_filtered_siswa.empty:
+                match_row = df_filtered_siswa[df_filtered_siswa["ID_Siswa"] == no_absen]
+                if not match_row.empty:
+                    nama_siswa_otomatis = str(match_row.iloc[0]["Nama_Siswa"])
+
             nama_siswa = st.text_input("Nama Siswa (Muncul Otomatis dari Sheet Siswa)", value=nama_siswa_otomatis)
 
         col_c, col_d = st.columns(2)
@@ -168,7 +181,7 @@ def render_sakti():
                     "Nilai": nilai_siswa,
                     "Catatan": catatan_guru if catatan_guru else "-"
                 })
-                st.success(f"✅ Hasil asesmen untuk **{nama_siswa}** (Absen {no_absen}) berhasil disimpan!")
+                st.success(f"✅ Hasil asesmen untuk **{nama_siswa}** (No Absen {no_absen}) berhasil disimpan!")
 
     # Fungsi untuk membuat file Excel yang rapi dengan openpyxl
     def generate_styled_excel(df):
@@ -217,16 +230,16 @@ def render_sakti():
         st.markdown("#### 🔍 Filter Rekapitulasi Data")
         f_col1, f_col2, f_col3 = st.columns(3)
         
-        list_sekolah = ["Semua Sekolah"] + sorted(df_all["Sekolah"].unique().tolist())
-        list_kelas = ["Semua Kelas"] + sorted(df_all["Kelas"].unique().tolist())
-        list_mapel = ["Semua Mata Pelajaran"] + sorted(df_all["Mata Pelajaran"].unique().tolist())
+        list_sekolah_filter = ["Semua Sekolah"] + sorted(df_all["Sekolah"].unique().tolist())
+        list_kelas_filter = ["Semua Kelas"] + sorted(df_all["Kelas"].unique().tolist())
+        list_mapel_filter = ["Semua Mata Pelajaran"] + sorted(df_all["Mata Pelajaran"].unique().tolist())
 
         with f_col1:
-            pilih_filter_sekolah = st.selectbox("Filter Sekolah", list_sekolah)
+            pilih_filter_sekolah = st.selectbox("Filter Sekolah", list_sekolah_filter)
         with f_col2:
-            pilih_filter_kelas = st.selectbox("Filter Kelas", list_kelas)
+            pilih_filter_kelas = st.selectbox("Filter Kelas", list_kelas_filter)
         with f_col3:
-            pilih_filter_mapel = st.selectbox("Filter Mata Pelajaran", list_mapel)
+            pilih_filter_mapel = st.selectbox("Filter Mata Pelajaran", list_mapel_filter)
 
         # Terapkan Filter ke DataFrame
         df_filtered = df_all.copy()
