@@ -1,19 +1,26 @@
 import streamlit as st
+import base64
+import json
 import pandas as pd
 from datetime import date
 import gspread
 from google.oauth2.service_account import Credentials
 
 def get_google_sheet_connection():
-    scope = [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive"
-    ]
-    credentials_dict = dict(st.secrets["gcp_service_account"])
-    creds = Credentials.from_service_account_info(credentials_dict, scopes=scope)
-    client = gspread.authorize(creds)
-    sheet = client.open("Database_PASTI_Pusat")
-    return sheet
+  scope = [
+      "https://www.googleapis.com/auth/spreadsheets",
+      "https://www.googleapis.com/auth/drive",
+  ]
+  # Ganti bagian st.secrets["gcp_service_account"] dengan kode decode base64 ini:
+  credentials_dict = json.loads(
+      base64.b64decode(st.secrets["gcp_base64"]).decode("utf-8")
+  )
+  creds = Credentials.from_service_account_info(
+      credentials_dict, scopes=scope
+  )
+  client = gspread.authorize(creds)
+  sheet = client.open("Database_PASTI_Pusat")
+  return sheet
 
 def render_digma_module():
     st.markdown("### 📊 DIGMA: Digitalisasi Jurnal Mengajar")
