@@ -17,6 +17,7 @@ import pandas as pd
 import streamlit as st
 from sakti import render_sakti
 from digma import render_digma_module
+from login import render_login
 # Import modul formatting gspread
 from gspread_formatting import (
     CellFormat, Border, Borders, Color, format_cell_range
@@ -27,7 +28,17 @@ st.set_page_config(
     page_icon="🏫",
     layout="wide",
 )
-
+# === LETAKKAN KODE PENGECEKAN LOGIN DI SINI ===
+if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
+    render_login()
+else:
+    # Tampilkan menu utama aplikasi Anda di sini setelah berhasil login
+    st.success("Selamat datang di Portal PASTI!")
+    
+    # Contoh pemanggilan modul lain setelah login sukses:
+    # render_sakti()
+    # render_digma_module()
+    
 # --- CSS Kustom untuk Tampilan Modern, Kartu Login Terpadu, & Posisi ---
 st.markdown(
     """
