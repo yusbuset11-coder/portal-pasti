@@ -1,5 +1,5 @@
 import sakti
-digma import render_digma_module
+from digma import render_digma_module
 
 from io import BytesIO
 import io
