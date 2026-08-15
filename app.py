@@ -40,7 +40,7 @@ st.markdown(
         /* --- 2. KARTU LOGIN LEBIH RINGKAS & BERCAHAYA --- */
         .auth-card {
             background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
-            padding: 1.25rem 1.5rem; /* Diperkecil agar lebih ramping ke atas */
+            padding: 1.25rem 1.5rem;
             border-radius: 16px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 25px rgba(56, 189, 248, 0.15);
             border: 1px solid rgba(56, 189, 248, 0.3);
@@ -262,81 +262,14 @@ with st.sidebar:
   )
   st.markdown("---")
 
-# Input API Key secara global di sidebar
+  # Input API Key secara global di sidebar
   api_key_input = st.text_input("Masukkan Google Gemini API Key", type="password")
   if api_key_input:
       st.session_state["gemini_api_key"] = api_key_input
 
 st.markdown("---")
 
-# Setelah itu baru lanjutkan dengan percabangan menu aslinya
-if pilih_app == "1. GEMA (Generator Modul Ajar)":
-    with st.sidebar:
-        st.header("⚙️ Parameter Pembelajaran (GEMA)")
-        # Lanjutkan parameter GEMA selanjutnya di sini...
-
-    jenjang_pendidikan = st.selectbox(
-        "Pilih Jenjang Pendidikan",
-        ["SD / MI", "SMP / MTs", "SMA / MA", "SMK / MAK"],
-    )
-
-    if jenjang_pendidikan == "SD / MI":
-      default_mapel = "Tematik / Kelas"
-      jp_guidance = "Panduan: 1 JP = 35 Menit"
-      fase_options = [
-          "Fase A / Kelas 1 SD",
-          "Fase A / Kelas 2 SD",
-          "Fase B / Kelas 3 SD",
-          "Fase B / Kelas 4 SD",
-          "Fase C / Kelas 5 SD",
-          "Fase C / Kelas 6 SD",
-      ]
-    elif jenjang_pendidikan == "SMP / MTs":
-      default_mapel = "Matematika / IPA / IPS"
-      jp_guidance = "Panduan: 1 JP = 40 Menit"
-      fase_options = [
-          "Fase D / Kelas 7 SMP",
-          "Fase D / Kelas 8 SMP",
-          "Fase D / Kelas 9 SMP",
-      ]
-    elif jenjang_pendidikan == "SMA / MA":
-      default_mapel = "Bahasa Indonesia / Matematika"
-      jp_guidance = "Panduan: 1 JP = 45 Menit"
-      fase_options = [
-          "Fase E / Kelas X SMA",
-          "Fase F / Kelas XI SMA",
-          "Fase F / Kelas XII SMA",
-      ]
-    else:
-      default_mapel = "Dasar-dasar Teknik Otomotif / Produk Kreatif"
-      jp_guidance = "Panduan: 1 JP = 45 Menit"
-      fase_options = [
-          "Fase E / Kelas X SMK (Program Dasar Keahlian)",
-          "Fase F / Kelas XI SMK (Konsentrasi Keahlian)",
-          "Fase F / Kelas XII SMK (Konsentrasi Keahlian)",
-      ]
-
-    mata_pelajaran = st.text_input("Mata Pelajaran / Program Kejuruan", default_mapel)
-    fase_kelas = st.selectbox("Fase / Kelas", fase_options)
-    topik = st.text_input("Topik / Materi Pokok / Elemen", "Contoh: Pemeliharaan Sistem Rem Kendaraan Ringan")
-
-    st.caption(jp_guidance)
-    alokasi_waktu = st.text_input("Alokasi Waktu", "2 JP (2 x 45 Menit)")
-    pertemuan_ke = st.text_input("Pertemuan Ke-", "1 (Pertemuan Pertama)")
-
-    st.markdown("---")
-    st.header("🏫 Identitas Satuan Pendidikan")
-    nama_sekolah = st.text_input("Nama Sekolah", st.session_state.get("user_sekolah", "SMKN 1 Bangkalan"))
-    semester = st.selectbox("Semester", ["Ganjil", "Genap"])
-    tahun_pelajaran = st.text_input("Tahun Pelajaran", "2026/2027")
-
-    st.markdown("---")
-    st.header("✍️ Identitas Pengesahan")
-    nama_kota = st.text_input("Nama Kota", "Bangkalan")
-    tanggal_pembuatan = st.text_input("Tanggal / Bulan / Tahun", "12 Agustus 2026")
-    nama_penulis = st.text_input("Nama Penulis Modul", st.session_state.get("user_nama", "Yustinus Budi Setyanta"))
-    nip_penulis = st.text_input("NIP Penulis", "196908302005011003")
-
+# ================= HELPER FUNCTIONS =================
 def set_cell_background(cell, fill_color):
     shading_elm = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{fill_color}"/>')
     cell._tc.get_or_add_tcPr().append(shading_elm)
@@ -950,68 +883,136 @@ def generate_docx(
     bio.seek(0)
     return bio
 
-st.markdown("### 🚀 Generator Modul Ajar (GEMA)")
-st.write("Gunakan parameter di sidebar untuk menyusun Modul Ajar Pembelajaran Mendalam.")
 
-if st.button("🚀 Buat Modul Ajar GEMA"):
-    # Tambahkan baris ini agar API key terbaca
-    api_key = st.session_state.get("gemini_api_key", "")
-    
-    if not api_key:
-        st.error("Mohon masukkan Google Gemini API Key.")
-    elif not topik:
-        st.warning("⚠️ Mohon isi topik pembelajaran.")
+# ================= PERCABANGAN MENU UTAMA =================
+
+if pilih_app == "1. GEMA (Generator Modul Ajar)":
+    st.markdown("### 🚀 Generator Modul Ajar (GEMA)")
+    st.write("Gunakan parameter di sidebar untuk menyusun Modul Ajar Pembelajaran Mendalam.")
+
+    with st.sidebar:
+        st.header("⚙️ Parameter Pembelajaran (GEMA)")
+
+    jenjang_pendidikan = st.selectbox(
+        "Pilih Jenjang Pendidikan",
+        ["SD / MI", "SMP / MTs", "SMA / MA", "SMK / MAK"],
+    )
+
+    if jenjang_pendidikan == "SD / MI":
+      default_mapel = "Tematik / Kelas"
+      jp_guidance = "Panduan: 1 JP = 35 Menit"
+      fase_options = [
+          "Fase A / Kelas 1 SD",
+          "Fase A / Kelas 2 SD",
+          "Fase B / Kelas 3 SD",
+          "Fase B / Kelas 4 SD",
+          "Fase C / Kelas 5 SD",
+          "Fase C / Kelas 6 SD",
+      ]
+    elif jenjang_pendidikan == "SMP / MTs":
+      default_mapel = "Matematika / IPA / IPS"
+      jp_guidance = "Panduan: 1 JP = 40 Menit"
+      fase_options = [
+          "Fase D / Kelas 7 SMP",
+          "Fase D / Kelas 8 SMP",
+          "Fase D / Kelas 9 SMP",
+      ]
+    elif jenjang_pendidikan == "SMA / MA":
+      default_mapel = "Bahasa Indonesia / Matematika"
+      jp_guidance = "Panduan: 1 JP = 45 Menit"
+      fase_options = [
+          "Fase E / Kelas X SMA",
+          "Fase F / Kelas XI SMA",
+          "Fase F / Kelas XII SMA",
+      ]
     else:
-        with st.spinner("Sistem GEMA PASTI sedang menyusun Modul Ajar lengkap..."):
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-3.5-flash")
+      default_mapel = "Dasar-dasar Teknik Otomotif / Produk Kreatif"
+      jp_guidance = "Panduan: 1 JP = 45 Menit"
+      fase_options = [
+          "Fase E / Kelas X SMK (Program Dasar Keahlian)",
+          "Fase F / Kelas XI SMK (Konsentrasi Keahlian)",
+          "Fase F / Kelas XII SMK (Konsentrasi Keahlian)",
+      ]
+
+    mata_pelajaran = st.text_input("Mata Pelajaran / Program Kejuruan", default_mapel)
+    fase_kelas = st.selectbox("Fase / Kelas", fase_options)
+    topik = st.text_input("Topik / Materi Pokok / Elemen", "Contoh: Pemeliharaan Sistem Rem Kendaraan Ringan")
+
+    st.caption(jp_guidance)
+    alokasi_waktu = st.text_input("Alokasi Waktu", "2 JP (2 x 45 Menit)")
+    pertemuan_ke = st.text_input("Pertemuan Ke-", "1 (Pertemuan Pertama)")
+
+    st.markdown("---")
+    st.header("🏫 Identitas Satuan Pendidikan")
+    nama_sekolah = st.text_input("Nama Sekolah", st.session_state.get("user_sekolah", "SMKN 1 Bangkalan"))
+    semester = st.selectbox("Semester", ["Ganjil", "Genap"])
+    tahun_pelajaran = st.text_input("Tahun Pelajaran", "2026/2027")
+
+    st.markdown("---")
+    st.header("✍️ Identitas Pengesahan")
+    nama_kota = st.text_input("Nama Kota", "Bangkalan")
+    tanggal_pembuatan = st.text_input("Tanggal / Bulan / Tahun", "12 Agustus 2026")
+    nama_penulis = st.text_input("Nama Penulis Modul", st.session_state.get("user_nama", "Yustinus Budi Setyanta"))
+    nip_penulis = st.text_input("NIP Penulis", "196908302005011003")
+
+    if st.button("🚀 Buat Modul Ajar GEMA"):
+        api_key = st.session_state.get("gemini_api_key", "")
         
-        prompt = f"""
-        Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Pembelajaran Mendalam (Deep Learning) yang SANGAT LENGKAP, detail, dan terperinci untuk:
-        - Jenjang & Fase: {jenjang_pendidikan} ({fase_kelas})
-        - Mata Pelajaran: {mata_pelajaran}
-        - Topik: {topik}
-        - Alokasi Waktu: {alokasi_waktu}
-        - Pertemuan Ke-: {pertemuan_ke}
+        if not api_key:
+            st.error("Mohon masukkan Google Gemini API Key.")
+        elif not topik:
+            st.warning("⚠️ Mohon isi topik pembelajaran.")
+        else:
+            with st.spinner("Sistem GEMA PASTI sedang menyusun Modul Ajar lengkap..."):
+                genai.configure(api_key=api_key)
+                model = genai.GenerativeModel("gemini-1.5-flash") # Diperbarui ke model stabil
+            
+            prompt = f"""
+            Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Pembelajaran Mendalam (Deep Learning) yang SANGAT LENGKAP, detail, dan terperinci untuk:
+            - Jenjang & Fase: {jenjang_pendidikan} ({fase_kelas})
+            - Mata Pelajaran: {mata_pelajaran}
+            - Topik: {topik}
+            - Alokasi Waktu: {alokasi_waktu}
+            - Pertemuan Ke-: {pertemuan_ke}
 
-        SESUAIKAN DENGAN SISTEMATIKA BERIKUT DALAM FORMAT JSON (SEMUA BAGIAN WAJIB TERISI LENGKAP, TIDAK BOLEH KOSONG ATAU TANDA STRIP):
-        1. "dimensi_profil_lulusan": Pilih 2 sampai 4 dimensi profil lulusan yang paling relevan.
-        2. "tujuan_pembelajaran": Uraian tujuan pembelajaran yang spesifik.
-        3. "pemahaman_bermakna": Pemahaman bermakna yang diperoleh siswa.
-        4. "pertanyaan_pemantik": Pertanyaan pemantik yang relevan.
-        5. "kerangka_pembelajaran": Berupa objek JSON yang WAJIB memiliki sub-kunci berikut secara lengkap:
-           - "praktik_pedagogis": objek dengan sub-kunci "model_pembelajaran" dan "metode_pembelajaran".
-           - "kemitraan_pembelajaran": objek dengan sub-kunci "lingkungan_sekolah" dan "lingkungan_luar_sekolah".
-           - "lingkungan_belajar": objek dengan sub-kunci "ruang_fisik", "ruang_virtual", dan "ruang_budaya_belajar".
-           - "pemanfaatan_digital": objek dengan sub-kunci "tahap_perencanaan", "tahap_pelaksanaan", dan "tahap_asesmen".
-        6. "pengalaman_belajar": Berupa objek dengan "kegiatan_pendahuluan", "memahami", "mengaplikasi", "merefleksi", dan "kegiatan_penutup".
-        7. "asesmen_pembelajaran": Berupa objek dengan "asesmen_awal", "asesmen_formatif", dan "asesmen_sumatif".
-        8. "rubrik_penilaian": Berupa *Array of Objects* (Daftar Objek JSON). Setiap objek WAJIB memuat: {{"kriteria": "...", "perlu_bimbingan": "...", "cukup": "...", "baik": "...", "sangat_baik": "..."}}. Buat minimal 2 objek kriteria penilaian.
-        9. "instrumen_formatif": Rincian lembar observasi kelas.
-        10. "lkm_content": Detail Lembar Kerja Murid.
+            SESUAIKAN DENGAN SISTEMATIKA BERIKUT DALAM FORMAT JSON (SEMUA BAGIAN WAJIB TERISI LENGKAP, TIDAK BOLEH KOSONG ATAU TANDA STRIP):
+            1. "dimensi_profil_lulusan": Pilih 2 sampai 4 dimensi profil lulusan yang paling relevan.
+            2. "tujuan_pembelajaran": Uraian tujuan pembelajaran yang spesifik.
+            3. "pemahaman_bermakna": Pemahaman bermakna yang diperoleh siswa.
+            4. "pertanyaan_pemantik": Pertanyaan pemantik yang relevan.
+            5. "kerangka_pembelajaran": Berupa objek JSON yang WAJIB memiliki sub-kunci berikut secara lengkap:
+               - "praktik_pedagogis": objek dengan sub-kunci "model_pembelajaran" dan "metode_pembelajaran".
+               - "kemitraan_pembelajaran": objek dengan sub-kunci "lingkungan_sekolah" dan "lingkungan_luar_sekolah".
+               - "lingkungan_belajar": objek dengan sub-kunci "ruang_fisik", "ruang_virtual", dan "ruang_budaya_belajar".
+               - "pemanfaatan_digital": objek dengan sub-kunci "tahap_perencanaan", "tahap_pelaksanaan", dan "tahap_asesmen".
+            6. "pengalaman_belajar": Berupa objek dengan "kegiatan_pendahuluan", "memahami", "mengaplikasi", "merefleksi", dan "kegiatan_penutup".
+            7. "asesmen_pembelajaran": Berupa objek dengan "asesmen_awal", "asesmen_formatif", dan "asesmen_sumatif".
+            8. "rubrik_penilaian": Berupa *Array of Objects* (Daftar Objek JSON). Setiap objek WAJIB memuat: {{"kriteria": "...", "perlu_bimbingan": "...", "cukup": "...", "baik": "...", "sangat_baik": "..."}}. Buat minimal 2 objek kriteria penilaian.
+            9. "instrumen_formatif": Rincian lembar observasi kelas.
+            10. "lkm_content": Detail Lembar Kerja Murid.
 
-        Berikan output HANYA dalam format JSON valid tanpa teks lain di luar JSON.
-        """
-        
-        response = model.generate_content(prompt)
-        text_resp = response.text.strip().replace("```json", "").replace("```", "").strip()
-        try:
-          data_ai = json.loads(text_resp)
-        except:
-          data_ai = {}
+            Berikan output HANYA dalam format JSON valid tanpa teks lain di luar JSON.
+            """
+            
+            response = model.generate_content(prompt)
+            text_resp = response.text.strip().replace("```json", "").replace("```", "").strip()
+            try:
+              data_ai = json.loads(text_resp)
+            except:
+              data_ai = {}
 
-        st.success("🎉 Modul Ajar GEMA Berhasil Disusun dengan Seluruh Kolom Terisi Penuh!")
-        docx_file = generate_docx(
-            data_ai, nama_sekolah, semester, tahun_pelajaran, mata_pelajaran,
-            fase_kelas, topik, alokasi_waktu, pertemuan_ke, nama_penulis,
-            nama_kota, tanggal_pembuatan, nip_penulis
-        )
-        st.download_button(
-            label="📥 Unduh Modul Ajar GEMA (.docx)",
-            data=docx_file,
-            file_name=f"Modul_Ajar_{topik.replace(' ', '_')}.docx",
-            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        )
+            st.success("🎉 Modul Ajar GEMA Berhasil Disusun dengan Seluruh Kolom Terisi Penuh!")
+            docx_file = generate_docx(
+                data_ai, nama_sekolah, semester, tahun_pelajaran, mata_pelajaran,
+                fase_kelas, topik, alokasi_waktu, pertemuan_ke, nama_penulis,
+                nama_kota, tanggal_pembuatan, nip_penulis
+            )
+            st.download_button(
+                label="📥 Unduh Modul Ajar GEMA (.docx)",
+                data=docx_file,
+                file_name=f"Modul_Ajar_{topik.replace(' ', '_')}.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
 
 elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
     st.markdown("### 📋 SIPENSIS: Sistem Informasi Presensi Siswa")
