@@ -17,7 +17,6 @@ import pandas as pd
 import streamlit as st
 from sakti import render_sakti
 from digma import render_digma_module
-from login import render_login_pasti
 # Import modul formatting gspread
 from gspread_formatting import (
     CellFormat, Border, Borders, Color, format_cell_range
@@ -28,12 +27,6 @@ st.set_page_config(
     page_icon="🏫",
     layout="wide",
 )
-if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = False
-
-if not st.session_state["logged_in"]:
-    render_login_pasti()
-    st.stop()  # Menghentikan eksekusi kode di bawahnya agar dashboard tidak tampil sebelum login
 # --- CSS Kustom untuk Tampilan Modern & Posisi Naik ---
 st.markdown(
     """
@@ -429,7 +422,7 @@ def add_kerangka_pembelajaran_table(doc, kerangka_data):
           p.paragraph_format.space_before = Pt(5)
           p.paragraph_format.space_after = Pt(5)
           p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-          for run in p.runs:
+          for run in row_cells[0].paragraphs[0].runs:
             run.font.size = Pt(10)
             run.font.bold = True
             run.font.color.rgb = RGBColor(74, 46, 33)
@@ -608,7 +601,7 @@ def add_scoring_tables(doc):
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_before = Pt(4)
         p.paragraph_format.space_after = Pt(4)
-        for r in p.runs:
+        for r in cell.paragraphs[0].runs:
           r.font.bold = True
           r.font.size = Pt(9)
           r.font.color.rgb = RGBColor(255, 255, 255)
@@ -621,7 +614,7 @@ def add_scoring_tables(doc):
         p.paragraph_format.space_before = Pt(4)
         p.paragraph_format.space_after = Pt(4)
         p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-        for r in p.runs:
+        for r in cell.paragraphs[0].runs:
           r.font.size = Pt(9)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(4)
@@ -650,7 +643,7 @@ def add_scoring_tables(doc):
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_before = Pt(4)
         p.paragraph_format.space_after = Pt(4)
-        for r in p.runs:
+        for r in cell.paragraphs[0].runs:
           r.font.bold = True
           r.font.size = Pt(9)
           r.font.color.rgb = RGBColor(255, 255, 255)
@@ -708,7 +701,7 @@ def add_formative_matrix_table(doc):
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_before = Pt(4)
         p.paragraph_format.space_after = Pt(4)
-        for r in p.runs:
+        for r in hdr_cells[i].paragraphs[0].runs:
           r.font.bold = True
           r.font.size = Pt(9)
           r.font.color.rgb = RGBColor(255, 255, 255)
@@ -972,7 +965,7 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
         else:
             with st.spinner("Sistem GEMA PASTI sedang menyusun Modul Ajar lengkap..."):
                 genai.configure(api_key=api_key)
-                model = genai.GenerativeModel("gemini-1.5-flash") # Diperbarui ke model stabil
+                model = genai.GenerativeModel("gemini-3.5-flash") # Diperbarui ke model stabil
             
             prompt = f"""
             Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Pembelajaran Mendalam (Deep Learning) yang SANGAT LENGKAP, detail, dan terperinci untuk:
