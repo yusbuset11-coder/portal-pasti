@@ -950,10 +950,10 @@ def generate_docx(
     bio.seek(0)
     return bio
 
-  st.markdown("### 🚀 Generator Modul Ajar (GEMA)")
-  st.write("Gunakan parameter di sidebar untuk menyusun Modul Ajar Pembelajaran Mendalam.")
+st.markdown("### 🚀 Generator Modul Ajar (GEMA)")
+st.write("Gunakan parameter di sidebar untuk menyusun Modul Ajar Pembelajaran Mendalam.")
 
-  if st.button("🚀 Buat Modul Ajar GEMA"):
+if st.button("🚀 Buat Modul Ajar GEMA"):
     if not api_key:
       st.error("🔑 Mohon masukkan Google Gemini API Key.")
     elif not topik:
