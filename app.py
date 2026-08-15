@@ -149,23 +149,23 @@ def check_auth():
                             & (df_tokens["Token"].astype(str).str.strip() == token_input.strip())
                         ]
                         if not match.empty:
-              st.session_state["authenticated"] = True
-              st.session_state["user_email"] = email_input
-              st.session_state["user_nama"] = match.iloc[0].get("Nama", "Pengguna")
-              st.session_state["user_sekolah"] = match.iloc[0].get("Sekolah", "Satuan Pendidikan")
-              st.rerun()
-            else:
-              st.error("❌ Email atau Token Akses tidak ditemukan di Database Pusat.")
-          else:
-            if token_input == "PASTI-2026":
-              st.session_state["authenticated"] = True
-              st.session_state["user_email"] = email_input
-              st.session_state["user_nama"] = "Admin PASTI"
-              st.rerun()
-            else:
-              st.error("❌ Gagal memvalidasi ke database atau token salah.")
-        else:
-          st.warning("⚠️ Mohon isi email dan token akses dengan lengkap.")
+                            st.session_state["authenticated"] = True
+                            st.session_state["user_email"] = email_input
+                            st.session_state["user_nama"] = match.iloc[0].get("Nama", "Pengguna")
+                            st.session_state["user_sekolah"] = match.iloc[0].get("Sekolah", "Satuan Pendidikan")
+                            st.rerun()
+                        else:
+                            st.error("❌ Email atau Token Akses tidak ditemukan di Database Pusat.")
+                    else:
+                        if token_input == "PASTI-2026":
+                            st.session_state["authenticated"] = True
+                            st.session_state["user_email"] = email_input
+                            st.session_state["user_nama"] = "Admin PASTI"
+                            st.rerun()
+                        else:
+                            st.error("❌ Gagal memvalidasi ke database atau token salah.")
+                else:
+                    st.warning("⚠️ Mohon isi email dan token akses dengan lengkap.")
     return False
   return True
 
