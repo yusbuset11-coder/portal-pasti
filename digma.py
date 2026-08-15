@@ -176,7 +176,7 @@ def render_digma_module():
     except Exception as e:
       st.error(f"Gagal memuat data dari Google Sheets: {e}")
 
-  # --- TAB 3: EXPORT LAPORAN SIAP CETAK & OTOMATIS RAPI ---
+  # --- TAB 3: EXPORT LAPORAN SIAP CETAK & LEBAR KOLOM OTOMATIS AMAN ---
   with tab3:
     st.markdown("#### 📥 Cetak & Export Laporan ke Excel (.xlsx)")
     try:
@@ -230,7 +230,6 @@ def render_digma_module():
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
           df_export.to_excel(writer, index=False, sheet_name="Jurnal Mengajar")
 
-        # Ambil workbook yang baru dibuat untuk diformat
         output.seek(0)
         import openpyxl
 
@@ -265,7 +264,7 @@ def render_digma_module():
           )
           cell.border = thin_border
 
-        # Styling Data Isi Tabel & Auto-Fit Lebar Kolom
+        # Styling Data Isi Tabel
         for row in ws.iter_rows(
             min_row=2, max_row=ws.max_row, min_col=1, max_col=ws.max_column
         ):
@@ -274,18 +273,16 @@ def render_digma_module():
             cell.border = thin_border
             cell.alignment = Alignment(vertical="center", wrap_text=True)
 
-        # Auto-fit lebar kolom secara cerdas agar tidak terpotong
+        # Auto-fit lebar kolom dengan minimum width yang lebih aman (minimal 22 karakter)
         for col in ws.columns:
           max_len = 0
           col_letter = get_column_letter(col[0].column)
           for cell in col:
-            if cell.value:
-              val_str = str(cell.value)
-              max_len = max(max_len, len(val_str))
-          # Berikan padding tambahan agar terlihat lega
-          ws.column_dimensions[col_letter].width = max(max_len + 4, 12)
+            if cell.value is not None:
+              max_len = max(max_len, len(str(cell.value)))
+          # Menggunakan batas minimal 22 agar judul kolom panjang seperti 'Mata_Pelajaran' tidak terpotong
+          ws.column_dimensions[col_letter].width = max(max_len + 6, 22)
 
-        # Simpan kembali ke BytesIO untuk tombol download Streamlit
         final_output = io.BytesIO()
         wb.save(final_output)
         excel_data = final_output.getvalue()
