@@ -47,7 +47,7 @@ def render_digma_module():
       ["✍️ Input Jurnal", "📋 Daftar Jurnal", "📥 Export Laporan"]
   )
 
-  # --- TAB 1: INPUT JURNAL (Tampilan Lebih Rapi & Simetris) ---
+  # --- TAB 1: INPUT JURNAL ---
   with tab1:
     st.subheader("Form Input Jurnal Mengajar Harian")
 
@@ -100,7 +100,7 @@ def render_digma_module():
             ]
             jurnal_ws.append_row(row_data)
             st.success("✅ Jurnal mengajar berhasil disimpan ke Database Pusat!")
-            st.balloons()  # Efek balon seperti di SIPENSIS
+            st.balloons()
           except Exception as e:
             st.error(f"❌ Gagal menyimpan jurnal ke Database: {e}")
 
@@ -113,13 +113,23 @@ def render_digma_module():
         df = pd.DataFrame(data)
         df.columns = df.columns.str.strip()
 
-        # Sembunyikan kolom Sekolah dan Nama_Guru dari tampilan tabel
-        df = df.drop(
-            columns=["Sekolah", "Nama_Guru", "sekolah", "nama_guru"],
-            errors="ignore",
-        )
+        # WHITELIST: Hanya ambil kolom ini saja (Sekolah & Nama_Guru otomatis dibuang)
+        kolom_diizinkan = [
+            "Tanggal",
+            "Mata_Pelajaran",
+            "Kelas",
+            "JP_Ke",
+            "Topik_Materi",
+            "Hadir",
+            "Tidak_Hadir",
+            "Catatan",
+        ]
+        kolom_tersedia = [col for col in kolom_diizinkan if col in df.columns]
+        df = df[kolom_tersedia]
 
-        search_query = st.text_input("🔍 Cari berdasarkan Mapel / Kelas", value="")
+        search_query = st.text_input(
+            "🔍 Cari berdasarkan Mapel / Kelas", value=""
+        )
         if search_query:
           df = df[
               df["Mata_Pelajaran"].str.contains(
@@ -143,14 +153,25 @@ def render_digma_module():
         df_export = pd.DataFrame(data)
         df_export.columns = df_export.columns.str.strip()
 
-        # Sembunyikan kolom Sekolah & Nama_Guru pada preview export
-        df_export_display = df_export.drop(
-            columns=["Sekolah", "Nama_Guru", "sekolah", "nama_guru"],
-            errors="ignore",
-        )
+        # Whitelist untuk tampilan preview export
+        kolom_diizinkan = [
+            "Tanggal",
+            "Mata_Pelajaran",
+            "Kelas",
+            "JP_Ke",
+            "Topik_Materi",
+            "Hadir",
+            "Tidak_Hadir",
+            "Catatan",
+        ]
+        kolom_tersedia = [
+            col for col in kolom_diizinkan if col in df_export.columns
+        ]
+        df_export_display = df_export[kolom_tersedia]
+
         st.dataframe(df_export_display, use_container_width=True)
 
-        csv_data = df_export.to_csv(index=False).encode("utf-8")
+        csv_data = df_export_display.to_csv(index=False).encode("utf-8")
         st.download_button(
             label="📥 Download Rekap Jurnal (.csv)",
             data=csv_data,
