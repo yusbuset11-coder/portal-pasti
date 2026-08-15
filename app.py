@@ -31,14 +31,13 @@ st.set_page_config(
 # === LETAKKAN KODE PENGECEKAN LOGIN DI SINI ===
 if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
     render_login()
-else:
-    # Tampilkan menu utama aplikasi Anda di sini setelah berhasil login
-    st.success("Selamat datang di Portal PASTI!")
-    
+    st.stop()  # Menghentikan eksekusi script agar menu di bawah tidak bocor ke halaman login
+
+ 
     # Contoh pemanggilan modul lain setelah login sukses:
     # render_sakti()
     # render_digma_module()
-    
+
 # --- CSS Kustom untuk Tampilan Modern, Kartu Login Terpadu, & Posisi ---
 st.markdown(
     """
