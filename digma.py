@@ -251,12 +251,10 @@ def render_digma_module():
 
         st.dataframe(df_export, use_container_width=True, hide_index=True)
 
-        # Proses styling profesional otomatis menggunakan openpyxl (Tabel dimulai baris ke-6)
+        # Proses Excel menggunakan openpyxl
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
-          df_export.to_excel(
-              writer, index=False, sheet_name="Jurnal Mengajar", startrow=5
-          )
+          df_export.to_excel(writer, index=False, sheet_name="Jurnal Mengajar")
 
         output.seek(0)
         import openpyxl
@@ -264,7 +262,10 @@ def render_digma_module():
         wb = openpyxl.load_workbook(output)
         ws = wb.active
 
-        # Menambahkan Judul Identitas di Bagian Atas
+        # Sisipkan 5 baris di bagian atas untuk Judul Identitas
+        ws.insert_rows(idx=1, amount=5)
+
+        # Mengisi Header Identitas di Baris 1 sampai 4
         ws["A1"] = "JURNAL MENGAJAR GURU"
         ws["A1"].font = Font(
             name="Calibri", size=14, bold=True, color="1F4E78"
@@ -283,7 +284,8 @@ def render_digma_module():
         ws.page_setup.fitToWidth = 1
         ws.page_setup.fitToHeight = 0
 
-        # Styling Header Tabel (Baris ke-6)
+        # Header Tabel sekarang berada di baris ke-6 setelah disisipkan
+        header_row = 6
         header_fill = PatternFill(
             start_color="1F4E78", end_color="1F4E78", fill_type="solid"
         )
@@ -296,7 +298,7 @@ def render_digma_module():
         )
 
         for col_num in range(1, ws.max_column + 1):
-          cell = ws.cell(row=6, column=col_num)
+          cell = ws.cell(row=header_row, column=col_num)
           cell.fill = header_fill
           cell.font = header_font
           cell.alignment = Alignment(
@@ -305,10 +307,9 @@ def render_digma_module():
           cell.border = thin_border
 
         # Styling Data Isi Tabel & Pemberian Border Otomatis (Mulai baris ke-7)
-        for row in ws.iter_rows(
-            min_row=7, max_row=ws.max_row, min_col=1, max_col=ws.max_column
-        ):
-          for cell in row:
+        for row_num in range(header_row + 1, ws.max_row + 1):
+          for col_num in range(1, ws.max_column + 1):
+            cell = ws.cell(row=row_num, column=col_num)
             cell.font = Font(name="Calibri", size=11)
             cell.border = thin_border
             cell.alignment = Alignment(vertical="center", wrap_text=True)
@@ -328,9 +329,9 @@ def render_digma_module():
 
         for col_num in range(1, ws.max_column + 1):
           col_letter = get_column_letter(col_num)
-          col_name = ws.cell(row=6, column=col_num).value
+          col_name = ws.cell(row=header_row, column=col_num).value
           max_len = 0
-          for row_num in range(6, ws.max_row + 1):
+          for row_num in range(header_row, ws.max_row + 1):
             cell_val = ws.cell(row=row_num, column=col_num).value
             if cell_val is not None:
               max_len = max(max_len, len(str(cell_val)))
