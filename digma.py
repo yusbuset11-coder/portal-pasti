@@ -176,7 +176,7 @@ def render_digma_module():
     except Exception as e:
       st.error(f"Gagal memuat data dari Google Sheets: {e}")
 
-  # --- TAB 3: EXPORT LAPORAN DENGAN JUDUL IDENTITAS & BORDER OTOMATIS ---
+  # --- TAB 3: EXPORT LAPORAN DENGAN IDENTITAS & KOLOM SEKOLAH DISEMBUNYIKAN ---
   with tab3:
     st.markdown("#### 📥 Cetak & Export Laporan ke Excel (.xlsx)")
     try:
@@ -249,6 +249,10 @@ def render_digma_module():
               format_tanggal_indo
           )
 
+        # Sembunyikan kolom 'Sekolah' dari tabel export karena sudah ada di identitas atas
+        if "Sekolah" in df_export.columns:
+          df_export = df_export.drop(columns=["Sekolah"])
+
         st.dataframe(df_export, use_container_width=True, hide_index=True)
 
         # Proses Excel menggunakan openpyxl
@@ -314,10 +318,9 @@ def render_digma_module():
             cell.border = thin_border
             cell.alignment = Alignment(vertical="center", wrap_text=True)
 
-        # Standar lebar minimum spesifik per kolom agar proporsional dan pas
+        # Standar lebar minimum spesifik per kolom agar proporsional dan pas (tanpa kolom Sekolah)
         default_min_widths = {
             "Tanggal": 22,
-            "Sekolah": 25,
             "Mata_Pelajaran": 20,
             "Kelas": 12,
             "JP_Ke": 12,
