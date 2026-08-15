@@ -73,7 +73,7 @@ def render_sakti():
                         st.error("API Key belum diset. Silakan masukkan di sidebar.")
                     else:
                         genai.configure(api_key=api_key)
-                        model = genai.GenerativeModel("gemini-1.5-flash")
+                        model = genai.GenerativeModel("gemini-3.5-flash")
                         response = model.generate_content(prompt)
                         
                         st.markdown("### 📋 Hasil Instrumen Asesmen dari AI:")
