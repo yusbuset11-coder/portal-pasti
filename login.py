@@ -57,7 +57,7 @@ def render_login():
                 token_input = st.text_input("🔑 Token Akses", type="password", placeholder="Masukkan token rahasia anda")
                 
                 st.markdown("<br>", unsafe_allow_html=True)
-                submit_btn = st.form_submit_button("🚀 Masuk ke Portal PASTI", use_container_width=True)
+                submit_btn = st.form_submit_button("🚀 Masuk ke PASTI", use_container_width=True)
                 
                 if submit_btn:
                     if not email_input or not token_input:
