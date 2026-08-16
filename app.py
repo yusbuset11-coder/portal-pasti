@@ -1046,71 +1046,63 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
             st.warning("Data siswa belum tersedia di database.")
 
     with tab2:
-        st.subheader("📁 Download Template & Upload Absensi Excel")
-        st.write("1. Pilih kelas untuk mendownload daftar siswa.\n2. Isi status absensi.\n3. Upload kembali file tersebut untuk disimpan otomatis.")
+    st.subheader("📁 Download Master Data Siswa & Upload Pembaruan")
+    st.write(
+        "1. Download master data siswa untuk mendapatkan seluruh data lintas kelas & sekolah.\n"
+        "2. Lakukan penambahan atau pengeditan data siswa di file Excel.\n"
+        "3. Upload kembali file tersebut untuk memperbarui database pusat yang digunakan aplikasi PASTI dan DIGMA."
+    )
 
-        df_siswa_ul = load_sheet_data("Siswa")
-        if not df_siswa_ul.empty:
-            df_siswa_ul.columns = df_siswa_ul.columns.str.strip()
-            daftar_kelas_ul = df_siswa_ul["Kelas"].dropna().unique()
+    df_siswa_ul = load_sheet_data("Siswa")
+    if not df_siswa_ul.empty:
+        df_siswa_ul.columns = df_siswa_ul.columns.str.strip()
 
-            col_dl1, col_dl2 = st.columns(2)
-            with col_dl1:
-                tgl_excel = st.date_input("📅 Tanggal Absensi", key="tgl_ex")
-                kelas_excel = st.selectbox("📚 Pilih Kelas:", daftar_kelas_ul, key="kelas_ex")
-            with col_dl2:
-                guru_excel = st.text_input("👨‍🏫 Nama Guru", value=st.session_state.get("user_nama", ""), key="guru_ex")
-                mapel_excel = st.text_input("📖 Mata Pelajaran", value="Pendidikan Pancasila", key="mapel_ex")
+        st.markdown("---")
+        st.markdown("#### 📥 Download Master Data Siswa (Semua Kelas & Sekolah)")
 
-            sekolah_user = st.session_state.get("sekolah", "")
+        # Ambil seluruh data siswa secara utuh tanpa filter kelas
+        cols_to_download = [
+            col for col in ["ID_Siswa", "Sekolah", "Kelas", "Nama_Siswa"] 
+            if col in df_siswa_ul.columns
+        ]
+        df_master_template = df_siswa_ul[cols_to_download].copy()
 
-            if sekolah_user:
-                df_filtered_kelas = df_siswa_ul[
-                    (df_siswa_ul["Kelas"] == kelas_excel) & 
-                    (df_siswa_ul["Sekolah"].str.strip().str.lower() == sekolah_user.strip().str.lower())
-                ].copy()
-            else:
-                df_filtered_kelas = df_siswa_ul[df_siswa_ul["Kelas"] == kelas_excel].copy()
+        # Proses ke format Excel di memori
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df_master_template.to_excel(writer, index=False, sheet_name='Siswa')
+        excel_data = output.getvalue()
 
-            df_template = df_filtered_kelas[["ID_Siswa", "Sekolah", "Kelas", "Nama_Siswa"]].copy()
-            df_template["Status (H/S/I/A)"] = ""
-            df_template["Keterangan"] = ""
+        # Tombol Download Master
+        st.download_button(
+            label="📥 Download Master Data Siswa Utuh",
+            data=excel_data,
+            file_name="Master_Data_Siswa_Pusat.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
 
-            output = io.BytesIO()
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df_template.to_excel(writer, index=False, sheet_name='Siswa')
-            excel_data = output.getvalue()
+        st.markdown("---")
+        st.markdown("#### 📤 Upload Master Data Siswa yang Telah Diedit")
+        uploaded_excel = st.file_uploader("Pilih file Excel master (.xlsx) hasil pembaruan", type=["xlsx", "xls"])
 
-            st.download_button(
-                label="📥 Download Template Siswa",  # Ubah teks di sini sesuai keinginan
-                data=excel_data,
-                file_name=f"Template_Siswa_{kelas_excel}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            )
+        if uploaded_excel is not None:
+            try:
+                df_upload = pd.read_excel(uploaded_excel)
+                st.write("Preview Data Master yang di-upload:")
+                st.dataframe(df_upload.head(), use_container_width=True)
 
-            st.markdown("---")
-            st.markdown("#### 📤 Upload File Excel yang Telah Diisi")
-            uploaded_excel = st.file_uploader("Pilih file Excel (.xlsx) hasil pengisian", type=["xlsx", "xls"])
-
-            if uploaded_excel is not None:
-                try:
-                    df_upload = pd.read_excel(uploaded_excel)
-                    st.write("Preview Data yang di-upload:")
-                    st.dataframe(df_upload.head(), use_container_width=True)
-
-                    if st.button("💾 Proses & Simpan ke Database", type="primary"):
-                        with st.spinner("Mengunggah data ke database pusat..."):
-                            df_existing = load_sheet_data("Absensi_Harian")
-                            df_final_ul = pd.concat([df_existing, df_upload], ignore_index=True) if not df_existing.empty else df_upload
-
-                            if save_sheet_data("Absensi_Harian", df_final_ul):
-                                st.success("✅ Data Absensi dari Excel Berhasil Disimpan ke Database!")
-                                st.balloons()
-                            else:
-                                st.error("❌ Gagal menyimpan data ke Database.")
-                except Exception as e:
-                    st.error(f"Terjadi kesalahan saat membaca file Excel: {e}")
-
+                if st.button("💾 Simpan Master Data ke Database Pusat", type="primary"):
+                    with st.spinner("Menyimpan ke database pusat..."):
+                        if save_sheet_data("Siswa", df_upload):
+                            st.success("✅ Master Data Siswa Berhasil Diperbarui di Database Pusat!")
+                            st.balloons()
+                        else:
+                            st.error("❌ Gagal menyimpan data ke Database.")
+            except Exception as e:
+                st.error(f"Terjadi kesalahan saat membaca file Excel: {e}")
+    else:
+        st.warning("Data siswa belum tersedia di database.")
+        
     with tab3:
         st.subheader("📊 Laporan & Rekapitulasi Harian")
         df_rekap = load_sheet_data("Absensi_Harian")
