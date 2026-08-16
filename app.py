@@ -44,20 +44,20 @@ st.markdown(
     <style>
         /* --- 1. KUSTOMISASI POSISI & LATAR BELAKANG MODERN --- */
         .block-container {
-            padding-top: 0rem !important;
+            padding-top: 0.2rem !important;
+            padding-bottom: 0.5rem !important;
             background: radial-gradient(circle at 50% 25%, #1e293b 0%, #090d16 100%);
-            /* min-height: 100vh; */
         }
         
         /* --- 2. KARTU LOGIN TERPADU & BERCAHAYA --- */
         .login-card-wrapper {
             background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
-            padding: 0.8rem 1.5rem;    /* Diperkecil dari 1.2rem agar tinggi kotak jauh lebih ringkas */
+            padding: 0.8rem 1.5rem !important; /* Memperkecil tinggi di dalam kotak */
             border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
             border: 1px solid rgba(56, 189, 248, 0.35);
-            margin-top: -2rem;
-            margin-bottom: 0.5rem;
+            margin-top: -1.5rem !important;   /* Menarik kotak lebih dekat ke judul */
+            margin-bottom: 0.5rem !important;
         }
 
         /* --- 3. STYLING TABEL --- */
