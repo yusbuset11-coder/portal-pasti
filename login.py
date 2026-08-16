@@ -1,45 +1,55 @@
 import streamlit as st
 
 def render_login():
-    # Layout Center untuk Form Login
+    # CSS dengan penyesuaian posisi (margin-top negatif untuk menaikkan posisi)
+    st.markdown("""
+        <style>
+            .login-wrapper {
+                margin-top: -3rem; /* Mengatur posisi agar naik ke atas */
+            }
+            .login-header {
+                text-align: center;
+                padding-bottom: 5px;
+            }
+            .pasti-title {
+                font-size: 3.2rem;
+                font-weight: 900;
+                color: #38bdf8;
+                margin-bottom: 0px;
+                letter-spacing: 2px;
+                line-height: 1.1;
+            }
+            .pasti-subtitle {
+                font-size: 1.2rem;
+                font-weight: 600;
+                color: #f8fafc;
+                margin-top: 5px;
+                margin-bottom: 10px;
+            }
+            .pasti-badge {
+                background: linear-gradient(90deg, #0284c7 0%, #0369a1 100%);
+                color: #ffffff;
+                padding: 5px 15px;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 700;
+                letter-spacing: 0.8px;
+                display: inline-block;
+                margin-bottom: 15px;
+                box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Layout Center
     _, col_center, _ = st.columns([1, 2.2, 1])
     
     with col_center:
+        # Wrapper untuk menerapkan margin-top agar posisi naik
+        st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
+        
         # Header Portal
         st.markdown("""
-            <style>
-                .login-header {
-                    text-align: center;
-                    padding-bottom: 5px;
-                }
-                .pasti-title {
-                    font-size: 3.2rem;
-                    font-weight: 900;
-                    color: #38bdf8;
-                    margin-bottom: 0px;
-                    letter-spacing: 2px;
-                    line-height: 1.1;
-                }
-                .pasti-subtitle {
-                    font-size: 1.2rem;
-                    font-weight: 600;
-                    color: #f8fafc;
-                    margin-top: 5px;
-                    margin-bottom: 10px;
-                }
-                .pasti-badge {
-                    background: linear-gradient(90deg, #0284c7 0%, #0369a1 100%);
-                    color: #ffffff;
-                    padding: 5px 15px;
-                    border-radius: 20px;
-                    font-size: 0.75rem;
-                    font-weight: 700;
-                    letter-spacing: 0.8px;
-                    display: inline-block;
-                    margin-bottom: 15px;
-                    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
-                }
-            </style>
             <div class="login-header">
                 <div class="pasti-title">PASTI</div>
                 <div class="pasti-subtitle">Portal Administrasi Siswa Terintegrasi</div>
@@ -47,7 +57,7 @@ def render_login():
             </div>
         """, unsafe_allow_html=True)
         
-        # Kontainer kartu login yang bersih dan rapi
+        # Kontainer kartu login
         with st.container(border=True):
             st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;'>Silakan masukkan Email dan Token Akses terdaftar di Database Pusat.</p>", unsafe_allow_html=True)
             
@@ -56,7 +66,6 @@ def render_login():
                 email_input = st.text_input("📧 Email Terdaftar", placeholder="nama.guru@sekolah.id")
                 token_input = st.text_input("🔑 Token Akses", type="password", placeholder="Masukkan token rahasia anda")
                 
-                st.markdown("<br>", unsafe_allow_html=True)
                 submit_btn = st.form_submit_button("🚀 Masuk ke PASTI", use_container_width=True)
                 
                 if submit_btn:
@@ -66,4 +75,6 @@ def render_login():
                         st.session_state["logged_in"] = True
                         st.session_state["user_email"] = email_input
                         st.success("Login Berhasil! Memuat portal...")
-                        st.rerun()
+                        st.rerun() # Rerun satu kali untuk refresh state
+        
+        st.markdown('</div>', unsafe_allow_html=True)
