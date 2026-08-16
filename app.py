@@ -1104,7 +1104,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
 df_template = df_template[["Tanggal", "Sekolah", "Nama_Guru", "Mata_Pelajaran", "Kelas", "ID_Siswa", "Nama_Siswa", "Status_Kehadiran", "S", "I", "A"]]
 output = io.BytesIO()
 with pd.ExcelWriter(output, engine='openpyxl') as writer:
-df_template.to_excel(writer, index=False, sheet_name='Template_Absensi')
+  df_template.to_excel(writer, index=False, sheet_name='Template_Absensi')
   excel_data = output.getvalue()
 
             st.download_button(
