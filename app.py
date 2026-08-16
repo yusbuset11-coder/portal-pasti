@@ -46,7 +46,7 @@ st.markdown(
         .block-container {
             padding-top: 0rem !important;
             background: radial-gradient(circle at 50% 25%, #1e293b 0%, #090d16 100%);
-            min-height: 100vh;
+            /* min-height: 100vh; */
         }
         
         /* --- 2. KARTU LOGIN TERPADU & BERCAHAYA --- */
