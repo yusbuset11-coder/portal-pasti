@@ -1091,10 +1091,10 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
             excel_data = output.getvalue()
 
             st.download_button(
-                label="📥 Download Template Absensi Kelas",
+                label="📥 Download Template Siswa",  # Ubah teks di sini sesuai keinginan
                 data=excel_data,
-                file_name=f"Template_Absensi_Kelas_{kelas_excel}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                file_name=f"Template_Siswa_{kelas_excel}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
 
             st.markdown("---")
