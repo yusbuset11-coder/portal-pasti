@@ -1072,7 +1072,7 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
             else:
                 df_filtered_kelas = df_siswa_ul[df_siswa_ul["Kelas"] == kelas_excel].copy()
 
-            df_template = df_filtered_kelas[["ID_Siswa", "Nama_Siswa"]].copy()
+            df_template = df_filtered_kelas[["ID_Siswa", "Sekolah", "Kelas", "Nama_Siswa"]].copy()
             df_template["Status (H/S/I/A)"] = ""
             df_template["Keterangan"] = ""
 
