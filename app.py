@@ -128,67 +128,6 @@ def save_sheet_data(sheet_name, df):
         st.error(f"Detail Error saat Menyimpan: {e}")
         return False
 
-def check_auth():
-  if "authenticated" not in st.session_state:
-    st.session_state["authenticated"] = False
-
-  if not st.session_state["authenticated"]:
-    col1, col2, col3 = st.columns([1, 1.25, 1])
-    with col2:
-        st.markdown('<div class="login-card-wrapper">', unsafe_allow_html=True)
-        st.markdown(
-            """
-            <div style="text-align: center; margin-bottom: 1.5rem;">
-                <h2 style="color: #38bdf8; margin: 0; font-size: 2.2rem; font-family: sans-serif; letter-spacing: 2px; font-weight: 800;">PASTI</h2>
-                <h4 style="color: #cbd5e1; margin: 6px 0 10px 0; font-size: 1.05rem; font-weight: 400; font-family: sans-serif;">Portal Administrasi Siswa Terintegrasi</h4>
-                <p style="color: #94a3b8; font-size: 0.85rem; margin: 0;">
-                    Silakan masukkan Email dan Token Akses terdaftar di Database Pusat.
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        email_input = st.text_input("📧 Email Terdaftar", placeholder="Masukkan email terdaftar...")
-        token_input = st.text_input("🔑 Token Akses", type="password", placeholder="Masukkan token akses...")
-
-        st.markdown("<div style='margin-top: 1.2rem;'></div>", unsafe_allow_html=True)
-        
-        if st.button("Masuk ke Portal PASTI", use_container_width=True):
-            if email_input.strip() and token_input.strip():
-                df_tokens = load_sheet_data("Tokens")
-                if not df_tokens.empty and "Email" in df_tokens.columns and "Token" in df_tokens.columns:
-                    match = df_tokens[
-                        (df_tokens["Email"].str.strip().str.lower() == email_input.strip().lower())
-                        & (df_tokens["Token"].astype(str).str.strip() == token_input.strip())
-                    ]
-                    if not match.empty:
-                        st.session_state["authenticated"] = True
-                        st.session_state["user_email"] = email_input
-                        st.session_state["user_nama"] = match.iloc[0].get("Nama", "Pengguna")
-                        st.session_state["user_sekolah"] = match.iloc[0].get("Sekolah", "Satuan Pendidikan")
-                        st.rerun()
-                    else:
-                        st.error("❌ Email atau Token Akses tidak ditemukan di Database Pusat.")
-                else:
-                    if token_input == "PASTI-2026":
-                        st.session_state["authenticated"] = True
-                        st.session_state["user_email"] = email_input
-                        st.session_state["user_nama"] = "Admin PASTI"
-                        st.rerun()
-                    else:
-                        st.error("❌ Gagal memvalidasi ke database atau token salah.")
-            else:
-                st.warning("⚠️ Mohon isi email dan token akses dengan lengkap.")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-    return False
-  return True
-
-
-if not check_auth():
-  st.stop()
-
 st.markdown(
     """
     <style>
