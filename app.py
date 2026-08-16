@@ -52,13 +52,12 @@ st.markdown(
         /* --- 2. KARTU LOGIN TERPADU & BERCAHAYA --- */
         .login-card-wrapper {
             background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
-            padding: 1.2rem 1.8rem;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 35px rgba(56, 189, 248, 0.35);
+            padding: 0.8rem 1.5rem;    /* Diperkecil dari 1.2rem agar tinggi kotak jauh lebih ringkas */
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.3);
             border: 1px solid rgba(56, 189, 248, 0.35);
-            margin-top: -1rem;
-            margin-bottom: 1rem;
-            transform: translateY(-100px); /* <-- Tambahkan baris ini untuk menarik kotak jauh lebih ke atas */
+            margin-top: -2rem;
+            margin-bottom: 0.5rem;
         }
 
         /* --- 3. STYLING TABEL --- */
