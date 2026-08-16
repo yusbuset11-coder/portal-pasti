@@ -42,7 +42,7 @@ def render_login():
     """, unsafe_allow_html=True)
 
     # Layout Center
-    _, col_center, _ = st.columns([1, 2.2, 1])
+    _, col_center, _ = st.columns([0.8, 2.4, 0.8])
     
     with col_center:
         # Wrapper untuk menerapkan margin-top agar posisi naik
