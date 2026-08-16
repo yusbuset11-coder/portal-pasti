@@ -42,39 +42,50 @@ if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
 st.markdown(
     """
     <style>
-        /* --- 1. KUSTOMISASI POSISI & LATAR BELAKANG MODERN --- */
-        .block-container {
-            padding-top: 0.2rem !important;
-            padding-bottom: 0.5rem !important;
-            background: radial-gradient(circle at 50% 25%, #1e293b 0%, #090d16 100%);
-        }
-        
-        /* --- 2. KARTU LOGIN TERPADU & BERCAHAYA --- */
-        .login-card-wrapper {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
-            padding: 0.8rem 1.5rem !important; /* Memperkecil tinggi di dalam kotak */
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(56, 189, 248, 0.35);
-            margin-top: -1.5rem !important;   /* Menarik kotak lebih dekat ke judul */
-            margin-bottom: 0.5rem !important;
-        }
+    /* Memaksa latar belakang tetap gelap di semua perangkat (mengatasi Light Mode HP) */
+    [data-testid="stAppViewContainer"] {
+        background: radial-gradient(circle at 50% 25%, #1e293b 0%, #090d16 100%) !important;
+    }
+    
+    [data-testid="stHeader"] {
+        background: transparent !important;
+    }
 
-        /* --- 3. STYLING TABEL --- */
-        .stDataFrame th, [data-testid="stDataEditor"] th {
-            background-color: #1E3A8A !important;
-            color: #FFFFFF !important;
-            font-weight: bold !important;
-            text-align: center !important;
-            text-transform: uppercase !important;
-        }
-        .stDataFrame td, [data-testid="stDataEditor"] td {
-            text-align: center !important;
-        }
-        .stDataFrame td:nth-child(2), .stDataFrame td:nth-child(4),
-        [data-testid="stDataEditor"] td:nth-child(2) {
-            text-align: left !important;
-        }
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 2rem !important;
+        max-width: 100% !important;
+    }
+
+    /* Kustomisasi Kartu Login agar pas di HP dan Laptop */
+    .login-card-wrapper {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
+        padding: 1.2rem 1.5rem !important;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        margin-top: 0.5rem !important;
+        margin-bottom: 1rem !important;
+        max-width: 420px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Styling Tabel (Tetap dipertahankan) */
+    .stDataFrame th, [data-testid="stDataEditor"] th {
+        background-color: #1E3A8A !important;
+        color: #FFFFFF !important;
+        font-weight: bold !important;
+        text-align: center !important;
+        text-transform: uppercase !important;
+    }
+    .stDataFrame td, [data-testid="stDataEditor"] td {
+        text-align: center !important;
+    }
+    .stDataFrame td:nth-child(2), .stDataFrame td:nth-child(4),
+    [data-testid="stDataEditor"] td:nth-child(2) {
+        text-align: left !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,
