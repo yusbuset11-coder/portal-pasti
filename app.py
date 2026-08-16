@@ -18,7 +18,6 @@ import streamlit as st
 from sakti import render_sakti
 from digma import render_digma_module
 from login import render_login
-# Import modul formatting gspread
 from gspread_formatting import (
     CellFormat, Border, Borders, Color, format_cell_range
 )
@@ -28,21 +27,16 @@ st.set_page_config(
     page_icon="🏫",
     layout="wide",
 )
+
 # === LETAKKAN KODE PENGECEKAN LOGIN DI SINI ===
 if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
     render_login()
-    st.stop()  # Menghentikan eksekusi script agar menu di bawah tidak bocor ke halaman login
-
- 
-    # Contoh pemanggilan modul lain setelah login sukses:
-    # render_sakti()
-    # render_digma_module()
+    st.stop()
 
 # --- CSS Kustom untuk Tampilan Modern, Kartu Login Terpadu, & Posisi ---
 st.markdown(
     """
     <style>
-    /* Memaksa latar belakang tetap gelap di semua perangkat (mengatasi Light Mode HP) */
     [data-testid="stAppViewContainer"] {
         background: radial-gradient(circle at 50% 25%, #1e293b 0%, #090d16 100%) !important;
     }
@@ -57,7 +51,6 @@ st.markdown(
         max-width: 100% !important;
     }
 
-    /* Kustomisasi Kartu Login agar pas di HP dan Laptop */
     .login-card-wrapper {
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
         padding: 1.2rem 1.5rem !important;
@@ -71,7 +64,6 @@ st.markdown(
         margin-right: auto;
     }
 
-    /* Styling Tabel (Tetap dipertahankan) */
     .stDataFrame th, [data-testid="stDataEditor"] th {
         background-color: #1E3A8A !important;
         color: #FFFFFF !important;
@@ -91,7 +83,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ID Google Spreadsheet Database_PASTI_Pusat
 SHEET_ID = "1terQDxNZX1aESF0GO02uSn9R7eKLKDGbkiT11GpX1pA"
 
 scope = [
@@ -100,17 +91,17 @@ scope = [
 ]
 
 def get_gspread_client():
-  b64_string = st.secrets["gcp_base64"]
-  json_bytes = base64.b64decode(b64_string)
-  creds_dict = json.loads(json_bytes.decode("utf-8"))
+    b64_string = st.secrets["gcp_base64"]
+    json_bytes = base64.b64decode(b64_string)
+    creds_dict = json.loads(json_bytes.decode("utf-8"))
 
-  with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
-    json.dump(creds_dict, f)
-    temp_filename = f.name
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
+        json.dump(creds_dict, f)
+        temp_filename = f.name
 
-  creds = Credentials.from_service_account_file(temp_filename, scopes=scope)
-  client = gspread.authorize(creds)
-  return client
+    creds = Credentials.from_service_account_file(temp_filename, scopes=scope)
+    client = gspread.authorize(creds)
+    return client
 
 @st.cache_data(ttl=60, show_spinner=False)
 def load_sheet_data(sheet_name):
@@ -217,22 +208,21 @@ st.markdown(
 )
 
 with st.sidebar:
-  st.header("📌 Menu Navigasi PASTI")
-  pilih_app = st.selectbox(
-      "Pilih Aplikasi Terintegrasi",
-      [
-          "1. GEMA (Generator Modul Ajar)",
-          "2. SIPENSIS (Sistem Informasi Presensi Siswa)",
-          "3. DIGMA (Digitalisasi Jurnal Mengajar)",
-          "4. SAKTI (Sistem Asesmen & Kompetensi Terintegrasi)"
-      ],
-  )
-  st.markdown("---")
+    st.header("📌 Menu Navigasi PASTI")
+    pilih_app = st.selectbox(
+        "Pilih Aplikasi Terintegrasi",
+        [
+            "1. GEMA (Generator Modul Ajar)",
+            "2. SIPENSIS (Sistem Informasi Presensi Siswa)",
+            "3. DIGMA (Digitalisasi Jurnal Mengajar)",
+            "4. SAKTI (Sistem Asesmen & Kompetensi Terintegrasi)"
+        ],
+    )
+    st.markdown("---")
 
-  # Input API Key secara global di sidebar
-  api_key_input = st.text_input("Masukkan Google Gemini API Key", type="password")
-  if api_key_input:
-      st.session_state["gemini_api_key"] = api_key_input
+    api_key_input = st.text_input("Masukkan Google Gemini API Key", type="password")
+    if api_key_input:
+        st.session_state["gemini_api_key"] = api_key_input
 
 st.markdown("---")
 
@@ -251,99 +241,99 @@ def add_section_table_custom(doc, title_text, rows_data):
     hdr_cells[0].text = title_text
     set_cell_background(hdr_cells[0], "5A3825")
     for p in hdr_cells[0].paragraphs:
-      p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-      p.paragraph_format.space_before = Pt(4)
-      p.paragraph_format.space_after = Pt(4)
-      for run in p.runs:
-        run.font.bold = True
-        run.font.size = Pt(10)
-        run.font.color.rgb = RGBColor(255, 255, 255)
-
-    for idx, (label, val) in enumerate(rows_data):
-      row_cells = table.rows[idx + 1].cells
-      row_cells[0].text = label
-      row_cells[0].width = Inches(2.5)
-      row_cells[1].width = Inches(4.0)
-      set_cell_background(row_cells[0], "F5EBE0")
-
-      for p in row_cells[0].paragraphs:
+        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
         p.paragraph_format.space_before = Pt(4)
         p.paragraph_format.space_after = Pt(4)
-        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
         for run in p.runs:
-          run.font.size = Pt(10)
-          run.font.bold = True
+            run.font.bold = True
+            run.font.size = Pt(10)
+            run.font.color.rgb = RGBColor(255, 255, 255)
 
-      val_str = str(val).replace("LKPD", "LKM").replace("Lembar Kegiatan Murid", "Lembar Kerja Murid")
-      row_cells[1].text = ""
-      lines = val_str.split("\n")
-      for line_idx, line in enumerate(lines):
-        p_right = row_cells[1].paragraphs[0] if line_idx == 0 else row_cells[1].add_paragraph()
-        p_right.paragraph_format.space_before = Pt(4)
-        p_right.paragraph_format.space_after = Pt(4)
-        p_right.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-        if ":" in line:
-          parts = line.split(":", 1)
-          r1 = p_right.add_run(parts[0].strip() + ": ")
-          r1.font.bold = True
-          r1.font.size = Pt(10)
-          r2 = p_right.add_run(parts[1].strip())
-          r2.font.size = Pt(10)
-        else:
-          r3 = p_right.add_run(line)
-          r3.font.size = Pt(10)
+    for idx, (label, val) in enumerate(rows_data):
+        row_cells = table.rows[idx + 1].cells
+        row_cells[0].text = label
+        row_cells[0].width = Inches(2.5)
+        row_cells[1].width = Inches(4.0)
+        set_cell_background(row_cells[0], "F5EBE0")
+
+        for p in row_cells[0].paragraphs:
+            p.paragraph_format.space_before = Pt(4)
+            p.paragraph_format.space_after = Pt(4)
+            p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            for run in p.runs:
+                run.font.size = Pt(10)
+                run.font.bold = True
+
+        val_str = str(val).replace("LKPD", "LKM").replace("Lembar Kegiatan Murid", "Lembar Kerja Murid")
+        row_cells[1].text = ""
+        lines = val_str.split("\n")
+        for line_idx, line in enumerate(lines):
+            p_right = row_cells[1].paragraphs[0] if line_idx == 0 else row_cells[1].add_paragraph()
+            p_right.paragraph_format.space_before = Pt(4)
+            p_right.paragraph_format.space_after = Pt(4)
+            p_right.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            if ":" in line:
+                parts = line.split(":", 1)
+                r1 = p_right.add_run(parts[0].strip() + ": ")
+                r1.font.bold = True
+                r1.font.size = Pt(10)
+                r2 = p_right.add_run(parts[1].strip())
+                r2.font.size = Pt(10)
+            else:
+                r3 = p_right.add_run(line)
+                r3.font.size = Pt(10)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
 def add_kerangka_pembelajaran_table(doc, kerangka_data):
     if not isinstance(kerangka_data, dict):
-      kerangka_data = {}
+        kerangka_data = {}
 
     praktik = kerangka_data.get("praktik_pedagogis", {})
     if not isinstance(praktik, dict):
-      praktik = {}
+        praktik = {}
     model_pem = praktik.get("model_pembelajaran", "")
     if not model_pem or model_pem == "-":
-      model_pem = "Problem Based Learning / Inquiry Learning Berbasis Kolaborasi"
+        model_pem = "Problem Based Learning / Inquiry Learning Berbasis Kolaborasi"
     metode_pem = praktik.get("metode_pembelajaran", "")
     if not metode_pem or metode_pem == "-":
-      metode_pem = "Diskusi kelompok, investigasi data, tanya jawab kritis, dan presentasi interaktif"
+        metode_pem = "Diskusi kelompok, investigasi data, tanya jawab kritis, dan presentasi interaktif"
 
     kemitraan = kerangka_data.get("kemitraan_pembelajaran", {})
     if not isinstance(kemitraan, dict):
-      kemitraan = {}
+        kemitraan = {}
     ling_sekolah = kemitraan.get("lingkungan_sekolah", "")
     if not ling_sekolah or ling_sekolah == "-":
-      ling_sekolah = "Kolaborasi sejawat dalam kelompok belajar heterogen dan bimbingan guru di lingkungan sekolah"
+        ling_sekolah = "Kolaborasi sejawat dalam kelompok belajar heterogen dan bimbingan guru di lingkungan sekolah"
     ling_luar = kemitraan.get("lingkungan_luar_sekolah", "")
     if not ling_luar or ling_luar == "-":
-      ling_luar = "Pelibatan narasumber praktisi atau pengamatan langsung di lingkungan masyarakat/dunia kerja"
+        ling_luar = "Pelibatan narasumber praktisi atau pengamatan langsung di lingkungan masyarakat/dunia kerja"
 
     lingkungan = kerangka_data.get("lingkungan_belajar", {})
     if not isinstance(lingkungan, dict):
-      lingkungan = {}
+        lingkungan = {}
     ruang_fisik = lingkungan.get("ruang_fisik", "")
     if not ruang_fisik or ruang_fisik == "-":
-      ruang_fisik = "Ruang kelas kolaboratif dengan penataan meja kelompok yang fleksibel dan kondusif"
+        ruang_fisik = "Ruang kelas kolaboratif dengan penataan meja kelompok yang fleksibel dan kondusif"
     ruang_virtual = lingkungan.get("ruang_virtual", "")
     if not ruang_virtual or ruang_virtual == "-":
-      ruang_virtual = "Google Classroom, grup diskusi WhatsApp, dan platform penyimpanan awan bersama"
+        ruang_virtual = "Google Classroom, grup diskusi WhatsApp, dan platform penyimpanan awan bersama"
     budaya = lingkungan.get("ruang_budaya_belajar", "")
     if not budaya or budaya == "-":
-      budaya = "Budaya berpikir kritis, saling menghargai pendapat, serta keterbukaan dalam menerima umpan balik"
+        budaya = "Budaya berpikir kritis, saling menghargai pendapat, serta keterbukaan dalam menerima umpan balik"
 
     digital = kerangka_data.get("pemanfaatan_digital", {})
     if not isinstance(digital, dict):
-      digital = {}
+        digital = {}
     t_perencanaan = digital.get("tahap_perencanaan", "")
     if not t_perencanaan or t_perencanaan == "-":
-      t_perencanaan = "Penyusunan modul berbasis perangkat digital, eksplorasi referensi, dan perancangan lembar kerja elektronik"
+        t_perencanaan = "Penyusunan modul berbasis perangkat digital, eksplorasi referensi, dan perancangan lembar kerja elektronik"
     t_pelaksanaan = digital.get("tahap_pelaksanaan", "")
     if not t_pelaksanaan or t_pelaksanaan == "-":
-      t_pelaksanaan = "Penggunaan media proyektor, penelusuran sumber belajar online, dan asesmen interaktif selama pembelajaran"
+        t_pelaksanaan = "Penggunaan media proyektor, penelusuran sumber belajar online, dan asesmen interaktif selama pembelajaran"
     t_asesmen = digital.get("tahap_asesmen", "")
     if not t_asesmen or t_asesmen == "-":
-      t_asesmen = "Penggunaan kuis digital (Quizizz/Google Forms), rekapitulasi penilaian online, dan lembar observasi elektronik"
+        t_asesmen = "Penggunaan kuis digital (Quizizz/Google Forms), rekapitulasi penilaian online, dan lembar observasi elektronik"
 
     rows_structure = [
         ("section", "Praktik Pedagogis"),
@@ -371,61 +361,61 @@ def add_kerangka_pembelajaran_table(doc, kerangka_data):
     hdr_cells[0].text = "KERANGKA PEMBELAJARAN"
     set_cell_background(hdr_cells[0], "5A3825")
     for p in hdr_cells[0].paragraphs:
-      p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-      p.paragraph_format.space_before = Pt(4)
-      p.paragraph_format.space_after = Pt(4)
-      for run in p.runs:
-        run.font.bold = True
-        run.font.size = Pt(10)
-        run.font.color.rgb = RGBColor(255, 255, 255)
+        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after = Pt(4)
+        for run in p.runs:
+            run.font.bold = True
+            run.font.size = Pt(10)
+            run.font.color.rgb = RGBColor(255, 255, 255)
 
     for idx, item in enumerate(rows_structure):
-      row_cells = table.rows[idx + 1].cells
-      if item[0] == "section":
-        row_cells[0].merge(row_cells[1])
-        row_cells[0].text = item[1]
-        set_cell_background(row_cells[0], "E6D5C3")
-        for p in row_cells[0].paragraphs:
-          p.paragraph_format.space_before = Pt(5)
-          p.paragraph_format.space_after = Pt(5)
-          p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-          for run in row_cells[0].paragraphs[0].runs:
-            run.font.size = Pt(10)
-            run.font.bold = True
-            run.font.color.rgb = RGBColor(74, 46, 33)
-      else:
-        label, val = item[1]
-        row_cells[0].text = label
-        row_cells[0].width = Inches(2.5)
-        row_cells[1].width = Inches(4.0)
-        set_cell_background(row_cells[0], "F5EBE0")
+        row_cells = table.rows[idx + 1].cells
+        if item[0] == "section":
+            row_cells[0].merge(row_cells[1])
+            row_cells[0].text = item[1]
+            set_cell_background(row_cells[0], "E6D5C3")
+            for p in row_cells[0].paragraphs:
+                p.paragraph_format.space_before = Pt(5)
+                p.paragraph_format.space_after = Pt(5)
+                p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                for run in row_cells[0].paragraphs[0].runs:
+                    run.font.size = Pt(10)
+                    run.font.bold = True
+                    run.font.color.rgb = RGBColor(74, 46, 33)
+        else:
+            label, val = item[1]
+            row_cells[0].text = label
+            row_cells[0].width = Inches(2.5)
+            row_cells[1].width = Inches(4.0)
+            set_cell_background(row_cells[0], "F5EBE0")
 
-        for p in row_cells[0].paragraphs:
-          p.paragraph_format.space_before = Pt(4)
-          p.paragraph_format.space_after = Pt(4)
-          p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-          for run in p.runs:
-            run.font.size = Pt(10)
-            run.font.bold = True
+            for p in row_cells[0].paragraphs:
+                p.paragraph_format.space_before = Pt(4)
+                p.paragraph_format.space_after = Pt(4)
+                p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                for run in p.runs:
+                    run.font.size = Pt(10)
+                    run.font.bold = True
 
-        val_str = str(val)
-        row_cells[1].text = ""
-        lines = val_str.split("\n")
-        for line_idx, line in enumerate(lines):
-          p_right = row_cells[1].paragraphs[0] if line_idx == 0 else row_cells[1].add_paragraph()
-          p_right.paragraph_format.space_before = Pt(4)
-          p_right.paragraph_format.space_after = Pt(4)
-          p_right.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-          if ":" in line:
-            parts = line.split(":", 1)
-            r1 = p_right.add_run(parts[0].strip() + ": ")
-            r1.font.bold = True
-            r1.font.size = Pt(10)
-            r2 = p_right.add_run(parts[1].strip())
-            r2.font.size = Pt(10)
-          else:
-            r3 = p_right.add_run(line)
-            r3.font.size = Pt(10)
+            val_str = str(val)
+            row_cells[1].text = ""
+            lines = val_str.split("\n")
+            for line_idx, line in enumerate(lines):
+                p_right = row_cells[1].paragraphs[0] if line_idx == 0 else row_cells[1].add_paragraph()
+                p_right.paragraph_format.space_before = Pt(4)
+                p_right.paragraph_format.space_after = Pt(4)
+                p_right.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                if ":" in line:
+                    parts = line.split(":", 1)
+                    r1 = p_right.add_run(parts[0].strip() + ": ")
+                    r1.font.bold = True
+                    r1.font.size = Pt(10)
+                    r2 = p_right.add_run(parts[1].strip())
+                    r2.font.size = Pt(10)
+                else:
+                    r3 = p_right.add_run(line)
+                    r3.font.size = Pt(10)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
@@ -435,27 +425,27 @@ def add_identity_table(doc, rows_data):
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
 
     for idx, (label, val) in enumerate(rows_data):
-      row_cells = table.rows[idx].cells
-      row_cells[0].text = label
-      row_cells[0].width = Inches(2.5)
-      row_cells[1].width = Inches(4.0)
-      set_cell_background(row_cells[0], "F5EBE0")
+        row_cells = table.rows[idx].cells
+        row_cells[0].text = label
+        row_cells[0].width = Inches(2.5)
+        row_cells[1].width = Inches(4.0)
+        set_cell_background(row_cells[0], "F5EBE0")
 
-      for p in row_cells[0].paragraphs:
-        p.paragraph_format.space_before = Pt(4)
-        p.paragraph_format.space_after = Pt(4)
-        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-        for run in p.runs:
-          run.font.size = Pt(10)
-          run.font.bold = True
+        for p in row_cells[0].paragraphs:
+            p.paragraph_format.space_before = Pt(4)
+            p.paragraph_format.space_after = Pt(4)
+            p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            for run in p.runs:
+                run.font.size = Pt(10)
+                run.font.bold = True
 
-      row_cells[1].text = str(val)
-      for p in row_cells[1].paragraphs:
-        p.paragraph_format.space_before = Pt(4)
-        p.paragraph_format.space_after = Pt(4)
-        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-        for run in p.runs:
-          run.font.size = Pt(10)
+        row_cells[1].text = str(val)
+        for p in row_cells[1].paragraphs:
+            p.paragraph_format.space_before = Pt(4)
+            p.paragraph_format.space_after = Pt(4)
+            p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            for run in p.runs:
+                run.font.size = Pt(10)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
@@ -470,39 +460,32 @@ def add_rubric_table(doc, rubrik_data):
     rows_content = []
 
     if isinstance(rubrik_data, list) and len(rubrik_data) > 0 and isinstance(rubrik_data[0], dict):
-      for item in rubrik_data:
-        rows_content.append((
-            str(item.get("kriteria", item.get("nama_kriteria", ""))),
-            str(item.get("perlu_bimbingan", "")),
-            str(item.get("cukup", "")),
-            str(item.get("baik", "")),
-            str(item.get("sangat_baik", ""))
-        ))
+        for item in rubrik_data:
+            rows_content.append((
+                str(item.get("kriteria", item.get("nama_kriteria", ""))),
+                str(item.get("perlu_bimbingan", "")),
+                str(item.get("cukup", "")),
+                str(item.get("baik", "")),
+                str(item.get("sangat_baik", ""))
+            ))
     elif isinstance(rubrik_data, dict) and rubrik_data:
-      for k, v in rubrik_data.items():
-        if isinstance(v, dict):
-          rows_content.append((
-              str(v.get("kriteria", v.get("nama_kriteria", k))),
-              str(v.get("perlu_bimbingan", "-")),
-              str(v.get("cukup", "-")),
-              str(v.get("baik", "-")),
-              str(v.get("sangat_baik", "-"))
-          ))
+        for k, v in rubrik_data.items():
+            if isinstance(v, dict):
+                rows_content.append((
+                    str(v.get("kriteria", v.get("nama_kriteria", k))),
+                    str(v.get("perlu_bimbingan", "-")),
+                    str(v.get("cukup", "-")),
+                    str(v.get("baik", "-")),
+                    str(v.get("sangat_baik", "-"))
+                ))
     else:
-      rows_content.append((
-          "Kemampuan Menganalisis Struktur Teks Kritis",
-          "Belum mampu mengidentifikasi bagian-bagian struktur teks secara tepat; penempatan bagian teks masih acak dan tidak disertai penjelasan.",
-          "Mampu mengidentifikasi struktur teks utama namun masih terdapat 1-2 kesalahan penempatan teks tanpa alasan pendukung yang kuat.",
-          "Mampu mengidentifikasi seluruh struktur teks dengan tepat dan mampu menjelaskan fungsi masing-masing bagian struktur tersebut secara logis.",
-          "Mampu mengidentifikasi seluruh struktur teks secara sempurna serta mampu menganalisis keterkaitan logis antarkomponen secara kritis."
-      ))
-      rows_content.append((
-          "Kemampuan Membedakan Fakta-Opini dan Mendeteksi Bias",
-          "Belum mampu membedakan kalimat fakta dan opini; gagal mendeteksi adanya kalimat bias di dalam teks.",
-          "Mampu membedakan fakta dan opini sebagian besar teks, namun belum mampu menunjukkan letak bias informasi atau bahasa subjektif.",
-          "Mampu membedakan fakta dan opini secara akurat serta mampu menunjukkan letak bias informasi disertai argumentasi rasional.",
-          "Sangat tajam dalam membedakan fakta-opini, mampu mengidentifikasi bias implisit, serta mampu mengusulkan revisi agar teks menjadi objektif."
-      ))
+        rows_content.append((
+            "Kemampuan Menganalisis Struktur Teks Kritis",
+            "Belum mampu mengidentifikasi bagian-bagian struktur teks secara tepat; penempatan bagian teks masih acak dan tidak disertai penjelasan.",
+            "Mampu mengidentifikasi struktur teks utama namun masih terdapat 1-2 kesalahan penempatan teks tanpa alasan pendukung yang kuat.",
+            "Mampu mengidentifikasi seluruh struktur teks dengan tepat dan mampu menjelaskan fungsi masing-masing bagian struktur tersebut secara logis.",
+            "Mampu mengidentifikasi seluruh struktur teks secara sempurna serta mampu menganalisis keterkaitan logis antarkomponen secara kritis."
+        ))
 
     table = doc.add_table(rows=len(rows_content) + 1, cols=5)
     table.style = "Table Grid"
@@ -510,34 +493,34 @@ def add_rubric_table(doc, rubrik_data):
 
     hdr_cells = table.rows[0].cells
     for i, title in enumerate(headers):
-      hdr_cells[i].text = title
-      set_cell_background(hdr_cells[i], "5A3825")
-      for p in hdr_cells[i].paragraphs:
-        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p.paragraph_format.space_before = Pt(4)
-        p.paragraph_format.space_after = Pt(4)
-        for r in p.runs:
-          r.font.bold = True
-          r.font.size = Pt(9)
-          r.font.color.rgb = RGBColor(255, 255, 255)
+        hdr_cells[i].text = title
+        set_cell_background(hdr_cells[i], "5A3825")
+        for p in hdr_cells[i].paragraphs:
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(4)
+            p.paragraph_format.space_after = Pt(4)
+            for r in p.runs:
+                r.font.bold = True
+                r.font.size = Pt(9)
+                r.font.color.rgb = RGBColor(255, 255, 255)
 
     widths = [Inches(1.6), Inches(1.2), Inches(1.2), Inches(1.2), Inches(1.2)]
 
     for row_idx, row_data in enumerate(rows_content):
-      row_cells = table.rows[row_idx + 1].cells
-      for col_idx, text_val in enumerate(row_data):
-        row_cells[col_idx].text = text_val
-        row_cells[col_idx].width = widths[col_idx]
-        if col_idx == 0:
-          set_cell_background(row_cells[col_idx], "F5EBE0")
-        for p in row_cells[col_idx].paragraphs:
-          p.paragraph_format.space_before = Pt(4)
-          p.paragraph_format.space_after = Pt(4)
-          p.alignment = WD_ALIGN_PARAGRAPH.LEFT if col_idx == 0 else WD_ALIGN_PARAGRAPH.JUSTIFY
-          for r in p.runs:
-            r.font.size = Pt(9)
+        row_cells = table.rows[row_idx + 1].cells
+        for col_idx, text_val in enumerate(row_data):
+            row_cells[col_idx].text = text_val
+            row_cells[col_idx].width = widths[col_idx]
             if col_idx == 0:
-              r.font.bold = True
+                set_cell_background(row_cells[col_idx], "F5EBE0")
+            for p in row_cells[col_idx].paragraphs:
+                p.paragraph_format.space_before = Pt(4)
+                p.paragraph_format.space_after = Pt(4)
+                p.alignment = WD_ALIGN_PARAGRAPH.LEFT if col_idx == 0 else WD_ALIGN_PARAGRAPH.JUSTIFY
+                for r in p.runs:
+                    r.font.size = Pt(9)
+                    if col_idx == 0:
+                        r.font.bold = True
 
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
@@ -561,28 +544,28 @@ def add_scoring_tables(doc):
     table1.alignment = WD_TABLE_ALIGNMENT.CENTER
 
     for i, val in enumerate(t1_data[0]):
-      cell = table1.rows[0].cells[i]
-      cell.text = val
-      set_cell_background(cell, "5A3825")
-      for p in cell.paragraphs:
-        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p.paragraph_format.space_before = Pt(4)
-        p.paragraph_format.space_after = Pt(4)
-        for r in cell.paragraphs[0].runs:
-          r.font.bold = True
-          r.font.size = Pt(9)
-          r.font.color.rgb = RGBColor(255, 255, 255)
+        cell = table1.rows[0].cells[i]
+        cell.text = val
+        set_cell_background(cell, "5A3825")
+        for p in cell.paragraphs:
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(4)
+            p.paragraph_format.space_after = Pt(4)
+            for r in cell.paragraphs[0].runs:
+                r.font.bold = True
+                r.font.size = Pt(9)
+                r.font.color.rgb = RGBColor(255, 255, 255)
 
     for i, val in enumerate(t1_data[1]):
-      cell = table1.rows[1].cells[i]
-      cell.text = val
-      cell.width = Inches(2.0) if i == 0 else Inches(4.5)
-      for p in cell.paragraphs:
-        p.paragraph_format.space_before = Pt(4)
-        p.paragraph_format.space_after = Pt(4)
-        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-        for r in cell.paragraphs[0].runs:
-          r.font.size = Pt(9)
+        cell = table1.rows[1].cells[i]
+        cell.text = val
+        cell.width = Inches(2.0) if i == 0 else Inches(4.5)
+        for p in cell.paragraphs:
+            p.paragraph_format.space_before = Pt(4)
+            p.paragraph_format.space_after = Pt(4)
+            p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            for r in cell.paragraphs[0].runs:
+                r.font.size = Pt(9)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(4)
 
@@ -603,32 +586,32 @@ def add_scoring_tables(doc):
     table2.alignment = WD_TABLE_ALIGNMENT.CENTER
 
     for i, val in enumerate(predikat_rows[0]):
-      cell = table2.rows[0].cells[i]
-      cell.text = val
-      set_cell_background(cell, "5A3825")
-      for p in cell.paragraphs:
-        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p.paragraph_format.space_before = Pt(4)
-        p.paragraph_format.space_after = Pt(4)
-        for r in cell.paragraphs[0].runs:
-          r.font.bold = True
-          r.font.size = Pt(9)
-          r.font.color.rgb = RGBColor(255, 255, 255)
+        cell = table2.rows[0].cells[i]
+        cell.text = val
+        set_cell_background(cell, "5A3825")
+        for p in cell.paragraphs:
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(4)
+            p.paragraph_format.space_after = Pt(4)
+            for r in cell.paragraphs[0].runs:
+                r.font.bold = True
+                r.font.size = Pt(9)
+                r.font.color.rgb = RGBColor(255, 255, 255)
 
     col_widths = [Inches(1.5), Inches(2.0), Inches(3.0)]
     for row_idx, row_data in enumerate(predikat_rows[1:]):
-      row_cells = table2.rows[row_idx + 1].cells
-      for col_idx, text_val in enumerate(row_data):
-        row_cells[col_idx].text = text_val
-        row_cells[col_idx].width = col_widths[col_idx]
-        if row_idx % 2 == 0:
-          set_cell_background(row_cells[col_idx], "F5EBE0")
-        for p in row_cells[col_idx].paragraphs:
-          p.paragraph_format.space_before = Pt(4)
-          p.paragraph_format.space_after = Pt(4)
-          p.alignment = WD_ALIGN_PARAGRAPH.CENTER if col_idx < 2 else WD_ALIGN_PARAGRAPH.LEFT
-          for r in p.runs:
-            r.font.size = Pt(9)
+        row_cells = table2.rows[row_idx + 1].cells
+        for col_idx, text_val in enumerate(row_data):
+            row_cells[col_idx].text = text_val
+            row_cells[col_idx].width = col_widths[col_idx]
+            if row_idx % 2 == 0:
+                set_cell_background(row_cells[col_idx], "F5EBE0")
+            for p in row_cells[col_idx].paragraphs:
+                p.paragraph_format.space_before = Pt(4)
+                p.paragraph_format.space_after = Pt(4)
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER if col_idx < 2 else WD_ALIGN_PARAGRAPH.LEFT
+                for r in p.runs:
+                    r.font.size = Pt(9)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
@@ -662,43 +645,43 @@ def add_formative_matrix_table(doc):
 
     hdr_cells = table.rows[0].cells
     for i, title in enumerate(headers):
-      hdr_cells[i].text = title
-      set_cell_background(hdr_cells[i], "5A3825")
-      for p in hdr_cells[i].paragraphs:
-        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p.paragraph_format.space_before = Pt(4)
-        p.paragraph_format.space_after = Pt(4)
-        for r in hdr_cells[i].paragraphs[0].runs:
-          r.font.bold = True
-          r.font.size = Pt(9)
-          r.font.color.rgb = RGBColor(255, 255, 255)
+        hdr_cells[i].text = title
+        set_cell_background(hdr_cells[i], "5A3825")
+        for p in hdr_cells[i].paragraphs:
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(4)
+            p.paragraph_format.space_after = Pt(4)
+            for r in hdr_cells[i].paragraphs[0].runs:
+                r.font.bold = True
+                r.font.size = Pt(9)
+                r.font.color.rgb = RGBColor(255, 255, 255)
 
     for row_idx, row_data in enumerate(sample_rows):
-      row_cells = table.rows[row_idx + 1].cells
-      for col_idx, text_val in enumerate(row_data):
-        row_cells[col_idx].text = text_val
-        if row_idx % 2 == 0:
-          set_cell_background(row_cells[col_idx], "F5EBE0")
-        for p in row_cells[col_idx].paragraphs:
-          p.paragraph_format.space_before = Pt(4)
-          p.paragraph_format.space_after = Pt(4)
-          p.alignment = WD_ALIGN_PARAGRAPH.CENTER if col_idx != 1 else WD_ALIGN_PARAGRAPH.LEFT
-          for r in p.runs:
-            r.font.size = Pt(9)
+        row_cells = table.rows[row_idx + 1].cells
+        for col_idx, text_val in enumerate(row_data):
+            row_cells[col_idx].text = text_val
+            if row_idx % 2 == 0:
+                set_cell_background(row_cells[col_idx], "F5EBE0")
+            for p in row_cells[col_idx].paragraphs:
+                p.paragraph_format.space_before = Pt(4)
+                p.paragraph_format.space_after = Pt(4)
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER if col_idx != 1 else WD_ALIGN_PARAGRAPH.LEFT
+                for r in p.runs:
+                    r.font.size = Pt(9)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
 def generate_docx(
-      data_ai, nama_sekolah, semester, tahun_pelajaran, mata_pelajaran,
-      fase_kelas, topik, alokasi_waktu, pertemuan_ke, nama_penulis,
-      nama_kota, tanggal_pembuatan, nip_penulis
-  ):
+    data_ai, nama_sekolah, semester, tahun_pelajaran, mata_pelajaran,
+    fase_kelas, topik, alokasi_waktu, pertemuan_ke, nama_penulis,
+    nama_kota, tanggal_pembuatan, nip_penulis
+):
     doc = docx.Document()
     for section in doc.sections:
-      section.top_margin = Inches(1)
-      section.bottom_margin = Inches(1)
-      section.left_margin = Inches(1)
-      section.right_margin = Inches(1)
+        section.top_margin = Inches(1)
+        section.bottom_margin = Inches(1)
+        section.left_margin = Inches(1)
+        section.right_margin = Inches(1)
 
     style = doc.styles["Normal"]
     font = style.font
@@ -730,11 +713,11 @@ def generate_docx(
     
     dimensi_data = data_ai.get("dimensi_profil_lulusan", "Penalaran Kritis & Kolaborasi")
     if isinstance(dimensi_data, list):
-      dimensi_str = "\n".join([f"☑ {d}" for d in dimensi_data])
+        dimensi_str = "\n".join([f"☑ {d}" for d in dimensi_data])
     elif isinstance(dimensi_data, dict):
-      dimensi_str = "\n".join([f"☑ {k}: {v}" for k, v in dimensi_data.items()])
+        dimensi_str = "\n".join([f"☑ {k}: {v}" for k, v in dimensi_data.items()])
     else:
-      dimensi_str = str(dimensi_data)
+        dimensi_str = str(dimensi_data)
     add_section_table_custom(doc, "DIMENSI PROFIL LULUSAN", [("Dimensi Profil Lulusan", dimensi_str)])
 
     add_section_table_custom(doc, "TUJUAN PEMBELAJARAN", [("Tujuan Pembelajaran", data_ai.get("tujuan_pembelajaran", "Peserta didik menguasai kompetensi materi."))])
@@ -808,14 +791,14 @@ def generate_docx(
 
     instrumen_data = data_ai.get("instrumen_formatif", {})
     if isinstance(instrumen_data, dict) and instrumen_data:
-      inst_rows = [(k.replace("_", " ").title(), str(v)) for k, v in instrumen_data.items()]
-      add_section_table_custom(doc, "LEMBAR OBSERVASI KELAS", inst_rows)
+        inst_rows = [(k.replace("_", " ").title(), str(v)) for k, v in instrumen_data.items()]
+        add_section_table_custom(doc, "LEMBAR OBSERVASI KELAS", inst_rows)
     else:
-      add_section_table_custom(doc, "LEMBAR OBSERVASI KELAS", [
-          ("Judul Instrumen", "Lembar Observasi Aktivitas & Kolaborasi Kelompok"),
-          ("Tujuan", "Mendokumentasikan perkembangan berpikir kritis dan keaktifan peserta didik."),
-          ("Aspek Diamati", "1. Kontribusi gagasan aktif\n2. Penalaran kritis terhadap data\n3. Sikap saling menghargai pendapat")
-      ])
+        add_section_table_custom(doc, "LEMBAR OBSERVASI KELAS", [
+            ("Judul Instrumen", "Lembar Observasi Aktivitas & Kolaborasi Kelompok"),
+            ("Tujuan", "Mendokumentasikan perkembangan berpikir kritis dan keaktifan peserta didik."),
+            ("Aspek Diamati", "1. Kontribusi gagasan aktif\n2. Penalaran kritis terhadap data\n3. Sikap saling menghargai pendapat")
+        ])
     
     add_formative_matrix_table(doc)
 
@@ -836,14 +819,14 @@ def generate_docx(
 
     lkm_data = data_ai.get("lkm_content", {})
     if isinstance(lkm_data, dict) and lkm_data:
-      lkm_rows = [(k.replace("_", " ").title(), str(v)) for k, v in lkm_data.items()]
-      add_section_table_custom(doc, "STRUKTUR LEMBAR KERJA MURID", lkm_rows)
+        lkm_rows = [(k.replace("_", " ").title(), str(v)) for k, v in lkm_data.items()]
+        add_section_table_custom(doc, "STRUKTUR LEMBAR KERJA MURID", lkm_rows)
     else:
-      add_section_table_custom(doc, "STRUKTUR LEMBAR KERJA MURID", [
-          ("Judul LKM", f"LKM Investigasi Topik: {topik}"),
-          ("Tujuan", "Melatih peserta didik mengaplikasikan konsep dan memecahkan studi kasus secara mandiri."),
-          ("Langkah Kerja", "1. Diskusikan bersama kelompok.\n2. Lakukan eksplorasi data.\n3. Presentasikan hasil kerja.")
-      ])
+        add_section_table_custom(doc, "STRUKTUR LEMBAR KERJA MURID", [
+            ("Judul LKM", f"LKM Investigasi Topik: {topik}"),
+            ("Tujuan", "Melatih peserta didik mengaplikasikan konsep dan memecahkan studi kasus secara mandiri."),
+            ("Langkah Kerja", "1. Diskusikan bersama kelompok.\n2. Lakukan eksplorasi data.\n3. Presentasikan hasil kerja.")
+        ])
 
     bio = BytesIO()
     doc.save(bio)
@@ -866,40 +849,40 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
     )
 
     if jenjang_pendidikan == "SD / MI":
-      default_mapel = "Tematik / Kelas"
-      jp_guidance = "Panduan: 1 JP = 35 Menit"
-      fase_options = [
-          "Fase A / Kelas 1 SD",
-          "Fase A / Kelas 2 SD",
-          "Fase B / Kelas 3 SD",
-          "Fase B / Kelas 4 SD",
-          "Fase C / Kelas 5 SD",
-          "Fase C / Kelas 6 SD",
-      ]
+        default_mapel = "Tematik / Kelas"
+        jp_guidance = "Panduan: 1 JP = 35 Menit"
+        fase_options = [
+            "Fase A / Kelas 1 SD",
+            "Fase A / Kelas 2 SD",
+            "Fase B / Kelas 3 SD",
+            "Fase B / Kelas 4 SD",
+            "Fase C / Kelas 5 SD",
+            "Fase C / Kelas 6 SD",
+        ]
     elif jenjang_pendidikan == "SMP / MTs":
-      default_mapel = "Matematika / IPA / IPS"
-      jp_guidance = "Panduan: 1 JP = 40 Menit"
-      fase_options = [
-          "Fase D / Kelas 7 SMP",
-          "Fase D / Kelas 8 SMP",
-          "Fase D / Kelas 9 SMP",
-      ]
+        default_mapel = "Matematika / IPA / IPS"
+        jp_guidance = "Panduan: 1 JP = 40 Menit"
+        fase_options = [
+            "Fase D / Kelas 7 SMP",
+            "Fase D / Kelas 8 SMP",
+            "Fase D / Kelas 9 SMP",
+        ]
     elif jenjang_pendidikan == "SMA / MA":
-      default_mapel = "Bahasa Indonesia / Matematika"
-      jp_guidance = "Panduan: 1 JP = 45 Menit"
-      fase_options = [
-          "Fase E / Kelas X SMA",
-          "Fase F / Kelas XI SMA",
-          "Fase F / Kelas XII SMA",
-      ]
+        default_mapel = "Bahasa Indonesia / Matematika"
+        jp_guidance = "Panduan: 1 JP = 45 Menit"
+        fase_options = [
+            "Fase E / Kelas X SMA",
+            "Fase F / Kelas XI SMA",
+            "Fase F / Kelas XII SMA",
+        ]
     else:
-      default_mapel = "Dasar-dasar Teknik Otomotif / Produk Kreatif"
-      jp_guidance = "Panduan: 1 JP = 45 Menit"
-      fase_options = [
-          "Fase E / Kelas X SMK (Program Dasar Keahlian)",
-          "Fase F / Kelas XI SMK (Konsentrasi Keahlian)",
-          "Fase F / Kelas XII SMK (Konsentrasi Keahlian)",
-      ]
+        default_mapel = "Dasar-dasar Teknik Otomotif / Produk Kreatif"
+        jp_guidance = "Panduan: 1 JP = 45 Menit"
+        fase_options = [
+            "Fase E / Kelas X SMK (Program Dasar Keahlian)",
+            "Fase F / Kelas XI SMK (Konsentrasi Keahlian)",
+            "Fase F / Kelas XII SMK (Konsentrasi Keahlian)",
+        ]
 
     mata_pelajaran = st.text_input("Mata Pelajaran / Program Kejuruan", default_mapel)
     fase_kelas = st.selectbox("Fase / Kelas", fase_options)
@@ -964,9 +947,9 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
             response = model.generate_content(prompt)
             text_resp = response.text.strip().replace("```json", "").replace("```", "").strip()
             try:
-              data_ai = json.loads(text_resp)
+                data_ai = json.loads(text_resp)
             except:
-              data_ai = {}
+                data_ai = {}
 
             st.success("🎉 Modul Ajar GEMA Berhasil Disusun dengan Seluruh Kolom Terisi Penuh!")
             docx_file = generate_docx(
@@ -1079,33 +1062,33 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                 guru_excel = st.text_input("👨‍🏫 Nama Guru", value=st.session_state.get("user_nama", ""), key="guru_ex")
                 mapel_excel = st.text_input("📖 Mata Pelajaran", value="Pendidikan Pancasila", key="mapel_ex")
 
-# Ambil nama sekolah dari session akun yang sedang login
-    sekolah_user = st.session_state.get("sekolah", "")
+            sekolah_user = st.session_state.get("sekolah", "")
 
-    # Filter data siswa berdasarkan Kelas DAN Sekolah akun yang login
-    if sekolah_user:
-        df_filtered_kelas = df_siswa_ul[
-            (df_siswa_ul["Kelas"] == kelas_excel) & 
-            (df_siswa_ul["Sekolah"].str.strip().str.lower() == sekolah_user.strip().str.lower())
-        ].copy()
-    else:
-        df_filtered_kelas = df_siswa_ul[df_siswa_ul["Kelas"] == kelas_excel].copy()
+            if sekolah_user:
+                df_filtered_kelas = df_siswa_ul[
+                    (df_siswa_ul["Kelas"] == kelas_excel) & 
+                    (df_siswa_ul["Sekolah"].str.strip().str.lower() == sekolah_user.strip().str.lower())
+                ].copy()
+            else:
+                df_filtered_kelas = df_siswa_ul[df_siswa_ul["Kelas"] == kelas_excel].copy()
 
-    df_template = df_filtered_kelas[["ID_Siswa", "Nama_Siswa"]].copy()
-    df_template["Tanggal"] = str(tgl_excel)
-    df_template["Sekolah"] = sekolah_user if sekolah_user else (df_filtered_kelas["Sekolah"].iloc[0] if not df_filtered_kelas.empty else "-")
-    df_template["Nama_Guru"] = guru_excel
-    df_template["Mata_Pelajaran"] = mapel_excel
-    df_template["Kelas"] = kelas_excel
-    df_template["Status_Kehadiran"] = "Hadir"
-    df_template["S"] = False
-    df_template["I"] = False
-    df_template["A"] = False
-df_template = df_template[["Tanggal", "Sekolah", "Nama_Guru", "Mata_Pelajaran", "Kelas", "ID_Siswa", "Nama_Siswa", "Status_Kehadiran", "S", "I", "A"]]
-output = io.BytesIO()
-with pd.ExcelWriter(output, engine='openpyxl') as writer:
-  df_template.to_excel(writer, index=False, sheet_name='Template_Absensi')
-  excel_data = output.getvalue()
+            df_template = df_filtered_kelas[["ID_Siswa", "Nama_Siswa"]].copy()
+            df_template["Tanggal"] = str(tgl_excel)
+            df_template["Sekolah"] = sekolah_user if sekolah_user else (df_filtered_kelas["Sekolah"].iloc[0] if not df_filtered_kelas.empty else "-")
+            df_template["Nama_Guru"] = guru_excel
+            df_template["Mata_Pelajaran"] = mapel_excel
+            df_template["Kelas"] = kelas_excel
+            df_template["Status_Kehadiran"] = "Hadir"
+            df_template["S"] = False
+            df_template["I"] = False
+            df_template["A"] = False
+
+            df_template = df_template[["Tanggal", "Sekolah", "Nama_Guru", "Mata_Pelajaran", "Kelas", "ID_Siswa", "Nama_Siswa", "Status_Kehadiran", "S", "I", "A"]]
+
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df_template.to_excel(writer, index=False, sheet_name='Template_Absensi')
+            excel_data = output.getvalue()
 
             st.download_button(
                 label="📥 Download Template Absensi Kelas",
