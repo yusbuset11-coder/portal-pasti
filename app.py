@@ -51,12 +51,12 @@ st.markdown(
         
         /* --- 2. KARTU LOGIN TERPADU & BERCAHAYA --- */
         .login-card-wrapper {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
-            padding: 2.5rem 2rem;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
+            padding: 1.5rem 2rem;     /* <-- Ubah dari 2.5rem menjadi 1.5rem agar kotak lebih pendek */
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 35px rgba(56, 189, 248, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 35px rgba(56, 189, 248, 0.35);
             border: 1px solid rgba(56, 189, 248, 0.35);
-            margin-top: 1rem;
+            margin-top: -1rem;       /* <-- Ubah dari 1rem menjadi -1rem (atau 0rem) agar posisinya naik ke atas */
             margin-bottom: 2rem;
         }
 
