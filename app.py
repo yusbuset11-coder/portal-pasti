@@ -58,7 +58,7 @@ st.markdown(
             border: 1px solid rgba(56, 189, 248, 0.35);
             margin-top: -1rem;
             margin-bottom: 1rem;
-            transform: translateY(-60px); /* <-- Tambahkan baris ini untuk menarik kotak jauh lebih ke atas */
+            transform: translateY(-100px); /* <-- Tambahkan baris ini untuk menarik kotak jauh lebih ke atas */
         }
 
         /* --- 3. STYLING TABEL --- */
