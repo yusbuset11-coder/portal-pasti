@@ -1079,16 +1079,28 @@ elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
                 guru_excel = st.text_input("👨‍🏫 Nama Guru", value=st.session_state.get("user_nama", ""), key="guru_ex")
                 mapel_excel = st.text_input("📖 Mata Pelajaran", value="Pendidikan Pancasila", key="mapel_ex")
 
-            df_template = df_siswa_ul[df_siswa_ul["Kelas"] == kelas_excel][["ID_Siswa", "Nama_Siswa"]].copy()
-            df_template["Tanggal"] = str(tgl_excel)
-            df_template["Sekolah"] = df_siswa_ul["Sekolah"].iloc[0] if "Sekolah" in df_siswa_ul.columns else "Tidak Diketahui"
-            df_template["Nama_Guru"] = guru_excel
-            df_template["Mata_Pelajaran"] = mapel_excel
-            df_template["Kelas"] = kelas_excel
-            df_template["Status_Kehadiran"] = "Hadir"
-            df_template["S"] = False
-            df_template["I"] = False
-            df_template["A"] = False
+# Ambil nama sekolah dari session akun yang sedang login
+    sekolah_user = st.session_state.get("sekolah", "")
+
+    # Filter data siswa berdasarkan Kelas DAN Sekolah akun yang login
+    if sekolah_user:
+        df_filtered_kelas = df_siswa_ul[
+            (df_siswa_ul["Kelas"] == kelas_excel) & 
+            (df_siswa_ul["Sekolah"].str.strip().str.lower() == sekolah_user.strip().str.lower())
+        ].copy()
+    else:
+        df_filtered_kelas = df_siswa_ul[df_siswa_ul["Kelas"] == kelas_excel].copy()
+
+    df_template = df_filtered_kelas[["ID_Siswa", "Nama_Siswa"]].copy()
+    df_template["Tanggal"] = str(tgl_excel)
+    df_template["Sekolah"] = sekolah_user if sekolah_user else (df_filtered_kelas["Sekolah"].iloc[0] if not df_filtered_kelas.empty else "-")
+    df_template["Nama_Guru"] = guru_excel
+    df_template["Mata_Pelajaran"] = mapel_excel
+    df_template["Kelas"] = kelas_excel
+    df_template["Status_Kehadiran"] = "Hadir"
+    df_template["S"] = False
+    df_template["I"] = False
+    df_template["A"] = False
 
             df_template = df_template[["Tanggal", "Sekolah", "Nama_Guru", "Mata_Pelajaran", "Kelas", "ID_Siswa", "Nama_Siswa", "Status_Kehadiran", "S", "I", "A"]]
 
