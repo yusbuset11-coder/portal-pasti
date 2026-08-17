@@ -72,49 +72,49 @@ def render_sipensis():
                 )
 
                 if st.button("💾 Simpan Absensi Harian (Supabase)", type="primary"):
-            # Tambahkan baris pemantau di sini
-            st.write("🔍 Debug - Email aktif:", current_email)
-            st.write("🔍 Debug - Sekolah aktif:", current_sekolah)
-            
-            with st.spinner("Menyimpan ke Supabase..."):
-                try:
-                    records_to_insert = []
-                    for _, row in edited_df.iterrows():
-                        status = "Hadir"
-                        if row["S"]: status = "Sakit"
-                        elif row["I"]: status = "Izin"
-                        elif row["A"]: status = "Alpha"
-                        
-                        records_to_insert.append({
-                            "tanggal": str(tanggal_absensi),
-                            "sekolah": current_sekolah,
-                            "user_email": current_email,
-                            "nama_guru": nama_guru,
-                            "mata_pelajaran": mata_pelajaran,
-                            "kelas": kelas_pilih,
-                            "id_siswa": str(row["id_siswa"]),
-                            "nama_siswa": str(row["nama_siswa"]),
-                            "status_kehadiran": status
-                        })
-
-                    # Pantau data yang akan dikirim
-                    st.write("🔍 Debug - Data yang mau dikirim:", records_to_insert)
-
-                    # Eksekusi kirim ke Supabase
-                    response = supabase.table("absensi_harian").insert(records_to_insert).execute()
+                    # Tambahkan baris pemantau di sini (menjorok ke dalam)
+                    st.write("🔍 Debug - Email aktif:", current_email)
+                    st.write("🔍 Debug - Sekolah aktif:", current_sekolah)
                     
-                    # Pantau respon dari Supabase
-                    st.write("🔍 Debug - Respon dari Supabase:", response)
-                    
-                    st.success("✅ Absensi Berhasil Disimpan ke Supabase!")
-                    st.balloons()
-                except Exception as e:
-                    st.error(f"Gagal menyimpan ke database: {e}")
+                    with st.spinner("Menyimpan ke Supabase..."):
+                        try:
+                            records_to_insert = []
+                            for _, row in edited_df.iterrows():
+                                status = "Hadir"
+                                if row["S"]: status = "Sakit"
+                                elif row["I"]: status = "Izin"
+                                elif row["A"]: status = "Alpha"
+                                
+                                records_to_insert.append({
+                                    "tanggal": str(tanggal_absensi),
+                                    "sekolah": current_sekolah,
+                                    "user_email": current_email,
+                                    "nama_guru": nama_guru,
+                                    "mata_pelajaran": mata_pelajaran,
+                                    "kelas": kelas_pilih,
+                                    "id_siswa": str(row["id_siswa"]),
+                                    "nama_siswa": str(row["nama_siswa"]),
+                                    "status_kehadiran": status
+                                })
+
+                            # Pantau data yang akan dikirim
+                            st.write("🔍 Debug - Data yang mau dikirim:", records_to_insert)
+
+                            # Eksekusi kirim ke Supabase
+                            response = supabase.table("absensi_harian").insert(records_to_insert).execute()
+                            
+                            # Pantau respon dari Supabase
+                            st.write("🔍 Debug - Respon dari Supabase:", response)
+                            
+                            st.success("✅ Absensi Berhasil Disimpan ke Supabase!")
+                            st.balloons()
+                        except Exception as e:
+                            st.error(f"Gagal menyimpan ke database: {e}")
             else:
                 st.warning("Tidak ada data siswa untuk kelas tersebut.")
         else:
             st.warning("⚠️ Belum ada data siswa Anda di Supabase. Silakan unggah melalui tab 'Download & Upload Excel'.")
-
+            
     with tab2:
         st.markdown("#### Manajemen Data Siswa Mandiri")
         uploaded_file = st.file_uploader("Pilih Berkas Excel Data Siswa (.xlsx)", type=["xlsx"])
