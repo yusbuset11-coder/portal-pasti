@@ -1,5 +1,6 @@
+streamlit
+pandas
+supabase
 gspread
-gspread-formatting
-python-docx
-google-generativeai
+oauth2client
 openpyxl
