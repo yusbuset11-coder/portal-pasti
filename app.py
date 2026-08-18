@@ -929,29 +929,29 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
                 model = genai.GenerativeModel("gemini-3.5-flash")
             
             prompt = f"""
-            Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Pembelajaran Mendalam (Deep Learning) yang SANGAT LENGKAP, detail, dan terperinci untuk:
-            - Jenjang & Fase: {jenjang_pendidikan} ({fase_kelas})
-            - Mata Pelajaran: {mata_pelajaran}
-            - Topik: {topik}
-            - Alokasi Waktu: {alokasi_waktu}
-            - Pertemuan Ke-: {pertemuan_ke}
+Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Pembelajaran Mendalam (Deep Learning)...
+Jenjang & Fase: {jenjang_pendidikan} - {fase_kelas}
+Mata Pelajaran: {mata_pelajaran}
+Topik: {topik}
+Alokasi Waktu: {alokasi_waktu}
+Pertemuan Ke-: {pertemuan_ke}
 
-            SESUAIKAN DENGAN SISTEMATIKA BERIKUT DALAM FORMAT JSON (SEMUA BAGIAN WAJIB TERISI LENGKAP, TIDAK BOLEH KOSONG ATAU TANDA STRIP):
-            1. "dimensi_profil_lulusan": Pilih 2 sampai 4 dimensi profil lulusan yang paling relevan.
-            2. "tujuan_pembelajaran": Uraian tujuan pembelajaran yang spesifik.
-            3. "pemahaman_bermakna": Pemahaman bermakna yang diperoleh siswa.
-            4. "pertanyaan_pemantik": Pertanyaan pemantik yang relevan.
-            5. "kerangka_pembelajaran": Berupa objek JSON yang WAJIB memiliki sub-kunci berikut secara lengkap:
-               - "praktik_pedagogis": objek dengan sub-kunci "model_pembelajaran" dan "metode_pembelajaran".
-               - "kemitraan_pembelajaran": objek dengan sub-kunci "lingkungan_sekolah" dan "lingkungan_luar_sekolah".
-               - "lingkungan_belajar": objek dengan sub-kunci "ruang_fisik", "ruang_virtual", dan "ruang_budaya_belajar".
-               - "pemanfaatan_digital": objek dengan sub-kunci "tahap_perencanaan", "tahap_pelaksanaan", dan "tahap_asesmen".
-            6. "pengalaman_belajar": Berupa objek dengan "kegiatan_pendahuluan", "memahami", "mengaplikasi", "merefleksi", dan "kegiatan_penutup".
-            7. "asesmen_pembelajaran": Berupa objek dengan "asesmen_awal", "asesmen_formatif", dan "asesmen_sumatif".
-            8. "rubrik_penilaian": Berupa *Array of Objects* (Daftar Objek JSON). Setiap objek WAJIB memuat: {{"kriteria": "...", "perlu_bimbingan": "...", "cukup": "...", "baik": "...", "sangat_baik": "..."}}. Buat minimal 2 objek kriteria penilaian.
-            9. "instrumen_formatif": Rincian lembar observasi kelas.
-            10. "lkm_content": Detail Lembar Kerja Murid.
-
+SESUAIKAN DENGAN SISTEMATIKA BERIKUT DALAM FORMAT JSON (SEMUA BAGIAN WAJIB TERISI LENGKAP, TIDAK BOLEH KOSONG):
+1. "dimensi_profil_lulusan": Pilih 2 sampai 4 dimensi profil lulusan yang paling relevan.
+2. "tujuan_pembelajaran": Uraian tujuan pembelajaran yang spesifik.
+3. "pemahaman_makna": Pemahaman bermakna yang diperoleh siswa.
+4. "pertanyaan_pemantik": Pertanyaan pemantik yang relevan.
+5. "kerangka_pembelajaran": Berupa objek JSON yang WAJIB memiliki sub-kunci berikut secara lengkap:
+   - "praktik_pedagogis": objek dengan sub-kunci "model_pembelajaran" dan "metode_pembelajaran".
+   - "kemitraan_pembelajaran": objek dengan sub-kunci "lingkungan_sekolah" dan "lingkungan_luar_sekolah".
+   - "lingkungan_belajar": objek dengan sub-kunci "ruang_fisik", "ruang_virtual", dan "ruang_budaya_belajar".
+   - "pemanfaatan_digital": objek dengan sub-kunci "tahap_perencanaan", "tahap_pelaksanaan", dan "tahap_evaluasi".
+6. "pengalaman_belajar": Berupa objek dengan "kegiatan_pendahuluan", "memahami", "mengaplikasi", "merefleksi".
+7. "asesmen_pembelajaran": Berupa objek dengan "asesmen_awal", "asesmen_formatif", dan "asesmen_sumatif".
+8. "rubrik_penilaian": Berupa *Array of Objects* (Daftar Objek JSON). Setiap objek WAJIB memuat: {{"kriteria", "deskripsi", "skor_maksimal"}}.
+9. "instrumen_formatif": Rincian lembar observasi kelas.
+10. "lkm_content": Detail Lembar Kerja Murid.
+"""
             response = model.generate_content(prompt)
             bt = chr(96) * 3
             text_resp = response.text.strip().replace(bt + "json", "").replace(bt, "").strip()
