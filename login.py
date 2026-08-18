@@ -16,7 +16,7 @@ def get_gspread_client():
 def verifikasi_login(email, token):
     try:
         client = get_gspread_client()
-        master_sheet_id = "1mgN63xzrLt_5b9-gBw8dIWYP3RRgNdagUiTrFZdgg"
+        master_sheet_id = "1mgN63xzrLt_5b9-GBw8dlWYP3RRgNdagUiTUrFdgg"
         sheet = client.open_by_key(master_sheet_id).sheet1
         data = sheet.get_all_records()
 
