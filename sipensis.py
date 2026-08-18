@@ -99,10 +99,10 @@ def run_sipensis():
     # Menu Navigasi Tabs SIPENSIS
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "📝 Input Manual", 
-        "📥 Download & Upload Template", 
+        "📥 Download & Upload Database Guru", 
         "📈 Laporan Harian", 
-        "📊 Rekap Ganjil", 
-        "📊 Rekap Genap"
+        "📊 Rekap Semester Ganjil", 
+        "📊 Rekap Semester Genap"
     ])
     
     with tab1:
@@ -163,8 +163,8 @@ def run_sipensis():
                 st.warning("Mohon isi minimal satu nama siswa.")
 
     with tab2:
-        st.subheader("📥 Download Template & 📤 Upload Database Guru")
-        st.write("Unduh template database yang berisi 3 sheet (Absensi Harian, Rekap Ganjil, Rekap Genap), lalu unggah kembali setelah diisi.")
+        st.subheader("📥 Download & Upload Database Guru")
+        st.write("Unduh template database yang mencakup 3 sheet (Absensi Harian, Rekap Semester Ganjil, Rekap Semester Genap), lalu unggah kembali file Excel yang telah diisi.")
         
         # Tombol Download Template Excel 3 Sheet
         output = io.BytesIO()
