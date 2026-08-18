@@ -953,6 +953,14 @@ SESUAIKAN DENGAN SISTEMATIKA BERIKUT DALAM FORMAT JSON (SEMUA BAGIAN WAJIB TERIS
 10. "lkm_content": Detail Lembar Kerja Murid.
 """
             response = model.generate_content(prompt)
-            bt = chr(96) * 3
-            text_resp = response.text.strip().replace(bt + "json", "").replace(bt, "").strip()
-            try:
+        bt = chr(96) * 3
+        text_resp = response.text.strip().replace(bt + "json", "").replace(bt, "").strip()
+        
+        try:
+            # Berikan spasi/indentasi ke dalam (tekan Tab) untuk baris di bawah try
+            data_modul = json.loads(text_resp)
+            st.success("Modul Ajar berhasil dibuat!")
+            st.json(data_modul)
+        except Exception as e:
+            st.error(fTerjadi kesalahan saat memproses data JSON: {e}")
+            st.text(text_resp)
