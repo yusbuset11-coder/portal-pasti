@@ -1,88 +1,80 @@
-"""
-Modul: Login PASTI (Otentikasi Berbasis Supabase)
-Pengembang: Yustinus Budi Setyanta - Pengawas Sekolah Cabdin Bangkalan
-"""
-
 import streamlit as st
-import pandas as pd
-from supabase import create_client
 
-def get_supabase_client():
-    url = st.secrets["supabase"]["url"]
-    key = st.secrets["supabase"]["key"]
-    return create_client(url, key)
-
-def render_login_pasti():
-    st.markdown(
-        """
+def render_login():
+    # CSS dengan penyesuaian posisi (margin-top negatif untuk menaikkan posisi)
+    st.markdown("""
         <style>
-        .login-card {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            padding: 35px;
-            border-radius: 16px;
-            border: 1px solid #334155;
-            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.4);
-            max-width: 480px;
-            margin: 40px auto;
-        }
-        .login-title {
-            color: #f8fafc;
-            font-size: 22px;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 8px;
-        }
-        .login-subtitle {
-            color: #94a3b8;
-            font-size: 13px;
-            text-align: center;
-            margin-bottom: 25px;
-        }
+            .login-wrapper {
+                margin-top: -3rem; /* Mengatur posisi agar naik ke atas */
+            }
+            .login-header {
+                text-align: center;
+                padding-bottom: 5px;
+            }
+            .pasti-title {
+                font-size: 3.2rem;
+                font-weight: 900;
+                color: #38bdf8;
+                margin-bottom: 0px;
+                letter-spacing: 2px;
+                line-height: 1.1;
+            }
+            .pasti-subtitle {
+                font-size: 1.2rem;
+                font-weight: 600;
+                color: #f8fafc;
+                margin-top: 5px;
+                margin-bottom: 10px;
+            }
+            .pasti-badge {
+                background: linear-gradient(90deg, #0284c7 0%, #0369a1 100%);
+                color: #ffffff;
+                padding: 5px 15px;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 700;
+                letter-spacing: 0.8px;
+                display: inline-block;
+                margin-bottom: 15px;
+                box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
+            }
         </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    """, unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.markdown(
-            """
-            <div class="login-card">
-                <div class="login-title">🏫 PORTAL PASTI</div>
-                <div class="login-subtitle">Portal Administrasi Siswa Terintegrasi<br>Silakan masukkan kredensial resmi Anda</div>
+    # Layout Center
+    _, col_center, _ = st.columns([0.8, 2.4, 0.8])
+    
+    with col_center:
+        # Wrapper untuk menerapkan margin-top agar posisi naik
+        st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
+        
+        # Header Portal
+        st.markdown("""
+            <div class="login-header">
+                <div class="pasti-title">PASTI</div>
+                <div class="pasti-subtitle">Portal Administrasi Siswa Terintegrasi</div>
+                <div class="pasti-badge">E-PRESENSI SISWA • E-JURNAL MENGAJAR • E-ASESMEN PM • E-MODUL AJAR PM</div>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        with st.form("form_login_pasti"):
-            email_input = st.text_input("📧 Email Terdaftar", placeholder="contoh: email@sekolah.id")
-            token_input = st.text_input("🔑 Token Unik Akses", type="password", placeholder="Masukkan token rahasia")
+        """, unsafe_allow_html=True)
+        
+        # Kontainer kartu login
+        with st.container(border=True):
+            st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;'>Silakan masukkan Email dan Token Akses terdaftar di Database Pusat.</p>", unsafe_allow_html=True)
             
-            submit_login = st.form_submit_button("🔓 Masuk ke Aplikasi", use_container_width=True, type="primary")
-
-            if submit_login:
-                if not email_input or not token_input:
-                    st.warning("⚠️ Email dan Token wajib diisi dengan lengkap!")
-                else:
-                    with st.spinner("Memeriksa otorisasi ke Database Supabase..."):
-                        try:
-                            supabase = get_supabase_client()
-                            response = supabase.table("tokens").select("*").eq("email", email_input.strip().lower()).execute()
-                            data_user = response.data
-
-                            if data_user:
-                                user_record = data_user[0]
-                                if str(user_record.get("token")) == token_input.strip():
-                                    st.session_state["logged_in"] = True
-                                    st.session_state["user_email"] = user_record["email"]
-                                    st.session_state["user_nama"] = user_record.get("nama_user", "Guru")
-                                    st.session_state["user_sekolah"] = user_record.get("sekolah", "")
-                                    st.success("✅ Verifikasi Berhasil! Memuat aplikasi...")
-                                    st.rerun()
-                                else:
-                                    st.error("❌ Akses Ditolak: Token yang Anda masukkan salah.")
-                            else:
-                                st.error("❌ Akses Ditolak: Email tidak terdaftar di database.")
-                        except Exception as e:
-                            st.error(f"❌ Gagal terhubung ke database Supabase: {e}")
+            # Form Login Interaktif
+            with st.form("form_login_professional"):
+                email_input = st.text_input("📧 Email Terdaftar", placeholder="nama.guru@sekolah.id")
+                token_input = st.text_input("🔑 Token Akses", type="password", placeholder="Masukkan token rahasia anda")
+                
+                submit_btn = st.form_submit_button("🚀 Masuk ke PASTI", use_container_width=True)
+                
+                if submit_btn:
+                    if not email_input or not token_input:
+                        st.warning("⚠️ Email dan Token Akses wajib diisi!")
+                    else:
+                        st.session_state["logged_in"] = True
+                        st.session_state["user_email"] = email_input
+                        st.success("Login Berhasil! Memuat portal...")
+                        st.rerun() # Rerun satu kali untuk refresh state
+        
+        st.markdown('</div>', unsafe_allow_html=True)
