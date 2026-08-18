@@ -1,159 +1,249 @@
-"""
-Modul: SIPENSIS (Sistem Informasi Presensi Siswa) - Pure Supabase Fix
-Pengembang: Yustinus Budi Setyanta
-"""
-
 import streamlit as st
 import pandas as pd
-from datetime import date
-from supabase import create_client
+import gspread
+from google.oauth2.service_account import Credentials
+from datetime import datetime
+import io
 
-def get_supabase_client():
-    url = st.secrets["supabase"]["url"]
-    key = st.secrets["supabase"]["key"]
-    return create_client(url, key)
+# Konfigurasi Google Sheets API
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
 
-def render_sipensis():
-    st.markdown("### 📋 SIPENSIS: Sistem Informasi Presensi Siswa")
+def get_gspread_client():
+    if "gcp_service_account" in st.secrets:
+        creds_dict = dict(st.secrets["gcp_service_account"])
+        creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+        return gspread.authorize(creds)
+    return None
+
+def run_sipensis():
+    st.markdown("## 📊 SIPENSIS: Sistem Informasi Presensi Siswa")
     
-    current_email = st.session_state.get("user_email", "")
-    current_sekolah = st.session_state.get("user_sekolah", "")
-
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "✍️ Input Manual", 
-        "📁 Download & Upload Excel", 
-        "📊 Laporan Harian", 
-        "📈 Rekap Semester Ganjil", 
-        "📈 Rekap Semester Genap"
-    ])
-
-    supabase = get_supabase_client()
-
-    with tab1:
-        st.markdown("#### Form Input Presensi Harian")
-        try:
-            res_siswa = supabase.table("siswa").select("*").eq("user_email", current_email).execute()
-            df_siswa = pd.DataFrame(res_siswa.data)
-        except Exception as e:
-            st.error(f"Gagal memuat data siswa: {e}")
-            df_siswa = pd.DataFrame()
+    # Identifikasi User yang Sedang Login
+    user_email = st.session_state.get("user_email", "budi@gmail.com")
+    user_name = st.session_state.get("user_name", "Budi Santoso")
+    
+    client = get_gspread_client()
+    if not client:
+        st.error("Koneksi Google Sheets (GCP Service Account) belum dikonfigurasi di secrets.toml.")
+        return
+    
+    # Hubungkan ke DATA_MASTER_REGISTRY
+    MASTER_REGISTRY_ID = st.secrets.get("master_registry_id", "1mgN63xzrLt_5b9-gWw8dIWYP3RRgNdagUiTrFZdgg")
+    
+    try:
+        registry_sheet = client.open_by_key(MASTER_REGISTRY_ID).sheet1
+        registry_data = registry_sheet.get_all_records()
+        df_registry = pd.DataFrame(registry_data)
+    except Exception as e:
+        st.error(f"Gagal memuat DATA_MASTER_REGISTRY: {e}")
+        return
+    
+    # Cari data guru berdasarkan email
+    guru_row_idx = None
+    guru_spreadsheet_id = None
+    
+    for idx, row in df_registry.iterrows():
+        if str(row.get("Email", "")).strip().lower() == str(user_email).strip().lower():
+            guru_row_idx = idx + 2  # Baris header sheet
+            guru_spreadsheet_id = str(row.get("Spreadsheet_ID_Guru", "")).strip()
+            break
+            
+    if guru_row_idx is None:
+        st.warning(f"Akun dengan email {user_email} belum terdaftar di DATA_MASTER_REGISTRY.")
+        return
         
-        if not df_siswa.empty:
-            col1, col2 = st.columns(2)
-            with col1:
-                tanggal_absensi = st.date_input("📅 Tanggal Absensi", value=date.today(), key="tgl_man")
-                daftar_kelas = df_siswa["kelas"].dropna().unique().tolist() if "kelas" in df_siswa.columns else ["X"]
-                kelas_pilih = st.selectbox("📚 Pilih Kelas:", daftar_kelas, key="kls_man")
-            
-            with col2:
-                nama_guru = st.text_input("👨‍🏫 Nama Guru", value=st.session_state.get("user_nama", ""), key="g_man")
-                mata_pelajaran = st.text_input("📖 Mata Pelajaran", value="Pendidikan Pancasila", key="m_man")
-
-            df_filtered = df_siswa[df_siswa["kelas"] == kelas_pilih].copy()
-            st.info(f"🏫 **Sekolah Anda:** {current_sekolah}")
-
-            if not df_filtered.empty:
-                df_input = df_filtered[["id_siswa", "nama_siswa"]].copy()
-                df_input["S"] = False
-                df_input["I"] = False
-                df_input["A"] = False
-
-                edited_df = st.data_editor(
-                    df_input,
-                    column_config={
-                        "id_siswa": st.column_config.TextColumn("ID Siswa", disabled=True),
-                        "nama_siswa": st.column_config.TextColumn("Nama Siswa", disabled=True),
-                        "S": st.column_config.CheckboxColumn("Sakit (S)"),
-                        "I": st.column_config.CheckboxColumn("Izin (I)"),
-                        "A": st.column_config.CheckboxColumn("Alpha (A)"),
-                    },
-                    hide_index=True,
-                    use_container_width=True
-                )
-
-                if st.button("💾 Simpan Absensi Harian (Supabase)", type="primary"):
-                    # Tambahkan baris pemantau di sini (menjorok ke dalam)
-                    st.write("🔍 Debug - Email aktif:", current_email)
-                    st.write("🔍 Debug - Sekolah aktif:", current_sekolah)
-                    
-                    with st.spinner("Menyimpan ke Supabase..."):
-                        try:
-                            records_to_insert = []
-                            for _, row in edited_df.iterrows():
-                                status = "Hadir"
-                                if row["S"]: status = "Sakit"
-                                elif row["I"]: status = "Izin"
-                                elif row["A"]: status = "Alpha"
-                                
-                                records_to_insert.append({
-                                    "tanggal": str(tanggal_absensi),
-                                    "sekolah": current_sekolah,
-                                    "user_email": current_email,
-                                    "nama_guru": nama_guru,
-                                    "mata_pelajaran": mata_pelajaran,
-                                    "kelas": kelas_pilih,
-                                    "id_siswa": str(row["id_siswa"]),
-                                    "nama_siswa": str(row["nama_siswa"]),
-                                    "status_kehadiran": status
-                                })
-
-                            # Pantau data yang akan dikirim
-                            st.write("🔍 Debug - Data yang mau dikirim:", records_to_insert)
-
-                            # Eksekusi kirim ke Supabase
-                            response = supabase.table("absensi_harian").insert(records_to_insert).execute()
-                            
-                            # Pantau respon dari Supabase
-                            st.write("🔍 Debug - Respon dari Supabase:", response)
-                            
-                            st.success("✅ Absensi Berhasil Disimpan ke Supabase!")
-                            st.balloons()
-                        except Exception as e:
-                            st.error(f"Gagal menyimpan ke database: {e}")
+    # Jika Spreadsheet_ID_Guru kosong
+    if not guru_spreadsheet_id or guru_spreadsheet_id in ["(Kosongkan dulu)", "nan", ""]:
+        st.info("💡 **Setup Awal Database Pribadi Guru**\nSilakan buat salinan dari Template_Database_Guru, lalu masukkan Spreadsheet ID milik Anda di bawah ini agar data absensi tersimpan di akun Anda sendiri.")
+        new_sheet_id = st.text_input("Masukkan Spreadsheet ID Pribadi Anda:")
+        if st.button("Simpan Spreadsheet ID"):
+            if new_sheet_id:
+                registry_sheet.update_cell(guru_row_idx, 5, new_sheet_id)  # Kolom E
+                st.success("Spreadsheet ID berhasil disimpan! Silakan refresh halaman.")
+                st.rerun()
             else:
-                st.warning("Tidak ada data siswa untuk kelas tersebut.")
-        else:
-            st.warning("⚠️ Belum ada data siswa Anda di Supabase. Silakan unggah melalui tab 'Download & Upload Excel'.")
+                st.warning("Mohon masukkan ID Spreadsheet yang valid.")
+        return
+
+    # Koneksi ke Spreadsheet Pribadi Guru
+    try:
+        teacher_wb = client.open_by_key(guru_spreadsheet_id)
+        sheet_absensi = teacher_wb.worksheet("Absensi Harian")
+        sheet_rekap_ganjil = teacher_wb.worksheet("Rekap Semester Ganjil")
+        sheet_rekap_genap = teacher_wb.worksheet("Rekap Semester Genap")
+    except Exception as e:
+        st.error(f"Gagal mengakses Spreadsheet Pribadi Guru. Pastikan Service Account sudah diberi akses Editor. Detail: {e}")
+        return
+
+    # Ambil data Absensi Harian untuk filter
+    data_absensi = sheet_absensi.get_all_records()
+    df_absensi = pd.DataFrame(data_absensi)
+    
+    # Filter Sekolah & Kelas di Sidebar
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 🏫 Filter Wilayah & Kelas")
+    
+    list_sekolah = ["Semua Sekolah"]
+    list_kelas = ["Semua Kelas"]
+    
+    if not df_absensi.empty and "Sekolah" in df_absensi.columns and "Kelas" in df_absensi.columns:
+        list_sekolah += list(df_absensi["Sekolah"].dropna().unique())
+        list_kelas += list(df_absensi["Kelas"].dropna().unique())
+        
+    pilih_sekolah = st.sidebar.selectbox("Pilih Sekolah", list_sekolah)
+    pilih_kelas = st.sidebar.selectbox("Pilih Kelas", list_kelas)
+
+    # Menu Navigasi Tabs SIPENSIS
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "📝 Input Manual", 
+        "📥 Download & Upload Template", 
+        "📈 Laporan Harian", 
+        "📊 Rekap Ganjil", 
+        "📊 Rekap Genap"
+    ])
+    
+    with tab1:
+        st.subheader("Form Input Presensi Harian Siswa")
+        col1, col2 = st.columns(2)
+        with col1:
+            tanggal_absen = st.date_input("Tanggal Absensi", datetime.now())
+            nama_guru_input = st.text_input("Nama Guru", value=user_name, disabled=True)
+        with col2:
+            sekolah_input = st.text_input("Nama Sekolah", value=pilih_sekolah if pilih_sekolah != "Semua Sekolah" else "")
+            kelas_input = st.text_input("Kelas", value=pilih_kelas if pilih_kelas != "Semua Kelas" else "")
             
+        mata_pelajaran = st.text_input("Mata Pelajaran", placeholder="Contoh: Pendidikan Pancasila")
+        
+        st.markdown("---")
+        st.markdown("### Daftar Siswa & Status Kehadiran")
+        
+        jumlah_siswa = st.number_input("Jumlah Siswa di Kelas", min_value=1, max_value=50, value=5)
+        
+        absensi_rows = []
+        for i in range(1, int(jumlah_siswa) + 1):
+            cols = st.columns([1, 4, 1, 1, 1])
+            with cols[0]:
+                st.write(f"No. {i}")
+            with cols[1]:
+                nama_siswa = st.text_input(f"Nama Siswa {i}", key=f"siswa_{i}")
+            with cols[2]:
+                s = st.checkbox("S", key=f"s_{i}")
+            with cols[3]:
+                i_val = st.checkbox("I", key=f"i_{i}")
+            with cols[4]:
+                a = st.checkbox("A", key=f"a_{i}")
+            
+            if nama_siswa:
+                absensi_rows.append({
+                    "Tanggal": str(tanggal_absen),
+                    "Sekolah": sekolah_input,
+                    "Mata_Pelajaran": mata_pelajaran,
+                    "Kelas": kelas_input,
+                    "No": i,
+                    "Nama_Siswa": nama_siswa,
+                    "S": "V" if s else "",
+                    "I": "V" if i_val else "",
+                    "A": "V" if a else ""
+                })
+                
+        if st.button("💾 Simpan Absensi ke Database Pribadi"):
+            if absensi_rows:
+                for row in absensi_rows:
+                    sheet_absensi.append_row([
+                        row["Tanggal"], row["Sekolah"], row["Mata_Pelajaran"], 
+                        row["Kelas"], row["No"], row["Nama_Siswa"], 
+                        row["S"], row["I"], row["A"]
+                    ])
+                st.success("Data absensi berhasil disimpan ke Spreadsheet pribadi Anda!")
+                st.rerun()
+            else:
+                st.warning("Mohon isi minimal satu nama siswa.")
+
     with tab2:
-        st.markdown("#### Manajemen Data Siswa Mandiri")
-        uploaded_file = st.file_uploader("Pilih Berkas Excel Data Siswa (.xlsx)", type=["xlsx"])
+        st.subheader("📥 Download Template & 📤 Upload Database Guru")
+        st.write("Unduh template database yang berisi 3 sheet (Absensi Harian, Rekap Ganjil, Rekap Genap), lalu unggah kembali setelah diisi.")
+        
+        # Tombol Download Template Excel 3 Sheet
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            pd.DataFrame(columns=["Tanggal", "Sekolah", "Mata_Pelajaran", "Kelas", "No", "Nama_Siswa", "S", "I", "A"]).to_excel(writer, sheet_name="Absensi Harian", index=False)
+            pd.DataFrame(columns=["Nama_Sekolah", "Mata_Pelajaran", "Kelas", "No", "Nama_Siswa", "S", "I", "A", "Jumlah"]).to_excel(writer, sheet_name="Rekap Semester Ganjil", index=False)
+            pd.DataFrame(columns=["Nama_Sekolah", "Mata_Pelajaran", "Kelas", "No", "Nama_Siswa", "S", "I", "A", "Jumlah"]).to_excel(writer, sheet_name="Rekap Semester Genap", index=False)
+        output.seek(0)
+        
+        st.download_button(
+            label="📥 Download Template Database Guru (.xlsx)",
+            data=output,
+            file_name="Template_Database_Guru.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        
+        st.markdown("---")
+        st.markdown("### Upload File Excel yang Telah Diedit")
+        uploaded_file = st.file_uploader("Pilih file Excel (.xlsx)", type=["xlsx"])
         if uploaded_file is not None:
-            df_upload = pd.read_excel(uploaded_file)
-            st.dataframe(df_upload.head(), use_container_width=True)
-            
-            if st.button("🚀 Unggah ke Supabase Saya", type="primary"):
-                with st.spinner("Mengunggah data..."):
-                    try:
-                        supabase.table("siswa").delete().eq("user_email", current_email).execute()
-                        records = []
-                        for _, row in df_upload.iterrows():
-                            records.append({
-                                "user_email": current_email,
-                                "sekolah": str(row.get("Sekolah", current_sekolah)),
-                                "id_siswa": str(row.get("ID_Siswa", "")),
-                                "nama_siswa": str(row.get("Nama_Siswa", "")),
-                                "kelas": str(row.get("Kelas", "X"))
-                            })
-                        supabase.table("siswa").insert(records).execute()
-                        st.success("✅ Data siswa berhasil diperbarui di Supabase!")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Gagal mengunggah: {e}")
+            if st.button("📤 Proses & Sinkronkan"):
+                try:
+                    xls = pd.ExcelFile(uploaded_file)
+                    if "Absensi Harian" in xls.sheet_names:
+                        df_up_abs = pd.read_excel(xls, "Absensi Harian")
+                        sheet_absensi.clear()
+                        sheet_absensi.update([df_up_abs.columns.values.tolist()] + df_up_abs.values.tolist())
+                    if "Rekap Semester Ganjil" in xls.sheet_names:
+                        df_up_ganjil = pd.read_excel(xls, "Rekap Semester Ganjil")
+                        sheet_rekap_ganjil.clear()
+                        sheet_rekap_ganjil.update([df_up_ganjil.columns.values.tolist()] + df_up_ganjil.values.tolist())
+                    if "Rekap Semester Genap" in xls.sheet_names:
+                        df_up_genap = pd.read_excel(xls, "Rekap Semester Genap")
+                        sheet_rekap_genap.clear()
+                        sheet_rekap_genap.update([df_up_genap.columns.values.tolist()] + df_up_genap.values.tolist())
+                    st.success("Sinkronisasi database berhasil!")
+                except Exception as e:
+                    st.error(f"Terjadi kesalahan: {e}")
 
     with tab3:
-        st.markdown("#### Laporan Harian Kehadiran")
-        try:
-            res_lap = supabase.table("absensi_harian").select("*").eq("user_email", current_email).execute()
-            df_lap = pd.DataFrame(res_lap.data)
-            if not df_lap.empty:
-                st.dataframe(df_lap, use_container_width=True)
-            else:
-                st.info("Data absensi belum tersedia untuk akun ini.")
-        except Exception as e:
-            st.error(f"Gagal memuat laporan: {e}")
+        st.subheader("📈 Laporan Harian Absensi")
+        if not df_absensi.empty:
+            filtered_df = df_absensi.copy()
+            if pilih_sekolah != "Semua Sekolah" and "Sekolah" in filtered_df.columns:
+                filtered_df = filtered_df[filtered_df["Sekolah"] == pilih_sekolah]
+            if pilih_kelas != "Semua Kelas" and "Kelas" in filtered_df.columns:
+                filtered_df = filtered_df[filtered_df["Kelas"] == pilih_kelas]
+            st.dataframe(filtered_df, use_container_width=True)
+        else:
+            st.info("Belum ada data absensi harian.")
 
     with tab4:
-        st.markdown("#### Rekapitulasi Semester Ganjil")
+        st.subheader("📊 Rekap Semester Ganjil")
+        try:
+            data_ganjil = sheet_rekap_ganjil.get_all_records()
+            df_ganjil = pd.DataFrame(data_ganjil)
+            if not df_ganjil.empty:
+                if pilih_sekolah != "Semua Sekolah" and "Nama_Sekolah" in df_ganjil.columns:
+                    df_ganjil = df_ganjil[df_ganjil["Nama_Sekolah"] == pilih_sekolah]
+                if pilih_kelas != "Semua Kelas" and "Kelas" in df_ganjil.columns:
+                    df_ganjil = df_ganjil[df_ganjil["Kelas"] == pilih_kelas]
+                st.dataframe(df_ganjil, use_container_width=True)
+            else:
+                st.info("Belum ada data Rekap Semester Ganjil.")
+        except Exception as e:
+            st.error(f"Gagal memuat rekap ganjil: {e}")
+
     with tab5:
-        st.markdown("#### Rekapitulasi Semester Genap")
+        st.subheader("📊 Rekap Semester Genap")
+        try:
+            data_genap = sheet_rekap_genap.get_all_records()
+            df_genap = pd.DataFrame(data_genap)
+            if not df_genap.empty:
+                if pilih_sekolah != "Semua Sekolah" and "Nama_Sekolah" in df_genap.columns:
+                    df_genap = df_genap[df_genap["Nama_Sekolah"] == pilih_sekolah]
+                if pilih_kelas != "Semua Kelas" and "Kelas" in df_genap.columns:
+                    df_genap = df_genap[df_genap["Kelas"] == pilih_kelas]
+                st.dataframe(df_genap, use_container_width=True)
+            else:
+                st.info("Belum ada data Rekap Semester Genap.")
+        except Exception as e:
+            st.error(f"Gagal memuat rekap genap: {e}")
