@@ -40,7 +40,7 @@ def verifikasi_login(email, token):
         st.error(f"❌ Terjadi kesalahan koneksi ke database pusat: {e}")
     return None
 
-def render_halaman_login():
+def render_login():
     st.markdown("## 🔐 Login Aplikasi PASTI")
     st.write("Silakan masukkan Email dan Token Unik Anda untuk mengakses sistem.")
 
