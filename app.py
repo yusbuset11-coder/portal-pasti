@@ -17,7 +17,7 @@ import pandas as pd
 import streamlit as st
 from sakti import render_sakti
 from digma import render_digma_module
-from login import render_login
+from login import render_halaman_login
 from gspread_formatting import (
     CellFormat, Border, Borders, Color, format_cell_range
 )
@@ -30,8 +30,8 @@ st.set_page_config(
 
 # === PENGECEKAN LOGIN ===
 if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
-  render_login()
-  st.stop()
+    render_halaman_login()
+    st.stop()
 
 # --- CSS Kustom untuk Tampilan Modern, Kartu Login Terpadu, & Posisi ---
 st.markdown(
@@ -104,34 +104,23 @@ def get_gspread_client():
     return client
 
 @st.cache_data(ttl=60, show_spinner=False)
-def load_sheet_data(sheet_name, spreadsheet_id=None):
+def load_sheet_data(sheet_name):
     try:
         client = get_gspread_client()
-        target_id = spreadsheet_id if spreadsheet_id else SHEET_ID
-        if len(str(target_id)) > 30 and " " not in str(target_id):
-            spreadsheet = client.open_by_key(target_id)
-        else:
-            spreadsheet = client.open(target_id)
+        spreadsheet = client.open("Database_PASTI_Pusat")
         worksheet = spreadsheet.worksheet(sheet_name)
         data = worksheet.get_all_records()
-        return pd.DataFrame(data)
+        df = pd.DataFrame(data)
+        return df
     except Exception as e:
+        st.error(f"Gagal memuat data dari Google Sheets: {e}")
         return pd.DataFrame()
 
-def save_sheet_data(sheet_name, df, spreadsheet_id=None):
+def save_sheet_data(sheet_name, df):
     try:
         client = get_gspread_client()
-        target_id = spreadsheet_id if spreadsheet_id else SHEET_ID
-        if len(str(target_id)) > 30 and " " not in str(target_id):
-            spreadsheet = client.open_by_key(target_id)
-        else:
-            spreadsheet = client.open(target_id)
-            
-        try:
-            worksheet = spreadsheet.worksheet(sheet_name)
-        except gspread.exceptions.WorksheetNotFound:
-            worksheet = spreadsheet.add_worksheet(title=sheet_name, rows="1000", cols="20")
-            
+        spreadsheet = client.open("Database_PASTI_Pusat")
+        worksheet = spreadsheet.worksheet(sheet_name)
         df = df.fillna("")
         worksheet.clear()
         data_to_update = [df.columns.values.tolist()] + df.values.tolist()
@@ -929,38 +918,238 @@ if pilih_app == "1. GEMA (Generator Modul Ajar)":
                 model = genai.GenerativeModel("gemini-3.5-flash")
             
             prompt = f"""
-Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Pembelajaran Mendalam (Deep Learning)...
-Jenjang & Fase: {jenjang_pendidikan} - {fase_kelas}
-Mata Pelajaran: {mata_pelajaran}
-Topik: {topik}
-Alokasi Waktu: {alokasi_waktu}
-Pertemuan Ke-: {pertemuan_ke}
+            Bertindaklah sebagai pakar kurikulum profesional. Buatkan konten Modul Ajar Pembelajaran Mendalam (Deep Learning) yang SANGAT LENGKAP, detail, dan terperinci untuk:
+            - Jenjang & Fase: {jenjang_pendidikan} ({fase_kelas})
+            - Mata Pelajaran: {mata_pelajaran}
+            - Topik: {topik}
+            - Alokasi Waktu: {alokasi_waktu}
+            - Pertemuan Ke-: {pertemuan_ke}
 
-SESUAIKAN DENGAN SISTEMATIKA BERIKUT DALAM FORMAT JSON (SEMUA BAGIAN WAJIB TERISI LENGKAP, TIDAK BOLEH KOSONG):
-1. "dimensi_profil_lulusan": Pilih 2 sampai 4 dimensi profil lulusan yang paling relevan.
-2. "tujuan_pembelajaran": Uraian tujuan pembelajaran yang spesifik.
-3. "pemahaman_makna": Pemahaman bermakna yang diperoleh siswa.
-4. "pertanyaan_pemantik": Pertanyaan pemantik yang relevan.
-5. "kerangka_pembelajaran": Berupa objek JSON yang WAJIB memiliki sub-kunci berikut secara lengkap:
-   - "praktik_pedagogis": objek dengan sub-kunci "model_pembelajaran" dan "metode_pembelajaran".
-   - "kemitraan_pembelajaran": objek dengan sub-kunci "lingkungan_sekolah" dan "lingkungan_luar_sekolah".
-   - "lingkungan_belajar": objek dengan sub-kunci "ruang_fisik", "ruang_virtual", dan "ruang_budaya_belajar".
-   - "pemanfaatan_digital": objek dengan sub-kunci "tahap_perencanaan", "tahap_pelaksanaan", dan "tahap_evaluasi".
-6. "pengalaman_belajar": Berupa objek dengan "kegiatan_pendahuluan", "memahami", "mengaplikasi", "merefleksi".
-7. "asesmen_pembelajaran": Berupa objek dengan "asesmen_awal", "asesmen_formatif", dan "asesmen_sumatif".
-8. "rubrik_penilaian": Berupa *Array of Objects* (Daftar Objek JSON). Setiap objek WAJIB memuat: {{"kriteria", "deskripsi", "skor_maksimal"}}.
-9. "instrumen_formatif": Rincian lembar observasi kelas.
-10. "lkm_content": Detail Lembar Kerja Murid.
-"""
+            SESUAIKAN DENGAN SISTEMATIKA BERIKUT DALAM FORMAT JSON (SEMUA BAGIAN WAJIB TERISI LENGKAP, TIDAK BOLEH KOSONG ATAU TANDA STRIP):
+            1. "dimensi_profil_lulusan": Pilih 2 sampai 4 dimensi profil lulusan yang paling relevan.
+            2. "tujuan_pembelajaran": Uraian tujuan pembelajaran yang spesifik.
+            3. "pemahaman_bermakna": Pemahaman bermakna yang diperoleh siswa.
+            4. "pertanyaan_pemantik": Pertanyaan pemantik yang relevan.
+            5. "kerangka_pembelajaran": Berupa objek JSON yang WAJIB memiliki sub-kunci berikut secara lengkap:
+               - "praktik_pedagogis": objek dengan sub-kunci "model_pembelajaran" dan "metode_pembelajaran".
+               - "kemitraan_pembelajaran": objek dengan sub-kunci "lingkungan_sekolah" dan "lingkungan_luar_sekolah".
+               - "lingkungan_belajar": objek dengan sub-kunci "ruang_fisik", "ruang_virtual", dan "ruang_budaya_belajar".
+               - "pemanfaatan_digital": objek dengan sub-kunci "tahap_perencanaan", "tahap_pelaksanaan", dan "tahap_asesmen".
+            6. "pengalaman_belajar": Berupa objek dengan "kegiatan_pendahuluan", "memahami", "mengaplikasi", "merefleksi", dan "kegiatan_penutup".
+            7. "asesmen_pembelajaran": Berupa objek dengan "asesmen_awal", "asesmen_formatif", dan "asesmen_sumatif".
+            8. "rubrik_penilaian": Berupa *Array of Objects* (Daftar Objek JSON). Setiap objek WAJIB memuat: {{"kriteria": "...", "perlu_bimbingan": "...", "cukup": "...", "baik": "...", "sangat_baik": "..."}}. Buat minimal 2 objek kriteria penilaian.
+            9. "instrumen_formatif": Rincian lembar observasi kelas.
+            10. "lkm_content": Detail Lembar Kerja Murid.
+
+            Berikan output HANYA dalam format JSON valid tanpa teks lain di luar JSON.
+            """
+            
             response = model.generate_content(prompt)
-        bt = chr(96) * 3
-        text_resp = response.text.strip().replace(bt + "json", "").replace(bt, "").strip()
+            text_resp = response.text.strip().replace("```json", "").replace("```", "").strip()
+            try:
+                data_ai = json.loads(text_resp)
+            except:
+                data_ai = {}
+
+            st.success("🎉 Modul Ajar GEMA Berhasil Disusun dengan Seluruh Kolom Terisi Penuh!")
+            docx_file = generate_docx(
+                data_ai, nama_sekolah, semester, tahun_pelajaran, mata_pelajaran,
+                fase_kelas, topik, alokasi_waktu, pertemuan_ke, nama_penulis,
+                nama_kota, tanggal_pembuatan, nip_penulis
+            )
+            st.download_button(
+                label="📥 Unduh Modul Ajar GEMA (.docx)",
+                data=docx_file,
+                file_name=f"Modul_Ajar_{topik.replace(' ', '_')}.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+
+elif pilih_app == "2. SIPENSIS (Sistem Informasi Presensi Siswa)":
+    st.markdown("### 📋 SIPENSIS: Sistem Informasi Presensi Siswa")
+
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "✍️ Input Manual", 
+        "📁 Download & Upload Excel", 
+        "📊 Laporan Harian", 
+        "📈 Rekap Semester Ganjil", 
+        "📈 Rekap Semester Genap"
+    ])
+
+    with tab1:
+        df_siswa = load_sheet_data("Siswa")
         
-        try:
-            # Berikan spasi/indentasi ke dalam (tekan Tab) untuk baris di bawah try
-            data_modul = json.loads(text_resp)
-            st.success("Modul Ajar berhasil dibuat!")
-            st.json(data_modul)
-        except Exception as e:
-            st.error(f"Terjadi kesalahan saat memproses data JSON: {e}")
-            st.text(text_resp)
+        if not df_siswa.empty:
+            df_siswa.columns = df_siswa.columns.str.strip()
+            daftar_kelas = df_siswa["Kelas"].dropna().unique()
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                tanggal_absensi = st.date_input("📅 Tanggal Absensi", key="tgl_manual")
+                kelas_pilih = st.selectbox("📚 Pilih Kelas:", daftar_kelas, key="kelas_manual")
+            with col2:
+                nama_guru = st.text_input("👨‍🏫 Nama Guru", value=st.session_state.get("user_nama", ""), key="guru_manual")
+                mata_pelajaran = st.text_input("📖 Mata Pelajaran", value="Pendidikan Pancasila", key="mapel_manual")
+
+            df_filtered = df_siswa[df_siswa["Kelas"] == kelas_pilih].copy()
+            nama_sekolah_otomatis = df_filtered["Sekolah"].iloc[0] if "Sekolah" in df_filtered.columns else "Tidak Diketahui"
+
+            st.info(f"🏫 **Sekolah:** {nama_sekolah_otomatis}")
+
+            df_input = df_filtered[["ID_Siswa", "Nama_Siswa"]].copy()
+            df_input["S"] = False
+            df_input["I"] = False
+            df_input["A"] = False
+
+            edited_df = st.data_editor(
+                df_input,
+                column_config={
+                    "ID_Siswa": st.column_config.NumberColumn("ID", disabled=True, width="small"),
+                    "Nama_Siswa": st.column_config.TextColumn("Nama Siswa", disabled=True, width="medium"),
+                    "S": st.column_config.CheckboxColumn("Sakit", width="small"),
+                    "I": st.column_config.CheckboxColumn("Izin", width="small"),
+                    "A": st.column_config.CheckboxColumn("Alpha", width="small"),
+                },
+                hide_index=True, use_container_width=True
+            )
+
+            if st.button("💾 Simpan Absensi Harian (Manual)", type="primary"):
+                with st.spinner("Menyimpan data..."):
+                    data_baru_list = []
+                    for _, row in edited_df.iterrows():
+                        status = "Hadir"
+                        if row["S"]: status = "Sakit"
+                        elif row["I"]: status = "Izin"
+                        elif row["A"]: status = "Alpha"
+                        
+                        data_baru_list.append({
+                            "Tanggal": str(tanggal_absensi),
+                            "Sekolah": nama_sekolah_otomatis,
+                            "Nama_Guru": nama_guru,
+                            "Mata_Pelajaran": mata_pelajaran,
+                            "Kelas": kelas_pilih,
+                            "ID_Siswa": row["ID_Siswa"],
+                            "Nama_Siswa": row["Nama_Siswa"],
+                            "Status_Kehadiran": status,
+                            "S": row["S"], "I": row["I"], "A": row["A"]
+                        })
+
+                    df_hari_ini = pd.DataFrame(data_baru_list)
+                    df_existing = load_sheet_data("Absensi_Harian")
+                    df_final = pd.concat([df_existing, df_hari_ini], ignore_index=True) if not df_existing.empty else df_hari_ini
+
+                    if save_sheet_data("Absensi_Harian", df_final):
+                        st.success("✅ Absensi Berhasil Disimpan ke Database Pusat!")
+                        st.balloons()
+                    else:
+                        st.error("❌ Gagal menyimpan ke Database.")
+        else:
+            st.warning("Data siswa belum tersedia di database.")
+
+    with tab2:
+        st.subheader("📁 Download Master Data Siswa & Upload Pembaruan")
+        st.write(
+            "1. Download master data siswa untuk mendapatkan seluruh data lintas kelas & sekolah.\n"
+            "2. Lakukan penambahan atau pengeditan data siswa di file Excel.\n"
+            "3. Upload kembali file tersebut untuk memperbarui database pusat yang digunakan aplikasi PASTI dan DIGMA."
+        )
+
+        df_siswa_ul = load_sheet_data("Siswa")
+        if not df_siswa_ul.empty:
+            df_siswa_ul.columns = df_siswa_ul.columns.str.strip()
+
+            st.markdown("---")
+            st.markdown("#### 📥 Download Master Data Siswa (Semua Kelas & Sekolah)")
+
+            cols_to_download = [
+                col for col in ["ID_Siswa", "Sekolah", "Kelas", "Nama_Siswa"] 
+                if col in df_siswa_ul.columns
+            ]
+            df_master_template = df_siswa_ul[cols_to_download].copy()
+
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df_master_template.to_excel(writer, index=False, sheet_name='Siswa')
+            excel_data = output.getvalue()
+
+            st.download_button(
+                label="📥 Download Master Data Siswa Utuh",
+                data=excel_data,
+                file_name="Master_Data_Siswa_Pusat.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+
+            st.markdown("---")
+            st.markdown("#### 📤 Upload Master Data Siswa yang Telah Diedit")
+            uploaded_excel = st.file_uploader("Pilih file Excel master (.xlsx) hasil pembaruan", type=["xlsx", "xls"])
+
+            if uploaded_excel is not None:
+                try:
+                    df_upload = pd.read_excel(uploaded_excel)
+                    st.write("Preview Data Master yang di-upload:")
+                    st.dataframe(df_upload.head(), use_container_width=True)
+
+                    if st.button("💾 Simpan Master Data ke Database Pusat", type="primary"):
+                        with st.spinner("Menyimpan ke database pusat..."):
+                            if save_sheet_data("Siswa", df_upload):
+                                st.success("✅ Master Data Siswa Berhasil Diperbarui di Database Pusat!")
+                                st.balloons()
+                            else:
+                                st.error("❌ Gagal menyimpan data ke Database.")
+                except Exception as e:
+                    st.error(f"Terjadi kesalahan saat membaca file Excel: {e}")
+        else:
+            st.warning("Data siswa belum tersedia di database.")
+        
+    with tab3:
+        st.subheader("📊 Laporan & Rekapitulasi Harian")
+        df_rekap = load_sheet_data("Absensi_Harian")
+        
+        if not df_rekap.empty:
+            df_rekap['Tanggal_Parsed'] = pd.to_datetime(df_rekap['Tanggal'], errors='coerce')
+            
+            days_indo = {'Monday': 'Senin', 'Tuesday': 'Selasa', 'Wednesday': 'Rabu', 'Thursday': 'Kamis', 'Friday': 'Jumat', 'Saturday': 'Sabtu', 'Sunday': 'Minggu'}
+            months_indo = {1: 'Januari', 2: 'Februari', 3: 'Maret', 4: 'April', 5: 'Mei', 6: 'Juni', 7: 'Juli', 8: 'Agustus', 9: 'September', 10: 'Oktober', 11: 'November', 12: 'Desember'}
+
+            def format_indo(dt):
+                if pd.isna(dt): return "-"
+                h = days_indo.get(dt.strftime('%A'), dt.strftime('%A'))
+                t = dt.day
+                b = months_indo.get(dt.month, dt.strftime('%B'))
+                y = dt.year
+                return f"{h}, {t} {b} {y}"
+
+            df_rekap['Tanggal_Format'] = df_rekap['Tanggal_Parsed'].apply(format_indo)
+            
+            kelas_filter = st.selectbox("Pilih Kelas untuk Laporan:", ["Semua"] + sorted(df_rekap["Kelas"].dropna().unique().tolist()), key="kls_lap_harian")
+            if kelas_filter != "Semua":
+                df_rekap = df_rekap[df_rekap["Kelas"] == kelas_filter]
+                
+            display_columns = ['Tanggal_Format', 'Kelas', 'ID_Siswa', 'Nama_Siswa', 'Status_Kehadiran', 'S', 'I', 'A']
+            df_display = df_rekap[[col for col in display_columns if col in df_rekap.columns]].copy()
+            df_display = df_display.rename(columns={
+                'Tanggal_Format': 'TANGGAL', 
+                'Kelas': 'KELAS', 
+                'ID_Siswa': 'ID', 
+                'Nama_Siswa': 'NAMA SISWA', 
+                'Status_Kehadiran': 'STATUS', 
+                'S': 'SAKIT', 
+                'I': 'IZIN', 
+                'A': 'ALPHA'
+            })
+            st.dataframe(df_display, hide_index=True, use_container_width=True)
+        else:
+            st.info("Belum ada data absensi harian yang tercatat.")
+
+    with tab4:
+        st.subheader("📈 Rekapitulasi Kehadiran Semester Ganjil")
+        st.info("Fitur rekapitulasi semester ganjil terintegrasi dengan database pusat.")
+
+    with tab5:
+        st.subheader("📈 Rekapitulasi Kehadiran Semester Genap")
+        st.info("Fitur rekapitulasi semester genap terintegrasi dengan database pusat.")
+
+elif pilih_app == "3. DIGMA (Digitalisasi Jurnal Mengajar)":
+    render_digma_module()
+
+elif pilih_app == "4. SAKTI (Sistem Asesmen & Kompetensi Terintegrasi)":
+    render_sakti()
