@@ -1,80 +1,58 @@
+import gspread
+from google.oauth2.service_account import Credentials
 import streamlit as st
 
-def render_login():
-    # CSS dengan penyesuaian posisi (margin-top negatif untuk menaikkan posisi)
-    st.markdown("""
-        <style>
-            .login-wrapper {
-                margin-top: -3rem; /* Mengatur posisi agar naik ke atas */
-            }
-            .login-header {
-                text-align: center;
-                padding-bottom: 5px;
-            }
-            .pasti-title {
-                font-size: 3.2rem;
-                font-weight: 900;
-                color: #38bdf8;
-                margin-bottom: 0px;
-                letter-spacing: 2px;
-                line-height: 1.1;
-            }
-            .pasti-subtitle {
-                font-size: 1.2rem;
-                font-weight: 600;
-                color: #f8fafc;
-                margin-top: 5px;
-                margin-bottom: 10px;
-            }
-            .pasti-badge {
-                background: linear-gradient(90deg, #0284c7 0%, #0369a1 100%);
-                color: #ffffff;
-                padding: 5px 15px;
-                border-radius: 20px;
-                font-size: 0.75rem;
-                font-weight: 700;
-                letter-spacing: 0.8px;
-                display: inline-block;
-                margin-bottom: 15px;
-                box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
-            }
-        </style>
-    """, unsafe_allow_html=True)
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive",
+]
 
-    # Layout Center
-    _, col_center, _ = st.columns([0.8, 2.4, 0.8])
-    
-    with col_center:
-        # Wrapper untuk menerapkan margin-top agar posisi naik
-        st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
-        
-        # Header Portal
-        st.markdown("""
-            <div class="login-header">
-                <div class="pasti-title">PASTI</div>
-                <div class="pasti-subtitle">Portal Administrasi Siswa Terintegrasi</div>
-                <div class="pasti-badge">E-PRESENSI SISWA • E-JURNAL MENGAJAR • E-ASESMEN PM • E-MODUL AJAR PM</div>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        # Kontainer kartu login
-        with st.container(border=True):
-            st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;'>Silakan masukkan Email dan Token Akses terdaftar di Database Pusat.</p>", unsafe_allow_html=True)
-            
-            # Form Login Interaktif
-            with st.form("form_login_professional"):
-                email_input = st.text_input("📧 Email Terdaftar", placeholder="nama.guru@sekolah.id")
-                token_input = st.text_input("🔑 Token Akses", type="password", placeholder="Masukkan token rahasia anda")
-                
-                submit_btn = st.form_submit_button("🚀 Masuk ke PASTI", use_container_width=True)
-                
-                if submit_btn:
-                    if not email_input or not token_input:
-                        st.warning("⚠️ Email dan Token Akses wajib diisi!")
-                    else:
-                        st.session_state["logged_in"] = True
-                        st.session_state["user_email"] = email_input
-                        st.success("Login Berhasil! Memuat portal...")
-                        st.rerun() # Rerun satu kali untuk refresh state
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+@st.cache_resource
+def get_gspread_client():
+    creds_dict = st.secrets["gcp_service_account"]
+    creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+    return gspread.authorize(creds)
+
+def verifikasi_login(email, token):
+    try:
+        client = get_gspread_client()
+        # Pastikan ID ini benar dan tidak ada typo
+        master_sheet_id = "1mgN63xzrLt__5b9-gBw8dIWYP3RRgNdagUiTurFZdgg"
+        sheet = client.open_by_key(master_sheet_id).sheet1
+        data = sheet.get_all_records()
+
+        for row in data:
+            db_email = str(row.get("Email", "")).strip().lower()
+            db_token = str(row.get("Token_Unik", "")).strip()
+            db_status = str(row.get("Status", "")).strip().upper()
+
+            if db_email == email.strip().lower() and db_token == token.strip():
+                if db_status == "AKTIF":
+                    return row
+    except Exception as e:
+        st.error(f"Terjadi kesalahan koneksi ke database pusat: {e}")
+    return None
+
+def render_halaman_login():
+    st.markdown("## 🔐 Login Aplikasi PASTI")
+    st.write("Silakan masukkan Email dan Token Unik Anda untuk mengakses sistem.")
+
+    with st.form("form_login"):
+        email_input = st.text_input("Email Terdaftar")
+        token_input = st.text_input("Token Unik", type="password")
+        tombol_login = st.form_submit_button("Masuk")
+
+        if tombol_login:
+            if not email_input or not token_input:
+                st.warning("Email dan Token Unik wajib diisi!")
+            else:
+                user_data = verifikasi_login(email_input, token_input)
+                if user_data:
+                    st.session_state["logged_in"] = True
+                    st.session_state["nama_guru"] = user_data.get("Nama_Guru")
+                    st.session_state["email_guru"] = user_data.get("Email")
+                    st.session_state["sheet_id_guru"] = user_data.get("Spreadsheet_ID_Guru")
+                    st.success(f"Login berhasil! Selamat datang, {user_data['Nama_Guru']}")
+                    st.rerun()
+                else:
+                    st.error("Login gagal. Email/Token salah atau akun tidak aktif.")
