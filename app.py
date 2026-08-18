@@ -962,5 +962,5 @@ SESUAIKAN DENGAN SISTEMATIKA BERIKUT DALAM FORMAT JSON (SEMUA BAGIAN WAJIB TERIS
             st.success("Modul Ajar berhasil dibuat!")
             st.json(data_modul)
         except Exception as e:
-            st.error(fTerjadi kesalahan saat memproses data JSON: {e}")
+            st.error(f"Terjadi kesalahan saat memproses data JSON: {e}")
             st.text(text_resp)
