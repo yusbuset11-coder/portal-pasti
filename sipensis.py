@@ -31,7 +31,7 @@ def run_sipensis():
         return
     
     # Hubungkan ke DATA_MASTER_REGISTRY
-    MASTER_REGISTRY_ID = st.secrets.get("master_registry_id", "1mgN63xzrLt_5b9-gWw8dIWYP3RRgNdagUiTrFZdgg")
+    MASTER_REGISTRY_ID = st.secrets.get("master_registry_id", "1mgN63xzrLt__5b9-gBw8dIWYP3RRgNdagUiTurFZdgg")
     
     try:
         registry_sheet = client.open_by_key(MASTER_REGISTRY_ID).sheet1
