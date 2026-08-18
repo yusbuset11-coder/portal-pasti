@@ -1,7 +1,1 @@
-streamlit
-pandas
-supabase
-gspread
-oauth2client
-openpyxl
-google-generativeai
+gspread-formatting
