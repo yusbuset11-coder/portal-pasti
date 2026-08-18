@@ -16,10 +16,13 @@ def get_gspread_client():
 def verifikasi_login(email, token):
     try:
         client = get_gspread_client()
-        # Pastikan ID ini benar dan tidak ada typo
-        master_sheet_id = "1mgN63xzrLt__5b9-gBw8dIWYP3RRgNdagUiTurFZdgg"
+        master_sheet_id = "1mgN63xzrLt_5b9-gBw8dIWYP3RRgNdagUiTrFZdgg"
         sheet = client.open_by_key(master_sheet_id).sheet1
         data = sheet.get_all_records()
+
+        if not data:
+            st.warning("⚠️ Spreadsheet Master Registry kosong atau tidak terbaca.")
+            return None
 
         for row in data:
             db_email = str(row.get("Email", "")).strip().lower()
@@ -29,11 +32,15 @@ def verifikasi_login(email, token):
             if db_email == email.strip().lower() and db_token == token.strip():
                 if db_status == "AKTIF":
                     return row
+                else:
+                    st.error("❌ Akun Anda berstatus TIDAK AKTIF.")
+                    return None
+                    
     except Exception as e:
-        st.error(f"Terjadi kesalahan koneksi ke database pusat: {e}")
+        st.error(f"❌ Terjadi kesalahan koneksi ke database pusat: {e}")
     return None
 
-def render_halaman_login():
+def render_login():
     st.markdown("## 🔐 Login Aplikasi PASTI")
     st.write("Silakan masukkan Email dan Token Unik Anda untuk mengakses sistem.")
 
@@ -44,7 +51,7 @@ def render_halaman_login():
 
         if tombol_login:
             if not email_input or not token_input:
-                st.warning("Email dan Token Unik wajib diisi!")
+                st.warning("⚠️ Email dan Token Unik wajib diisi!")
             else:
                 user_data = verifikasi_login(email_input, token_input)
                 if user_data:
@@ -52,7 +59,7 @@ def render_halaman_login():
                     st.session_state["nama_guru"] = user_data.get("Nama_Guru")
                     st.session_state["email_guru"] = user_data.get("Email")
                     st.session_state["sheet_id_guru"] = user_data.get("Spreadsheet_ID_Guru")
-                    st.success(f"Login berhasil! Selamat datang, {user_data['Nama_Guru']}")
+                    st.success(f"✅ Login berhasil! Selamat datang, {user_data['Nama_Guru']}")
                     st.rerun()
                 else:
-                    st.error("Login gagal. Email/Token salah atau akun tidak aktif.")
+                    st.error("❌ Login gagal. Email atau Token Unik salah.")
