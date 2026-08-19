@@ -1,2 +1,3 @@
 gspread-formatting
 python-docx
+google-generativeai
