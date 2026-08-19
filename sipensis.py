@@ -164,16 +164,16 @@ def run_sipensis():
 
     with tab2:
         st.subheader("📥 Download & Upload Database Guru")
-        st.write("Unduh template database resmi yang mencakup 3 sheet (Absensi Harian, Rekap Semester Ganjil, Rekap Semester Genap), lalu unggah kembali file Excel yang telah diisi.")
+        st.markdown("Silakan unduh template resmi yang mencakup 3 sheet (Absensi Harian, Rekap Semester Ganjil, Rekap Semester Genap) langsung dari Google Sheets.")
         
-        # ID Google Sheets Template Database Guru (Pastikan aksesnya sudah dibagikan ke publik)
+        # ID Google Sheets Template Database Guru
         template_guru_id = "1F2o-ODBFDHezkhSZas5jtaD6vM8Ny8KtVTM7w"
         url_download_template = f"https://docs.google.com/spreadsheets/d/{template_guru_id}/export?format=xlsx"
 
         st.markdown(
             f"""
             <a href="{url_download_template}" target="_blank">
-                <button style="background-color: #0e1117; color: white; padding: 12px 24px; border: 2px solid #4f8bf9; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px;">
+                <button style="background-color: #ff4b4b; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px;">
                     📥 Download Template Database Guru (.XLSX)
                 </button>
             </a>
