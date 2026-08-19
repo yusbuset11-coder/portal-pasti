@@ -169,7 +169,8 @@ def run_sipensis():
         # ID Google Sheets Template Database Guru
         template_guru_id = "1F2o-ODBFDHezkhSZas5jtaD6vM8Ny8KF2gZ4KtVTM7w"
         url_download_template = f"https://docs.google.com/spreadsheets/d/{template_guru_id}/export?format=xlsx"
-
+        st.write(f"DEBUG URL: {url_download_template}")
+        
         st.markdown(
             f"""
             <a href="{url_download_template}" target="_blank">
