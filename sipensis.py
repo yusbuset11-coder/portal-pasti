@@ -167,7 +167,7 @@ def run_sipensis():
         st.markdown("Silakan unduh template resmi yang mencakup 3 sheet (Absensi Harian, Rekap Semester Ganjil, Rekap Semester Genap) langsung dari Google Sheets.")
         
         # ID Google Sheets Template Database Guru
-        template_guru_id = "1F2o-ODBFDHezkhSZas5jtaD6vM8Ny8KtVTM7w"
+        template_guru_id = "1F2o-ODBFDHezkhSZas5jtaD6vM8Ny8KF2gZ4KtVTM7w"
         url_download_template = f"https://docs.google.com/spreadsheets/d/{template_guru_id}/export?format=xlsx"
 
         st.markdown(
