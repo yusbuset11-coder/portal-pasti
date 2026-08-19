@@ -164,21 +164,21 @@ def run_sipensis():
 
     with tab2:
         st.subheader("📥 Download & Upload Database Guru")
-        st.write("Unduh template database yang mencakup 3 sheet (Absensi Harian, Rekap Semester Ganjil, Rekap Semester Genap), lalu unggah kembali file Excel yang telah diisi.")
+        st.write("Unduh template database resmi yang mencakup 3 sheet (Absensi Harian, Rekap Semester Ganjil, Rekap Semester Genap), lalu unggah kembali file Excel yang telah diisi.")
         
-        # Tombol Download Template Excel 3 Sheet
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            pd.DataFrame(columns=["Tanggal", "Sekolah", "Mata_Pelajaran", "Kelas", "No", "Nama_Siswa", "S", "I", "A"]).to_excel(writer, sheet_name="Absensi Harian", index=False)
-            pd.DataFrame(columns=["Nama_Sekolah", "Mata_Pelajaran", "Kelas", "No", "Nama_Siswa", "S", "I", "A", "Jumlah"]).to_excel(writer, sheet_name="Rekap Semester Ganjil", index=False)
-            pd.DataFrame(columns=["Nama_Sekolah", "Mata_Pelajaran", "Kelas", "No", "Nama_Siswa", "S", "I", "A", "Jumlah"]).to_excel(writer, sheet_name="Rekap Semester Genap", index=False)
-        output.seek(0)
-        
-        st.download_button(
-            label="📥 Download Template Database Guru (.xlsx)",
-            data=output,
-            file_name="Template_Database_Guru.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        # ID Google Sheets Template Database Guru (Pastikan aksesnya sudah dibagikan ke publik)
+        template_guru_id = "1F2o-ODBFDHezkhSZas5jtaD6vM8Ny8KtVTM7w"
+        url_download_template = f"https://docs.google.com/spreadsheets/d/{template_guru_id}/export?format=xlsx"
+
+        st.markdown(
+            f"""
+            <a href="{url_download_template}" target="_blank">
+                <button style="background-color: #0e1117; color: white; padding: 12px 24px; border: 2px solid #4f8bf9; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px;">
+                    📥 Download Template Database Guru (.XLSX)
+                </button>
+            </a>
+            """,
+            unsafe_allow_html=True
         )
         
         st.markdown("---")
