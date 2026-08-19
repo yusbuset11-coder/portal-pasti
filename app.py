@@ -91,7 +91,9 @@ scope = [
 ]
 
 def get_gspread_client():
-    b64_string = st.secrets["gcp_base64"]
+    creds_dict = st.secrets["gcp_service_account"]
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+    return gspread.authorize(creds)
     json_bytes = base64.b64decode(b64_string)
     creds_dict = json.loads(json_bytes.decode("utf-8"))
 
