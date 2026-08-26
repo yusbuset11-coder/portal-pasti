@@ -7,18 +7,24 @@ st.set_page_config(
     layout="wide",
 )
 
-# --- CSS CUSTOM UNTUK MENIRU DESAIN LAMA YANG ELEGAN ---
+# --- CSS CUSTOM UNTUK TAMPILAN RINGKAS & ELEGAN ---
 st.markdown(
     """
     <style>
-    /* Gradasi Header Utama */
+    /* Mengurangi jarak atas agar tidak terlalu ke bawah */
+    .block-container {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
+    
+    /* Header Utama yang Lebih Kompak */
     .main-header {
         background: linear-gradient(135deg, #0284c7, #38bdf8);
-        padding: 40px;
+        padding: 25px;
         border-radius: 12px;
         color: white;
         text-align: center;
-        margin-bottom: 30px;
+        margin-bottom: 20px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
     
@@ -27,150 +33,215 @@ st.markdown(
         background: white;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
-        padding: 25px 20px;
+        padding: 20px 15px;
         text-align: center;
-        height: 225px;
+        height: 205px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: space-between;
         box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        margin-bottom: 15px;
+        margin-bottom: 10px;
     }
     
     .card-icon {
-        font-size: 36px;
-        margin-bottom: 5px;
+        font-size: 32px;
+        margin-bottom: 2px;
     }
     
     .card-title {
         font-weight: bold;
-        font-size: 18px;
-        margin-bottom: 5px;
+        font-size: 16px;
+        margin-bottom: 3px;
     }
     
     .card-desc {
-        font-size: 12px;
+        font-size: 11px;
         color: #64748b;
         margin: 0;
     }
     
-    /* Tombol Outline Custom */
-    .btn-custom {
-        display: block;
+    /* Tombol Navigasi Dalam Portal */
+    .stButton button {
         width: 100%;
-        padding: 8px 0;
-        text-align: center;
         border-radius: 20px;
-        font-size: 14px;
         font-weight: 500;
-        text-decoration: none;
-        transition: all 0.2s;
-        background: white;
+        font-size: 13px;
+        padding: 4px 0;
     }
-    
-    .btn-sipensis { border: 1.5px solid #2563eb; color: #2563eb; }
-    .btn-sipensis:hover { background: #2563eb; color: white; }
-
-    .btn-digma { border: 1.5px solid #16a34a; color: #16a34a; }
-    .btn-digma:hover { background: #16a34a; color: white; }
-
-    .btn-sakti { border: 1.5px solid #ca8a04; color: #ca8a04; }
-    .btn-sakti:hover { background: #ca8a04; color: white; }
-
-    .btn-gema { border: 1.5px solid #dc2626; color: #dc2626; }
-    .btn-gema:hover { background: #dc2626; color: white; }
     </style>
 """,
     unsafe_allow_html=True,
 )
 
-# --- HEADER UTAMA ---
-st.markdown(
-    """
-    <div class="main-header">
-        <div style="font-size: 40px; margin-bottom: 5px;">🗂️</div>
-        <h1 style="margin: 0; font-size: 36px; font-weight: bold; letter-spacing: 1px;">PASTI</h1>
-        <p style="margin: 8px 0 0 0; font-size: 16px; opacity: 0.95;">Portal Akademik Siswa Terintegrasi</p>
-    </div>
-""",
-    unsafe_allow_html=True,
-)
+# --- SESSION STATE UNTUK LOGIN & NAVIGASI ---
+if "logged_in" not in st.session_state:
+  st.session_state.logged_in = False
 
-# --- LINK APLIKASI MASING-MASING ---
-URL_SIPENSIS = "https://sipensis-nzzezgbxb7qpzxmo2qs9jk.streamlit.app/"
-URL_DIGMA = "https://ru27usdatjtkptpha9it3v.streamlit.app/"
-URL_SAKTI = "https://kbnmpyijmfge9acfaaynhk.streamlit.app/"
-URL_GEMA = (
-    "https://generator-modul-ajar-ej7k6d9oggjr6436vsfncn.streamlit.app/"
-)
+if "page" not in st.session_state:
+  st.session_state.page = "Home"
 
-col1, col2, col3, col4 = st.columns(4)
 
-with col1:
-  st.markdown(
-      f"""
-        <div class="card">
-            <div>
-                <div class="card-icon">👤</div>
-                <div class="card-title" style="color: #2563eb;">SIPENSIS</div>
-                <div class="card-desc">Sistem Informasi Presensi Siswa</div>
-            </div>
-            <a href="{URL_SIPENSIS}" target="_blank" class="btn-custom btn-sipensis">Buka SIPENSIS</a>
+def navigate_to(page_name):
+  st.session_state.page = page_name
+  st.rerun()
+
+
+# ==========================================
+# HALAMAN LOGIN (SEKALI DI AWAL)
+# ==========================================
+if not st.session_state.logged_in:
+  col_l1, col_l2, col_l3 = st.columns([1, 1.2, 1])
+  with col_l2:
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div style="background: white; padding: 30px; border-radius: 15px; border: 1.5px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center;">
+            <h2 style="color: #0284c7; margin-bottom: 5px;">🔐 Portal PASTI</h2>
+            <p style="font-size: 13px; color: #64748b;">Silakan masukkan Email dan Token Unik Anda</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    email_input = st.text_input("Email Resmi", placeholder="nama@guru.sch.id")
+    token_input = st.text_input(
+        "Token Unik", type="password", placeholder="Masukkan token unik Anda"
+    )
+
+    if st.button("Masuk ke Portal", type="primary", use_container_width=True):
+      if email_input and token_input:  # Validasi bebas atau sesuaikan token Anda
+        st.session_state.logged_in = True
+        st.session_state.email = email_input
+        st.success("Login Berhasil! Memuat Portal...")
+        st.rerun()
+      else:
+        st.warning("Mohon isi Email dan Token Unik terlebih dahulu!")
+
+# ==========================================
+# SETELAH LOGIN (DASHBOARD UTAMA)
+# ==========================================
+else:
+  if st.session_state.page == "Home":
+    st.markdown(
+        """
+        <div class="main-header">
+            <div style="font-size: 32px; margin-bottom: 2px;">🗂️</div>
+            <h1 style="margin: 0; font-size: 32px; font-weight: bold; letter-spacing: 1px;">PASTI</h1>
+            <p style="margin: 5px 0 0 0; font-size: 15px; opacity: 0.95;">Portal Akademik Siswa Terintegrasi</p>
         </div>
     """,
-      unsafe_allow_html=True,
-  )
+        unsafe_allow_html=True,
+    )
 
-with col2:
-  st.markdown(
-      f"""
-        <div class="card">
-            <div>
-                <div class="card-icon">📖</div>
-                <div class="card-title" style="color: #16a34a;">DIGMA</div>
-                <div class="card-desc">Digitalisasi Jurnal Mengajar Guru.</div>
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+      st.markdown(
+          """
+            <div class="card">
+                <div>
+                    <div class="card-icon">👤</div>
+                    <div class="card-title" style="color: #2563eb;">SIPENSIS</div>
+                    <div class="card-desc">Sistem Informasi Presensi Siswa.</div>
+                </div>
             </div>
-            <a href="{URL_DIGMA}" target="_blank" class="btn-custom btn-digma">Buka DIGMA</a>
-        </div>
-    """,
-      unsafe_allow_html=True,
-  )
+        """,
+          unsafe_allow_html=True,
+      )
+      if st.button(
+          "Buka SIPENSIS", key="btn_sipensis", type="secondary", use_container_width=True
+      ):
+        navigate_to("SIPENSIS")
 
-with col3:
-  st.markdown(
-      f"""
-        <div class="card">
-            <div>
-                <div class="card-icon">📝</div>
-                <div class="card-title" style="color: #ca8a04;">SAKTI</div>
-                <div class="card-desc">Sistem Asesmen & Kompetensi Terintegrasi.</div>
+    with col2:
+      st.markdown(
+          """
+            <div class="card">
+                <div>
+                    <div class="card-icon">📖</div>
+                    <div class="card-title" style="color: #16a34a;">DIGMA</div>
+                    <div class="card-desc">Digitalisasi Jurnal Mengajar Guru.</div>
+                </div>
             </div>
-            <a href="{URL_SAKTI}" target="_blank" class="btn-custom btn-sakti">Buka SAKTI</a>
-        </div>
-    """,
-      unsafe_allow_html=True,
-  )
+        """,
+          unsafe_allow_html=True,
+      )
+      if st.button(
+          "Buka DIGMA", key="btn_digma", type="secondary", use_container_width=True
+      ):
+        navigate_to("DIGMA")
 
-with col4:
-  st.markdown(
-      f"""
-        <div class="card">
-            <div>
-                <div class="card-icon">🤖</div>
-                <div class="card-title" style="color: #dc2626;">GEMA</div>
-                <div class="card-desc">Generator Modul Ajar Pembelajaran Mendalam.</div>
+    with col3:
+      st.markdown(
+          """
+            <div class="card">
+                <div>
+                    <div class="card-icon">📝</div>
+                    <div class="card-title" style="color: #ca8a04;">SAKTI</div>
+                    <div class="card-desc">Sistem Asesmen & Kompetensi Terintegrasi.</div>
+                </div>
             </div>
-            <a href="{URL_GEMA}" target="_blank" class="btn-custom btn-gema">Buka GEMA</a>
-        </div>
-    """,
-      unsafe_allow_html=True,
-  )
+        """,
+          unsafe_allow_html=True,
+      )
+      if st.button(
+          "Buka SAKTI", key="btn_sakti", type="secondary", use_container_width=True
+      ):
+        navigate_to("SAKTI")
 
-# --- FOOTER ---
-st.markdown("<br><hr><br>", unsafe_allow_html=True)
-st.markdown(
-    "<p style='text-align: center; color: #64748b; font-size: 13px;'>© 2026"
-    " PASTI - Yustinus Budi Setyanta, S.Pd., M.Pd. - PS Cabdin Bangkalan</p>",
-    unsafe_allow_html=True,
-)
+    with col4:
+      st.markdown(
+          """
+            <div class="card">
+                <div>
+                    <div class="card-icon">🤖</div>
+                    <div class="card-title" style="color: #dc2626;">GEMA</div>
+                    <div class="card-desc">Generator Modul Ajar Pembelajaran Mendalam.</div>
+                </div>
+            </div>
+        """,
+          unsafe_allow_html=True,
+      )
+      if st.button(
+          "Buka GEMA", key="btn_gema", type="secondary", use_container_width=True
+      ):
+        navigate_to("GEMA")
+
+    # Tombol Logout di bawah
+    st.markdown("<br>", unsafe_allow_html=True)
+    col_out1, col_out2, col_out3 = st.columns([2, 1, 2])
+    with col_out2:
+      if st.button("🚪 Keluar / Logout", use_container_width=True):
+        st.session_state.logged_in = False
+        st.rerun()
+
+    st.markdown("<br><hr><br>", unsafe_allow_html=True)
+    st.markdown(
+        "<p style='text-align: center; color: #64748b; font-size: 12px;'>©"
+        " 2026 PASTI - Yustinus Budi Setyanta, S.Pd., M.Pd. - PS Cabdin"
+        " Bangkalan</p>",
+        unsafe_allow_html=True,
+    )
+
+  # ==========================================
+  # SUB HALAMAN MODUL
+  # ==========================================
+  else:
+    if st.button("⬅️ Kembali ke Beranda Portal PASTI"):
+      navigate_to("Home")
+
+    st.markdown("---")
+
+    if st.session_state.page == "SIPENSIS":
+      st.title("👥 SIPENSIS: Sistem Informasi Presensi Siswa")
+      st.info("Modul presensi siswa aktif di dalam portal terintegrasi.")
+    elif st.session_state.page == "DIGMA":
+      st.title("📖 DIGMA: Digitalisasi Jurnal Mengajar Guru")
+      st.info("Modul jurnal mengajar guru aktif di dalam portal terintegrasi.")
+    elif st.session_state.page == "SAKTI":
+      st.title("⚡ SAKTI: Sistem Asesmen & Kompetensi Terintegrasi")
+      st.info("Modul asesmen dan rekap nilai aktif di dalam portal terintegrasi.")
+    elif st.session_state.page == "GEMA":
+      st.title("📚 GEMA: Generator Modul Ajar Pembelajaran Mendalam")
+      st.info("Modul generator perangkat ajar aktif di dalam portal terintegrasi.")
