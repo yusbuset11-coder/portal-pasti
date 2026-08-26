@@ -11,13 +11,10 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    /* Mengurangi jarak atas agar tidak terlalu ke bawah */
     .block-container {
         padding-top: 2rem !important;
         padding-bottom: 2rem !important;
     }
-    
-    /* Header Utama yang Lebih Kompak */
     .main-header {
         background: linear-gradient(135deg, #0284c7, #38bdf8);
         padding: 25px;
@@ -27,8 +24,6 @@ st.markdown(
         margin-bottom: 20px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
-    
-    /* Desain Kartu Menu */
     .card {
         background: white;
         border: 1px solid #e2e8f0;
@@ -43,25 +38,20 @@ st.markdown(
         box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         margin-bottom: 10px;
     }
-    
     .card-icon {
         font-size: 32px;
         margin-bottom: 2px;
     }
-    
     .card-title {
         font-weight: bold;
         font-size: 16px;
         margin-bottom: 3px;
     }
-    
     .card-desc {
         font-size: 11px;
         color: #64748b;
         margin: 0;
     }
-    
-    /* Tombol Navigasi Dalam Portal */
     .stButton button {
         width: 100%;
         border-radius: 20px;
@@ -74,7 +64,15 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- SESSION STATE UNTUK LOGIN & NAVIGASI ---
+# --- URL APLIKASI MASING-MASING ---
+URL_SIPENSIS = "https://sipensis-nzzezgbxb7qpzxmo2qs9jk.streamlit.app/"
+URL_DIGMA = "https://ru27usdatjtkptpha9it3v.streamlit.app/"
+URL_SAKTI = "https://kbnmpyijmfge9acfaaynhk.streamlit.app/"
+URL_GEMA = (
+    "https://generator-modul-ajar-ej7k6d9oggjr6436vsfncn.streamlit.app/"
+)
+
+# --- SESSION STATE ---
 if "logged_in" not in st.session_state:
   st.session_state.logged_in = False
 
@@ -110,7 +108,7 @@ if not st.session_state.logged_in:
     )
 
     if st.button("Masuk ke Portal", type="primary", use_container_width=True):
-      if email_input and token_input:  # Validasi bebas atau sesuaikan token Anda
+      if email_input and token_input:
         st.session_state.logged_in = True
         st.session_state.email = email_input
         st.success("Login Berhasil! Memuat Portal...")
@@ -119,7 +117,7 @@ if not st.session_state.logged_in:
         st.warning("Mohon isi Email dan Token Unik terlebih dahulu!")
 
 # ==========================================
-# SETELAH LOGIN (DASHBOARD UTAMA)
+# DASHBOARD UTAMA
 # ==========================================
 else:
   if st.session_state.page == "Home":
@@ -208,7 +206,6 @@ else:
       ):
         navigate_to("GEMA")
 
-    # Tombol Logout di bawah
     st.markdown("<br>", unsafe_allow_html=True)
     col_out1, col_out2, col_out3 = st.columns([2, 1, 2])
     with col_out2:
@@ -225,7 +222,7 @@ else:
     )
 
   # ==========================================
-  # SUB HALAMAN MODUL
+  # SUB HALAMAN (MENAMPILKAN APLIKASI ASLI VIA IFRAME)
   # ==========================================
   else:
     if st.button("⬅️ Kembali ke Beranda Portal PASTI"):
@@ -235,13 +232,16 @@ else:
 
     if st.session_state.page == "SIPENSIS":
       st.title("👥 SIPENSIS: Sistem Informasi Presensi Siswa")
-      st.info("Modul presensi siswa aktif di dalam portal terintegrasi.")
+      st.components.v1.iframe(URL_SIPENSIS, height=800, scrolling=True)
+
     elif st.session_state.page == "DIGMA":
       st.title("📖 DIGMA: Digitalisasi Jurnal Mengajar Guru")
-      st.info("Modul jurnal mengajar guru aktif di dalam portal terintegrasi.")
+      st.components.v1.iframe(URL_DIGMA, height=800, scrolling=True)
+
     elif st.session_state.page == "SAKTI":
       st.title("⚡ SAKTI: Sistem Asesmen & Kompetensi Terintegrasi")
-      st.info("Modul asesmen dan rekap nilai aktif di dalam portal terintegrasi.")
+      st.components.v1.iframe(URL_SAKTI, height=800, scrolling=True)
+
     elif st.session_state.page == "GEMA":
       st.title("📚 GEMA: Generator Modul Ajar Pembelajaran Mendalam")
-      st.info("Modul generator perangkat ajar aktif di dalam portal terintegrasi.")
+      st.components.v1.iframe(URL_GEMA, height=800, scrolling=True)
